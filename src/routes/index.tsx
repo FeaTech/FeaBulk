@@ -41,8 +41,8 @@ function Index() {
             <a className="hover:text-[#F87908]" href="#sell">Sell on FEA Bulk</a>
           </nav>
           <div className="hidden items-center gap-4 lg:flex">
-            <a className="text-sm font-bold text-[#102B52] hover:text-[#F87908]" href="#workspace">Sign in</a>
-            <a className="bg-[#F87908] px-5 py-3 text-sm font-bold text-white transition hover:bg-[#d96806]" href="#workspace">Create business account</a>
+            <a className="text-sm font-bold text-[#102B52] hover:text-[#F87908]" href="/auth">Sign in</a>
+            <a className="bg-[#F87908] px-5 py-3 text-sm font-bold text-white transition hover:bg-[#d96806]" href="/auth">Create business account</a>
           </div>
           <button className="grid h-10 w-10 place-items-center border border-[#DDE5EE] text-[#102B52] lg:hidden" onClick={() => setMenuOpen(!menuOpen)} aria-expanded={menuOpen} aria-label="Toggle navigation">
             {menuOpen ? <X size={20} /> : <Menu size={20} />}
