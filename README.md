@@ -1,6 +1,6 @@
 # FeaBulk
 
-FeaBulk is a B2B wholesale marketplace in active development. The app uses TanStack Start and Supabase. It is **not production ready**: real payment initiation and reconciliation, seller payouts, carrier integrations, legal review of generated GST documents, monitoring, and end-to-end tests remain unfinished. Do not accept live orders or funds.
+FeaBulk is a B2B wholesale marketplace in active development. The app uses TanStack Start and Supabase. It is **not production ready**: real payment initiation and reconciliation, seller payouts, carrier integrations, external alert delivery, legal review of generated GST documents, and end-to-end tests remain unfinished. Do not accept live orders or funds.
 
 ## Current working flows
 
@@ -15,6 +15,8 @@ FeaBulk is a B2B wholesale marketplace in active development. The app uses TanSt
 - Partial shipments, dispatch, buyer delivery confirmation and timed inspection.
 - Dispute opening, operations resolution and completed-order reviews.
 - Durable in-app notifications and audit/outbox records for key transitions.
+- Immutable, versioned purchase orders, proforma invoices, GST invoices, delivery challans and packing lists in private storage.
+- Five-minute operational health scans for payment, payout, fulfilment, event delivery, document and SLA exceptions.
 
 Business verification and listing moderation require an explicitly provisioned operations account. There is no self-service admin signup. To bootstrap the first platform administrator, an authorized database operator must insert the known Supabase Auth user ID into `public.operations_members` with role `platform_administrator`. Verify the person's identity first; never grant this role to an arbitrary buyer or seller account.
 
@@ -29,4 +31,4 @@ The original Lovable project is at https://lovable.dev/projects/d8d14b79-c713-42
 
 ## Operational gaps
 
-The `payment-webhook` Edge Function is only a generic signed-event receiver. It does not initiate a payment with a provider, verify a provider-specific event, or make payouts. Keep it disabled until a provider adapter, real credentials, replay tests and reconciliation are in place. Carrier tracking, GST document generation and provider-backed refunds also require actual service integrations and operational processes. Manual shipment tracking is persisted, but it is not synchronized with a carrier.
+The `payment-webhook` Edge Function is only a generic signed-event receiver. It does not initiate a payment with a provider, verify a provider-specific event, or make payouts. Keep it disabled until a provider adapter, real credentials, replay tests and reconciliation are in place. Provider-backed refunds and carrier tracking require actual service integrations and operational processes. Commercial documents are generated as immutable printable HTML records; a qualified Indian tax professional must approve their legal wording and fields before live use. Manual shipment tracking is persisted, but it is not synchronized with a carrier. Operational incidents are detected in the app, but external paging and email delivery are not configured.

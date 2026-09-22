@@ -10,6 +10,14 @@ const cors = {
 const documentTypes = ["purchase_order", "proforma_invoice", "tax_invoice", "delivery_challan", "packing_list"] as const;
 type DocumentType = typeof documentTypes[number];
 type Input = { order_id: string; organization_id: string; document_type: DocumentType; request_id: string };
+type DocumentOrganization = { id: string; legal_name: string; display_name: string; gstin: string | null; status: string };
+type DocumentOrderLine = { id: string; description: string; seller_sku: string | null; hsn_code: string | null; quantity: number; unit_of_measure: string; unit_price: number; gst_rate: number };
+type DocumentOrder = {
+  id: string; order_number: string; status: string; currency: string; taxable_amount: number;
+  gst_amount: number; freight_amount: number; additional_charge_amount: number; discount_amount: number;
+  grand_total: number; delivery_address: unknown; buyer_organization_id: string; seller_organization_id: string;
+  order_lines: DocumentOrderLine[];
+};
 
 const htmlEscape = (value: unknown) => String(value ?? "")
   .replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;")
@@ -23,13 +31,13 @@ const addressText = (value: unknown) => {
 const json = (body: unknown, status = 200) => Response.json(body, { status, headers: { ...cors, "Cache-Control": "no-store" } });
 
 function renderDocument(input: {
-  type: DocumentType; number: string; version: number; order: Record<string, any>;
-  issuer: Record<string, any>; recipient: Record<string, any>; issuerAddress: unknown; recipientAddress: unknown;
+  type: DocumentType; number: string; version: number; order: DocumentOrder;
+  issuer: DocumentOrganization; recipient: DocumentOrganization; issuerAddress: unknown; recipientAddress: unknown;
 }) {
   const { type, number, version, order, issuer, recipient } = input;
   const isTaxInvoice = type === "tax_invoice";
   const sameState = isTaxInvoice && String(issuer.gstin).slice(0, 2) === String(recipient.gstin).slice(0, 2);
-  const lines = (order.order_lines ?? []) as Array<Record<string, any>>;
+  const lines = order.order_lines ?? [];
   const rows = lines.map((line, index) => {
     const taxable = Number(line.quantity) * Number(line.unit_price);
     const allocatedDiscount = Number(order.taxable_amount) > 0 ? Number(order.discount_amount) * taxable / Number(order.taxable_amount) : 0;

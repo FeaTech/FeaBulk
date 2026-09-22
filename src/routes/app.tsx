@@ -79,8 +79,8 @@ function Workspace() {
       getOrganizationInvitations(organization.id),
     ]);
     setRfqs(nextRfqs); setOpportunities(nextOpportunities); setSellerQuotes(nextSellerQuotes); setProducts(nextProducts); setOrders(nextOrders); setVerification(nextVerification); setTeam(nextTeam); setInvitations(nextInvitations);
-  }, [organizationId, organization?.kind]);
-  useEffect(() => { if (!organization) return; setView(buyer ? "rfqs" : "opportunities"); setConversation(null); setMessages([]); void loadData().catch(err => setError(errorText(err))); }, [loadData, organizationId]);
+  }, [organization, buyer, seller]);
+  useEffect(() => { if (!organization) return; setView(buyer ? "rfqs" : "opportunities"); setConversation(null); setMessages([]); void loadData().catch(err => setError(errorText(err))); }, [loadData, organization, buyer]);
 
   async function run(action: () => Promise<unknown>, success: string) {
     setBusy(true); setError(""); setNotice("");
