@@ -142,3 +142,11 @@
     color: var(--color-foreground);
   }
 }
+
+@layer components {
+  .button { background: #f87908; color: white; padding: .65rem 1rem; font-size: .875rem; font-weight: 800; cursor: pointer; }
+  .button:hover { background: #d96806; }
+  .button:disabled { opacity: .55; cursor: not-allowed; }
+  .button-secondary { border: 1px solid #102b52; color: #102b52; padding: .65rem 1rem; font-size: .875rem; font-weight: 700; cursor: pointer; }
+  .button-secondary:disabled { opacity: .55; cursor: not-allowed; }
+}

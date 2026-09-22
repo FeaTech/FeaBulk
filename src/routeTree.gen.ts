@@ -12,6 +12,8 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AppRouteImport } from './routes/app'
 import { Route as AuthRouteImport } from './routes/auth'
+import { Route as MarketplaceRouteImport } from './routes/marketplace'
+import { Route as OperationsRouteImport } from './routes/operations'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -28,35 +30,53 @@ const AuthRoute = AuthRouteImport.update({
   path: '/auth',
   getParentRoute: () => rootRouteImport,
 } as any)
+const MarketplaceRoute = MarketplaceRouteImport.update({
+  id: '/marketplace',
+  path: '/marketplace',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const OperationsRoute = OperationsRouteImport.update({
+  id: '/operations',
+  path: '/operations',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/app': typeof AppRoute
   '/auth': typeof AuthRoute
+  '/marketplace': typeof MarketplaceRoute
+  '/operations': typeof OperationsRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/app': typeof AppRoute
   '/auth': typeof AuthRoute
+  '/marketplace': typeof MarketplaceRoute
+  '/operations': typeof OperationsRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/app': typeof AppRoute
   '/auth': typeof AuthRoute
+  '/marketplace': typeof MarketplaceRoute
+  '/operations': typeof OperationsRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/app' | '/auth'
+  fullPaths: '/' | '/app' | '/auth' | '/marketplace' | '/operations'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/app' | '/auth'
-  id: '__root__' | '/' | '/app' | '/auth'
+  to: '/' | '/app' | '/auth' | '/marketplace' | '/operations'
+  id: '__root__' | '/' | '/app' | '/auth' | '/marketplace' | '/operations'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AppRoute: typeof AppRoute
   AuthRoute: typeof AuthRoute
+  MarketplaceRoute: typeof MarketplaceRoute
+  OperationsRoute: typeof OperationsRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -82,6 +102,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/marketplace': {
+      id: '/marketplace'
+      path: '/marketplace'
+      fullPath: '/marketplace'
+      preLoaderRoute: typeof MarketplaceRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/operations': {
+      id: '/operations'
+      path: '/operations'
+      fullPath: '/operations'
+      preLoaderRoute: typeof OperationsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -89,6 +123,8 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AppRoute: AppRoute,
   AuthRoute: AuthRoute,
+  MarketplaceRoute: MarketplaceRoute,
+  OperationsRoute: OperationsRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
