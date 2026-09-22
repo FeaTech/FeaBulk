@@ -80,6 +80,16 @@ export type Dispute = {
   id: string; order_id: string; opened_by_organization_id: string; type: string;
   status: string; description: string; opened_at: string; resolution: Record<string, unknown> | null;
 };
+export type OperationalIncident = {
+  id: string; category: string; severity: "low" | "medium" | "high" | "critical";
+  entity_type: string; entity_id: string; summary: string; details: Record<string, unknown>;
+  status: "open" | "acknowledged"; first_detected_at: string; last_detected_at: string;
+  acknowledgement_notes: string | null;
+};
+export type OperationsHealth = {
+  summary: { open: number; acknowledged: number; critical: number; high: number };
+  incidents: OperationalIncident[];
+};
 
 function unwrap<T>(result: { data: T | null; error: { message: string } | null }): T {
   if (result.error) throw new Error(result.error.message);
@@ -351,5 +361,15 @@ export async function getDisputeQueue(): Promise<Dispute[]> {
 export async function resolveDispute(id: string, outcome: string, notes: string) {
   return unwrap(await db.rpc("resolve_dispute_command", {
     dispute_id_input: id, outcome_input: outcome, notes_input: notes,
+  }));
+}
+export async function getOperationsHealth(): Promise<OperationsHealth> {
+  return unwrap((await db.rpc("get_operations_health_command")) as {
+    data: OperationsHealth | null; error: { message: string } | null;
+  });
+}
+export async function acknowledgeOperationalIncident(id: string, notes: string) {
+  return unwrap(await db.rpc("acknowledge_operational_incident_command", {
+    incident_id_input: id, notes_input: notes,
   }));
 }

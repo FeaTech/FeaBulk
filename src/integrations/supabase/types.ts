@@ -673,6 +673,63 @@ export type Database = {
         }
         Relationships: []
       }
+      operational_incidents: {
+        Row: {
+          acknowledged_at: string | null
+          acknowledged_by: string | null
+          acknowledgement_notes: string | null
+          category: string
+          details: Json
+          entity_id: string
+          entity_type: string
+          fingerprint: string
+          first_detected_at: string
+          id: string
+          last_detected_at: string
+          last_scan_token: string
+          resolved_at: string | null
+          severity: string
+          status: string
+          summary: string
+        }
+        Insert: {
+          acknowledged_at?: string | null
+          acknowledged_by?: string | null
+          acknowledgement_notes?: string | null
+          category: string
+          details?: Json
+          entity_id: string
+          entity_type: string
+          fingerprint: string
+          first_detected_at?: string
+          id?: string
+          last_detected_at?: string
+          last_scan_token: string
+          resolved_at?: string | null
+          severity: string
+          status?: string
+          summary: string
+        }
+        Update: {
+          acknowledged_at?: string | null
+          acknowledged_by?: string | null
+          acknowledgement_notes?: string | null
+          category?: string
+          details?: Json
+          entity_id?: string
+          entity_type?: string
+          fingerprint?: string
+          first_detected_at?: string
+          id?: string
+          last_detected_at?: string
+          last_scan_token?: string
+          resolved_at?: string | null
+          severity?: string
+          status?: string
+          summary?: string
+        }
+        Relationships: []
+      }
       operations_members: {
         Row: {
           granted_at: string
@@ -1996,6 +2053,33 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      acknowledge_operational_incident_command: {
+        Args: { incident_id_input: string; notes_input: string }
+        Returns: {
+          acknowledged_at: string | null
+          acknowledged_by: string | null
+          acknowledgement_notes: string | null
+          category: string
+          details: Json
+          entity_id: string
+          entity_type: string
+          fingerprint: string
+          first_detected_at: string
+          id: string
+          last_detected_at: string
+          last_scan_token: string
+          resolved_at: string | null
+          severity: string
+          status: string
+          summary: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "operational_incidents"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       add_product_price_tier_command: {
         Args: {
           maximum_quantity_input: number
@@ -2398,6 +2482,7 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      get_operations_health_command: { Args: never; Returns: Json }
       get_or_create_trade_conversation_command: {
         Args: {
           context_input: Database["public"]["Enums"]["conversation_context"]
@@ -2707,6 +2792,7 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      run_operational_health_scan_command: { Args: never; Returns: number }
       send_trade_message_command: {
         Args: {
           body_input: string
