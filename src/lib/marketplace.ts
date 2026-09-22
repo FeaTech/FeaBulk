@@ -43,6 +43,12 @@ export type Order = {
   disputes: Array<{ id: string; status: string; type: string; description: string; opened_at: string }>;
   reviews: Array<{ id: string; rating: number; body: string | null }>;
   commercial_documents: CommercialDocument[];
+  payment_transactions: PaymentTransaction[];
+};
+export type PaymentTransaction = {
+  id: string; status: Database["public"]["Enums"]["payment_status"]; amount: number; currency: string;
+  provider: string; provider_reference: string | null; provider_payment_reference: string | null;
+  amount_refunded: number; reconciliation_status: string; created_at: string;
 };
 export type CommercialDocument = {
   id: string; order_id: string; type: Database["public"]["Enums"]["document_type"];
@@ -128,7 +134,46 @@ export async function getProducts(organizationId: string): Promise<Product[]> {
   return unwrap((await db.from("products").select("id,name,slug,seller_sku,description,category_id,hsn_code,unit_of_measure,gst_rate,lead_time_days,minimum_order_quantity,available_quantity,listing_status,moderation_status,moderation_notes,submitted_for_review_at,created_at,product_price_tiers(id,minimum_quantity,maximum_quantity,unit_price)").eq("organization_id", organizationId).order("created_at", { ascending: false }).limit(50)) as { data: Product[] | null; error: { message: string } | null });
 }
 export async function getOrders(organizationId: string): Promise<Order[]> {
-  return unwrap((await db.from("orders").select("id,order_number,status,grand_total,buyer_organization_id,seller_organization_id,inspection_ends_at,created_at,order_lines(id,description,hsn_code,quantity,unit_of_measure,unit_price,gst_rate),shipments(id,status,carrier,tracking_number,estimated_delivery_at),disputes(id,status,type,description,opened_at),reviews(id,rating,body),commercial_documents(id,order_id,type,document_number,version,storage_path,content_sha256,generated_at)").or(`buyer_organization_id.eq.${organizationId},seller_organization_id.eq.${organizationId}`).order("created_at", { ascending: false }).limit(50)) as { data: Order[] | null; error: { message: string } | null });
+  return unwrap((await db.from("orders").select("id,order_number,status,grand_total,buyer_organization_id,seller_organization_id,inspection_ends_at,created_at,order_lines(id,description,hsn_code,quantity,unit_of_measure,unit_price,gst_rate),shipments(id,status,carrier,tracking_number,estimated_delivery_at),disputes(id,status,type,description,opened_at),reviews(id,rating,body),commercial_documents(id,order_id,type,document_number,version,storage_path,content_sha256,generated_at),payment_transactions(id,status,amount,currency,provider,provider_reference,provider_payment_reference,amount_refunded,reconciliation_status,created_at)").or(`buyer_organization_id.eq.${organizationId},seller_organization_id.eq.${organizationId}`).order("created_at", { ascending: false }).limit(50)) as { data: Order[] | null; error: { message: string } | null });
+}
+
+export type PaymentCheckout = {
+  transaction_id: string; provider_order_id: string; key_id: string; amount_paise: number; currency: string;
+};
+
+export async function getPaymentAvailability(): Promise<boolean> {
+  const { data, error } = await db.functions.invoke("payment-command", { body: { action: "status" } });
+  if (error) return false;
+  return Boolean((data as { available?: boolean } | null)?.available);
+}
+
+export async function initiateOrderPayment(orderId: string, requestId: string): Promise<PaymentCheckout> {
+  const { data, error } = await db.functions.invoke("payment-command", { body: { action: "initiate", order_id: orderId, request_id: requestId } });
+  if (error) {
+    const context = (error as { context?: unknown }).context;
+    if (context instanceof Response) {
+      const details = await context.json().catch(() => null) as { message?: string; error?: string } | null;
+      throw new Error(details?.message ?? details?.error ?? error.message);
+    }
+    throw error;
+  }
+  return data as PaymentCheckout;
+}
+
+export async function confirmOrderPayment(input: { providerOrderId: string; providerPaymentId: string; signature: string }) {
+  const { data, error } = await db.functions.invoke("payment-command", { body: {
+    action: "confirm", provider_order_id: input.providerOrderId,
+    provider_payment_id: input.providerPaymentId, signature: input.signature,
+  } });
+  if (error) {
+    const context = (error as { context?: unknown }).context;
+    if (context instanceof Response) {
+      const details = await context.json().catch(() => null) as { message?: string; error?: string } | null;
+      throw new Error(details?.message ?? details?.error ?? error.message);
+    }
+    throw error;
+  }
+  return data as { accepted: boolean; status: string; transaction_id: string };
 }
 export async function createOrganization(input: { legalName: string; displayName: string; kind: BusinessKind; gstin?: string; businessType?: string; address?: Record<string, string> }): Promise<Organization> {
   return unwrap((await db.rpc("create_business_organization_command", {

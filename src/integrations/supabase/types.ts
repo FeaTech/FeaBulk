@@ -1060,15 +1060,68 @@ export type Database = {
         }
         Relationships: []
       }
+      payment_provider_events: {
+        Row: {
+          event_id: string
+          event_type: string
+          id: string
+          payload_sha256: string
+          payment_transaction_id: string | null
+          processed_at: string | null
+          processing_error: string | null
+          processing_status: string
+          provider: string
+          provider_reference: string
+          received_at: string
+        }
+        Insert: {
+          event_id: string
+          event_type: string
+          id?: string
+          payload_sha256: string
+          payment_transaction_id?: string | null
+          processed_at?: string | null
+          processing_error?: string | null
+          processing_status?: string
+          provider: string
+          provider_reference: string
+          received_at?: string
+        }
+        Update: {
+          event_id?: string
+          event_type?: string
+          id?: string
+          payload_sha256?: string
+          payment_transaction_id?: string | null
+          processed_at?: string | null
+          processing_error?: string | null
+          processing_status?: string
+          provider?: string
+          provider_reference?: string
+          received_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payment_provider_events_payment_transaction_id_fkey"
+            columns: ["payment_transaction_id"]
+            isOneToOne: false
+            referencedRelation: "payment_transactions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       payment_transactions: {
         Row: {
           amount: number
+          amount_refunded: number
           created_at: string
           currency: string
           id: string
           idempotency_key: string
+          initiated_by: string | null
           order_id: string
           provider: string
+          provider_payment_reference: string | null
           provider_reference: string | null
           reconciliation_status: string
           status: Database["public"]["Enums"]["payment_status"]
@@ -1078,12 +1131,15 @@ export type Database = {
         }
         Insert: {
           amount: number
+          amount_refunded?: number
           created_at?: string
           currency?: string
           id?: string
           idempotency_key: string
+          initiated_by?: string | null
           order_id: string
           provider: string
+          provider_payment_reference?: string | null
           provider_reference?: string | null
           reconciliation_status?: string
           status?: Database["public"]["Enums"]["payment_status"]
@@ -1093,12 +1149,15 @@ export type Database = {
         }
         Update: {
           amount?: number
+          amount_refunded?: number
           created_at?: string
           currency?: string
           id?: string
           idempotency_key?: string
+          initiated_by?: string | null
           order_id?: string
           provider?: string
+          provider_payment_reference?: string | null
           provider_reference?: string | null
           reconciliation_status?: string
           status?: Database["public"]["Enums"]["payment_status"]
@@ -2158,6 +2217,69 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      apply_razorpay_payment_event_internal: {
+        Args: {
+          amount_paise_input: number
+          amount_refunded_paise_input: number
+          currency_input: string
+          event_id_input: string
+          event_type_input: string
+          payload_sha256_input: string
+          payment_reference_input: string
+          provider_reference_input: string
+        }
+        Returns: {
+          amount: number
+          amount_refunded: number
+          created_at: string
+          currency: string
+          id: string
+          idempotency_key: string
+          initiated_by: string | null
+          order_id: string
+          provider: string
+          provider_payment_reference: string | null
+          provider_reference: string | null
+          reconciliation_status: string
+          status: Database["public"]["Enums"]["payment_status"]
+          updated_at: string
+          verified_at: string | null
+          webhook_event_id: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "payment_transactions"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      attach_payment_provider_reference_internal: {
+        Args: { provider_reference_input: string; transaction_id_input: string }
+        Returns: {
+          amount: number
+          amount_refunded: number
+          created_at: string
+          currency: string
+          id: string
+          idempotency_key: string
+          initiated_by: string | null
+          order_id: string
+          provider: string
+          provider_payment_reference: string | null
+          provider_reference: string | null
+          reconciliation_status: string
+          status: Database["public"]["Enums"]["payment_status"]
+          updated_at: string
+          verified_at: string | null
+          webhook_event_id: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "payment_transactions"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       complete_order_inspection_command: {
         Args: { order_id_input: string }
         Returns: {
@@ -2455,6 +2577,33 @@ export type Database = {
         Args: { failure_code_input: string; job_id_input: string }
         Returns: undefined
       }
+      fail_payment_attempt_internal: {
+        Args: { failure_reason_input: string; transaction_id_input: string }
+        Returns: {
+          amount: number
+          amount_refunded: number
+          created_at: string
+          currency: string
+          id: string
+          idempotency_key: string
+          initiated_by: string | null
+          order_id: string
+          provider: string
+          provider_payment_reference: string | null
+          provider_reference: string | null
+          reconciliation_status: string
+          status: Database["public"]["Enums"]["payment_status"]
+          updated_at: string
+          verified_at: string | null
+          webhook_event_id: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "payment_transactions"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       finalize_commercial_document_internal: {
         Args: {
           content_sha256_input: string
@@ -2502,6 +2651,33 @@ export type Database = {
         SetofOptions: {
           from: "*"
           to: "conversations"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      initiate_payment_attempt_command: {
+        Args: { idempotency_key_input: string; order_id_input: string }
+        Returns: {
+          amount: number
+          amount_refunded: number
+          created_at: string
+          currency: string
+          id: string
+          idempotency_key: string
+          initiated_by: string | null
+          order_id: string
+          provider: string
+          provider_payment_reference: string | null
+          provider_reference: string | null
+          reconciliation_status: string
+          status: Database["public"]["Enums"]["payment_status"]
+          updated_at: string
+          verified_at: string | null
+          webhook_event_id: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "payment_transactions"
           isOneToOne: true
           isSetofReturn: false
         }

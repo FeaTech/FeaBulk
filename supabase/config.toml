@@ -21,6 +21,12 @@ entrypoint = "./functions/payment-webhook/index.ts"
 # For example, if you want to serve static HTML pages in your function:
 # static_files = [ "./functions/payment-webhook/*.html" ]
 
+[functions.payment-command]
+enabled = true
+verify_jwt = true
+import_map = "./functions/payment-command/deno.json"
+entrypoint = "./functions/payment-command/index.ts"
+
 [functions.catalog-command]
 enabled = true
 verify_jwt = false
