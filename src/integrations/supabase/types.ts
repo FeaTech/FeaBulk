@@ -120,6 +120,101 @@ export type Database = {
         }
         Relationships: []
       }
+      commercial_document_jobs: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          document_number: string
+          document_type: Database["public"]["Enums"]["document_type"]
+          failure_code: string | null
+          id: string
+          order_id: string
+          organization_id: string
+          request_id: string
+          requested_by: string
+          status: string
+          storage_path: string
+          version: number
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          document_number: string
+          document_type: Database["public"]["Enums"]["document_type"]
+          failure_code?: string | null
+          id?: string
+          order_id: string
+          organization_id: string
+          request_id: string
+          requested_by: string
+          status?: string
+          storage_path: string
+          version: number
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          document_number?: string
+          document_type?: Database["public"]["Enums"]["document_type"]
+          failure_code?: string | null
+          id?: string
+          order_id?: string
+          organization_id?: string
+          request_id?: string
+          requested_by?: string
+          status?: string
+          storage_path?: string
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "commercial_document_jobs_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "commercial_document_jobs_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      commercial_document_sequences: {
+        Row: {
+          document_type: Database["public"]["Enums"]["document_type"]
+          fiscal_year: string
+          last_number: number
+          organization_id: string
+          updated_at: string
+        }
+        Insert: {
+          document_type: Database["public"]["Enums"]["document_type"]
+          fiscal_year: string
+          last_number?: number
+          organization_id: string
+          updated_at?: string
+        }
+        Update: {
+          document_type?: Database["public"]["Enums"]["document_type"]
+          fiscal_year?: string
+          last_number?: number
+          organization_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "commercial_document_sequences_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       commercial_documents: {
         Row: {
           content_sha256: string
@@ -2272,6 +2367,37 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      fail_commercial_document_internal: {
+        Args: { failure_code_input: string; job_id_input: string }
+        Returns: undefined
+      }
+      finalize_commercial_document_internal: {
+        Args: {
+          content_sha256_input: string
+          job_id_input: string
+          metadata_input: Json
+        }
+        Returns: {
+          content_sha256: string
+          document_number: string | null
+          generated_at: string
+          generated_by: string | null
+          id: string
+          metadata: Json
+          order_id: string | null
+          organization_id: string
+          storage_path: string
+          supersedes_id: string | null
+          type: Database["public"]["Enums"]["document_type"]
+          version: number
+        }
+        SetofOptions: {
+          from: "*"
+          to: "commercial_documents"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       get_or_create_trade_conversation_command: {
         Args: {
           context_input: Database["public"]["Enums"]["conversation_context"]
@@ -2494,6 +2620,36 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      reserve_commercial_document_internal: {
+        Args: {
+          actor_id_input: string
+          document_type_input: Database["public"]["Enums"]["document_type"]
+          order_id_input: string
+          organization_id_input: string
+          request_id_input: string
+        }
+        Returns: {
+          completed_at: string | null
+          created_at: string
+          document_number: string
+          document_type: Database["public"]["Enums"]["document_type"]
+          failure_code: string | null
+          id: string
+          order_id: string
+          organization_id: string
+          request_id: string
+          requested_by: string
+          status: string
+          storage_path: string
+          version: number
+        }
+        SetofOptions: {
+          from: "*"
+          to: "commercial_document_jobs"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       resolve_dispute_command: {
         Args: {
           dispute_id_input: string
@@ -2573,6 +2729,29 @@ export type Database = {
         SetofOptions: {
           from: "*"
           to: "messages"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      set_order_line_tax_details_command: {
+        Args: { hsn_code_input: string; order_line_id_input: string }
+        Returns: {
+          created_at: string
+          description: string
+          gst_rate: number
+          hsn_code: string | null
+          id: string
+          line_total: number | null
+          order_id: string
+          product_id: string | null
+          quantity: number
+          seller_sku: string | null
+          unit_of_measure: string
+          unit_price: number
+        }
+        SetofOptions: {
+          from: "*"
+          to: "order_lines"
           isOneToOne: true
           isSetofReturn: false
         }

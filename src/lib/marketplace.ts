@@ -30,7 +30,7 @@ export type Product = {
   id: string; name: string; slug: string; seller_sku: string;
   minimum_order_quantity: number; available_quantity: number;
   listing_status: string; moderation_status: string; submitted_for_review_at: string | null; created_at: string;
-  description?: string; category_id?: string | null; unit_of_measure?: string;
+  description?: string; category_id?: string | null; unit_of_measure?: string; hsn_code?: string | null;
   gst_rate?: number | null; lead_time_days?: number; moderation_notes?: string | null;
   product_price_tiers?: Array<{ id: string; minimum_quantity: number; maximum_quantity: number; unit_price: number }>;
 };
@@ -38,10 +38,16 @@ export type Order = {
   id: string; order_number: string; status: string; grand_total: number;
   buyer_organization_id: string; seller_organization_id: string; created_at: string;
   inspection_ends_at: string | null;
-  order_lines: Array<{ id: string; description: string; quantity: number; unit_of_measure: string; unit_price: number }>;
+  order_lines: Array<{ id: string; description: string; hsn_code: string | null; quantity: number; unit_of_measure: string; unit_price: number; gst_rate: number }>;
   shipments: Array<{ id: string; status: string; carrier: string | null; tracking_number: string | null; estimated_delivery_at: string | null }>;
   disputes: Array<{ id: string; status: string; type: string; description: string; opened_at: string }>;
   reviews: Array<{ id: string; rating: number; body: string | null }>;
+  commercial_documents: CommercialDocument[];
+};
+export type CommercialDocument = {
+  id: string; order_id: string; type: Database["public"]["Enums"]["document_type"];
+  document_number: string | null; version: number; storage_path: string;
+  content_sha256: string; generated_at: string;
 };
 export type VerificationCase = {
   id: string; organization_id: string; status: string; business_type: string | null;
@@ -109,10 +115,10 @@ export async function getSellerQuotes(organizationId: string): Promise<Quote[]> 
   return unwrap((await db.from("rfq_quotes").select("id,rfq_id,seller_organization_id,status,current_version,quote_versions(version,unit_price,quantity,gst_rate,shipping_charge,additional_charges,discount_amount,lead_time_days,validity_ends_at)").eq("seller_organization_id", organizationId).order("created_at", { ascending: false }).limit(50)) as { data: Quote[] | null; error: { message: string } | null });
 }
 export async function getProducts(organizationId: string): Promise<Product[]> {
-  return unwrap((await db.from("products").select("id,name,slug,seller_sku,description,category_id,unit_of_measure,gst_rate,lead_time_days,minimum_order_quantity,available_quantity,listing_status,moderation_status,moderation_notes,submitted_for_review_at,created_at,product_price_tiers(id,minimum_quantity,maximum_quantity,unit_price)").eq("organization_id", organizationId).order("created_at", { ascending: false }).limit(50)) as { data: Product[] | null; error: { message: string } | null });
+  return unwrap((await db.from("products").select("id,name,slug,seller_sku,description,category_id,hsn_code,unit_of_measure,gst_rate,lead_time_days,minimum_order_quantity,available_quantity,listing_status,moderation_status,moderation_notes,submitted_for_review_at,created_at,product_price_tiers(id,minimum_quantity,maximum_quantity,unit_price)").eq("organization_id", organizationId).order("created_at", { ascending: false }).limit(50)) as { data: Product[] | null; error: { message: string } | null });
 }
 export async function getOrders(organizationId: string): Promise<Order[]> {
-  return unwrap((await db.from("orders").select("id,order_number,status,grand_total,buyer_organization_id,seller_organization_id,inspection_ends_at,created_at,order_lines(id,description,quantity,unit_of_measure,unit_price),shipments(id,status,carrier,tracking_number,estimated_delivery_at),disputes(id,status,type,description,opened_at),reviews(id,rating,body)").or(`buyer_organization_id.eq.${organizationId},seller_organization_id.eq.${organizationId}`).order("created_at", { ascending: false }).limit(50)) as { data: Order[] | null; error: { message: string } | null });
+  return unwrap((await db.from("orders").select("id,order_number,status,grand_total,buyer_organization_id,seller_organization_id,inspection_ends_at,created_at,order_lines(id,description,hsn_code,quantity,unit_of_measure,unit_price,gst_rate),shipments(id,status,carrier,tracking_number,estimated_delivery_at),disputes(id,status,type,description,opened_at),reviews(id,rating,body),commercial_documents(id,order_id,type,document_number,version,storage_path,content_sha256,generated_at)").or(`buyer_organization_id.eq.${organizationId},seller_organization_id.eq.${organizationId}`).order("created_at", { ascending: false }).limit(50)) as { data: Order[] | null; error: { message: string } | null });
 }
 export async function createOrganization(input: { legalName: string; displayName: string; kind: BusinessKind; gstin?: string; businessType?: string; address?: Record<string, string> }): Promise<Organization> {
   return unwrap((await db.rpc("create_business_organization_command", {
@@ -312,6 +318,31 @@ export async function createReview(orderId: string, rating: number, body: string
   return unwrap(await db.rpc("create_review_command", {
     order_id_input: orderId, rating_input: rating, body_input: body,
   }));
+}
+export async function setOrderLineHsn(orderLineId: string, hsnCode: string) {
+  return unwrap(await db.rpc("set_order_line_tax_details_command", {
+    order_line_id_input: orderLineId, hsn_code_input: hsnCode,
+  }));
+}
+export async function generateCommercialDocument(orderId: string, organizationId: string, documentType: CommercialDocument["type"]) {
+  const { data, error } = await db.functions.invoke("commercial-document", { body: {
+    order_id: orderId, organization_id: organizationId,
+    document_type: documentType, request_id: crypto.randomUUID(),
+  } });
+  if (error) {
+    const context = (error as { context?: unknown }).context;
+    if (context instanceof Response) {
+      const details = await context.json().catch(() => null) as { message?: string; error?: string } | null;
+      throw new Error(details?.message ?? details?.error ?? error.message);
+    }
+    throw error;
+  }
+  return data as { document: CommercialDocument; signed_url: string };
+}
+export async function getCommercialDocumentUrl(storagePath: string): Promise<string> {
+  const { data, error } = await db.storage.from("commercial-documents").createSignedUrl(storagePath, 600);
+  if (error) throw error;
+  return data.signedUrl;
 }
 export async function getDisputeQueue(): Promise<Dispute[]> {
   return unwrap((await db.from("disputes").select("id,order_id,opened_by_organization_id,type,status,description,opened_at,resolution")

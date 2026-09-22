@@ -1,6 +1,6 @@
 # FeaBulk
 
-FeaBulk is a B2B wholesale marketplace in active development. The app uses TanStack Start and Supabase. It is **not production ready**: real payment initiation and reconciliation, seller payouts, shipping integrations, tax-document generation, dispute resolution, monitoring, and end-to-end tests remain unfinished. Do not accept live orders or funds.
+FeaBulk is a B2B wholesale marketplace in active development. The app uses TanStack Start and Supabase. It is **not production ready**: real payment initiation and reconciliation, seller payouts, carrier integrations, legal review of generated GST documents, monitoring, and end-to-end tests remain unfinished. Do not accept live orders or funds.
 
 ## Current working flows
 
