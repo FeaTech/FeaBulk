@@ -77,6 +77,7 @@ export type TradeMessage = {
   body: string; created_at: string;
 };
 export type TeamRole = Database["public"]["Enums"]["organization_role"];
+export type OperationsRole = Database["public"]["Enums"]["operations_role"];
 export type TeamMember = { user_id: string; email: string; role: TeamRole; joined_at: string };
 export type OrganizationInvitation = {
   id: string; organization_id: string; email: string; role: TeamRole; token: string;
@@ -95,6 +96,16 @@ export type OperationalIncident = {
 export type OperationsHealth = {
   summary: { open: number; acknowledged: number; critical: number; high: number };
   incidents: OperationalIncident[];
+};
+export type PlatformAccount = {
+  user_id: string; email: string; full_name: string | null; email_confirmed: boolean;
+  account_created_at: string; last_sign_in_at: string | null; organization_count: number;
+  organization_names: string; operations_roles: string[];
+};
+export type PlatformOrganization = {
+  organization_id: string; legal_name: string; display_name: string; kind: BusinessKind;
+  status: string; gstin: string | null; member_count: number; verification_status: string;
+  organization_created_at: string;
 };
 
 function unwrap<T>(result: { data: T | null; error: { message: string } | null }): T {
@@ -118,8 +129,11 @@ export async function getOrganizations(): Promise<Organization[]> {
   return unwrap((await db.from("organizations").select("id,legal_name,display_name,kind,status").order("created_at", { ascending: true })) as { data: Organization[] | null; error: { message: string } | null });
 }
 export async function getOperationsAccess(userId: string): Promise<boolean> {
-  const rows = unwrap((await db.from("operations_members").select("role").eq("user_id", userId).limit(1)) as { data: Array<{ role: string }> | null; error: { message: string } | null });
-  return rows.length > 0;
+  return (await getOperationsRoles(userId)).length > 0;
+}
+export async function getOperationsRoles(userId: string): Promise<OperationsRole[]> {
+  const rows = unwrap((await db.from("operations_members").select("role").eq("user_id", userId)) as { data: Array<{ role: OperationsRole }> | null; error: { message: string } | null });
+  return rows.map(item => item.role);
 }
 export async function getCategories(): Promise<Category[]> {
   return unwrap((await db.from("categories").select("id,name").eq("is_active", true).order("name")) as { data: Category[] | null; error: { message: string } | null });
@@ -423,4 +437,16 @@ export async function acknowledgeOperationalIncident(id: string, notes: string) 
   return unwrap(await db.rpc("acknowledge_operational_incident_command", {
     incident_id_input: id, notes_input: notes,
   }));
+}
+
+type UntypedRpcResult<T> = { data: T | null; error: { message: string } | null };
+async function callUntypedRpc<T>(name: string): Promise<T> {
+  const call = db.rpc.bind(db) as unknown as (functionName: string) => Promise<UntypedRpcResult<T>>;
+  return unwrap(await call(name));
+}
+export async function getPlatformAccounts(): Promise<PlatformAccount[]> {
+  return callUntypedRpc<PlatformAccount[]>("get_platform_accounts_command");
+}
+export async function getPlatformOrganizations(): Promise<PlatformOrganization[]> {
+  return callUntypedRpc<PlatformOrganization[]>("get_platform_organizations_command");
 }
