@@ -13,6 +13,48 @@ type AuthStorage = {
 function localDevelopmentStorage(): AuthStorage {
   let local: Storage | null = null;
   try { local = window.localStorage ?? null; } catch { local = null; }
+  const indexedDb = new Promise<IDBDatabase | null>(resolve => {
+    try {
+      const request = window.indexedDB.open('feabulk-auth', 1);
+      request.onupgradeneeded = () => {
+        if (!request.result.objectStoreNames.contains('sessions')) request.result.createObjectStore('sessions');
+      };
+      request.onsuccess = () => resolve(request.result);
+      request.onerror = () => resolve(null);
+      request.onblocked = () => resolve(null);
+    } catch { resolve(null); }
+  });
+  const readIndexedDb = async (key: string) => {
+    const database = await indexedDb;
+    if (!database) return null;
+    return new Promise<string | null>(resolve => {
+      const request = database.transaction('sessions', 'readonly').objectStore('sessions').get(key);
+      request.onsuccess = () => resolve(typeof request.result === 'string' ? request.result : null);
+      request.onerror = () => resolve(null);
+    });
+  };
+  const writeIndexedDb = async (key: string, value: string) => {
+    const database = await indexedDb;
+    if (!database) return;
+    await new Promise<void>(resolve => {
+      const transaction = database.transaction('sessions', 'readwrite');
+      transaction.objectStore('sessions').put(value, key);
+      transaction.oncomplete = () => resolve();
+      transaction.onerror = () => resolve();
+      transaction.onabort = () => resolve();
+    });
+  };
+  const removeIndexedDb = async (key: string) => {
+    const database = await indexedDb;
+    if (!database) return;
+    await new Promise<void>(resolve => {
+      const transaction = database.transaction('sessions', 'readwrite');
+      transaction.objectStore('sessions').delete(key);
+      transaction.oncomplete = () => resolve();
+      transaction.onerror = () => resolve();
+      transaction.onabort = () => resolve();
+    });
+  };
   const maxChunkLength = 2800;
   const cookieOptions = `Path=/; SameSite=Lax; Max-Age=${60 * 60 * 24 * 30}`;
   const cookieName = (key: string, suffix: string) => `feabulk_${key.replace(/[^a-zA-Z0-9_-]/g, "_")}_${suffix}`;
@@ -51,9 +93,17 @@ function localDevelopmentStorage(): AuthStorage {
   };
 
   return {
-    getItem: key => local?.getItem(key) ?? readCookieValue(key),
-    setItem: (key, value) => { local?.setItem(key, value); writeCookieValue(key, value); },
-    removeItem: key => { local?.removeItem(key); clearCookies(key); },
+    getItem: async key => local?.getItem(key) ?? await readIndexedDb(key) ?? readCookieValue(key),
+    setItem: async (key, value) => {
+      local?.setItem(key, value);
+      writeCookieValue(key, value);
+      await writeIndexedDb(key, value);
+    },
+    removeItem: async key => {
+      local?.removeItem(key);
+      clearCookies(key);
+      await removeIndexedDb(key);
+    },
   };
 }
 
