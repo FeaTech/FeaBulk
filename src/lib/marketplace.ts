@@ -104,7 +104,13 @@ function unwrap<T>(result: { data: T | null; error: { message: string } | null }
 }
 
 export async function getIdentity() {
-  const { data, error } = await db.auth.getUser();
+  const { data: sessionData, error: sessionError } = await db.auth.getSession();
+  if (sessionError) throw sessionError;
+  if (!sessionData.session) return null;
+
+  // Pass the access token explicitly. This avoids a second storage lookup while
+  // the router is switching from /auth to /app in embedded preview browsers.
+  const { data, error } = await db.auth.getUser(sessionData.session.access_token);
   if (error) throw error;
   return data.user;
 }

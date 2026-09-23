@@ -12,6 +12,7 @@ import {
   type Category, type CommercialDocument, type Notification, type Order, type Organization, type OrganizationInvitation,
   type Product, type Quote, type Rfq, type TeamMember, type TeamRole, type TradeConversation, type TradeMessage, type VerificationCase,
 } from "@/lib/marketplace";
+import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/app")({ component: Workspace });
 type View = "rfqs" | "orders" | "catalog" | "opportunities" | "team";
@@ -100,6 +101,21 @@ function Workspace() {
     setLoading(false);
   }, []);
   useEffect(() => { void loadAccount().catch(err => { setError(errorText(err)); setLoading(false); }); }, [loadAccount]);
+  useEffect(() => {
+    const { data } = supabase.auth.onAuthStateChange(event => {
+      if (event === "SIGNED_IN" || event === "TOKEN_REFRESHED") {
+        window.setTimeout(() => {
+          void loadAccount().catch(err => { setError(errorText(err)); setLoading(false); });
+        }, 0);
+      } else if (event === "SIGNED_OUT") {
+        setUserId(null);
+        setOrganizations([]);
+        setOrganizationId("");
+        setLoading(false);
+      }
+    });
+    return () => data.subscription.unsubscribe();
+  }, [loadAccount]);
 
   const loadData = useCallback(async () => {
     if (!organization) return;

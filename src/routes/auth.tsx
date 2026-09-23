@@ -57,8 +57,11 @@ function AuthPage() {
         if (data.session) await router.navigate({ to: "/app" });
         else setMessage("Check your email to confirm your account, then sign in.");
       } else {
-        const { error } = await supabase.auth.signInWithPassword({ email, password });
+        const { data, error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
+        if (!data.session) throw new Error("The login completed without a session. Please try again.");
+        const { data: identity, error: identityError } = await supabase.auth.getUser(data.session.access_token);
+        if (identityError || !identity.user) throw identityError ?? new Error("The login session could not be verified.");
         await router.navigate({ to: "/app" });
       }
     } catch (error) { setMessage(error instanceof Error ? error.message : "Authentication failed. Try again."); }
