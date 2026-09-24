@@ -450,3 +450,22 @@ export async function getPlatformAccounts(): Promise<PlatformAccount[]> {
 export async function getPlatformOrganizations(): Promise<PlatformOrganization[]> {
   return callUntypedRpc<PlatformOrganization[]>("get_platform_organizations_command");
 }
+
+export type PlatformOrder = { id: string; order_number: string; status: string; grand_total: number; buyer_name: string; seller_name: string; created_at: string; payment_status: string | null; shipment_status: string | null };
+export type PlatformPayment = { id: string; order_number: string; provider: string; provider_reference: string | null; status: string; amount: number; reconciliation_status: string; verified_at: string | null; created_at: string };
+export type AdminCategory = { id: string; parent_id: string | null; name: string; slug: string; is_active: boolean; product_count: number };
+export async function getPlatformOrders(): Promise<PlatformOrder[]> {
+  return callUntypedRpc<PlatformOrder[]>("get_platform_orders_command");
+}
+export async function getPlatformPayments(): Promise<PlatformPayment[]> {
+  return callUntypedRpc<PlatformPayment[]>("get_platform_payments_command");
+}
+export async function getAdminCategories(): Promise<AdminCategory[]> {
+  return callUntypedRpc<AdminCategory[]>("get_all_categories_command");
+}
+export async function saveCategory(input: { id: string | null; name: string; slug: string; parent_id: string | null; is_active: boolean }) {
+  const call = db.rpc.bind(db) as unknown as (n: string, a: Record<string, unknown>) => Promise<UntypedRpcResult<string>>;
+  return unwrap(await call("upsert_category_command", {
+    id_input: input.id, name_input: input.name, slug_input: input.slug, parent_id_input: input.parent_id, is_active_input: input.is_active,
+  }));
+}
