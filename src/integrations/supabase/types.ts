@@ -2655,6 +2655,34 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      get_platform_accounts_command: {
+        Args: never
+        Returns: {
+          account_created_at: string
+          email: string
+          email_confirmed: boolean
+          full_name: string
+          last_sign_in_at: string
+          operations_roles: string[]
+          organization_count: number
+          organization_names: string
+          user_id: string
+        }[]
+      }
+      get_platform_organizations_command: {
+        Args: never
+        Returns: {
+          display_name: string
+          gstin: string
+          kind: string
+          legal_name: string
+          member_count: number
+          organization_created_at: string
+          organization_id: string
+          status: string
+          verification_status: string
+        }[]
+      }
       initiate_payment_attempt_command: {
         Args: { idempotency_key_input: string; order_id_input: string }
         Returns: {
