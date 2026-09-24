@@ -67,7 +67,17 @@ import {
 } from "@/lib/marketplace";
 import { supabase } from "@/integrations/supabase/client";
 
-export const Route = createFileRoute("/app")({ component: Workspace });
+export const Route = createFileRoute("/app")({
+  head: () => ({ meta: [
+    { title: "Business Workspace | FEA Bulk" },
+    { name: "description", content: "Manage your FEA Bulk organization, quotes, orders, catalog and team." },
+    { property: "og:title", content: "Business Workspace | FEA Bulk" },
+    { property: "og:description", content: "Manage your FEA Bulk organization, quotes, orders, catalog and team." },
+    { property: "og:type", content: "website" },
+    { name: "twitter:card", content: "summary" },
+  ] }),
+  component: Workspace,
+});
 type View =
   "overview" | "rfqs" | "suppliers" | "orders" | "catalog" | "opportunities" | "quotes" | "team";
 type Supplier = { id: string; display_name: string };

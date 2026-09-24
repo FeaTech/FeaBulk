@@ -3,6 +3,12 @@ import { createClient } from '@supabase/supabase-js';
 import type { Database } from './types';
 import { brokeredPreviewStorage } from './previewAuthStorage';
 
+// Public browser credentials for the connected FeaBulk project. Keeping these
+// as fallbacks prevents a published client bundle from depending on server-only
+// environment injection. Supabase authorization is still enforced by RLS.
+const CONNECTED_SUPABASE_URL = 'https://erifdzxnrmqihpqqwdlo.supabase.co';
+const CONNECTED_SUPABASE_PUBLISHABLE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVyaWZkenhucm1xaWhwcXF3ZGxvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODg5ODE2NzgsImV4cCI6MjEwNDU1NzY3OH0.gkbh938ZmjmkAzX_RE1LTwXF7Q9rOC1UCFbF0lJ-_jE';
+
 function isNewSupabaseApiKey(value: string): boolean {
   return value.startsWith('sb_publishable_') || value.startsWith('sb_secret_');
 }
@@ -32,8 +38,8 @@ function createSupabaseClient() {
   // Use import.meta.env for client-side (Vite build-time replacement)
   // Fall back to process.env for SSR (server-side rendering)
   const env = typeof process !== 'undefined' && process.env ? process.env : ({} as Record<string, string | undefined>);
-  const SUPABASE_URL = import.meta.env['VITE_SUPABASE_URL'] || env['SUPABASE_URL'];
-  const SUPABASE_PUBLISHABLE_KEY = import.meta.env['VITE_SUPABASE_PUBLISHABLE_KEY'] || env['SUPABASE_PUBLISHABLE_KEY'];
+  const SUPABASE_URL = import.meta.env['VITE_SUPABASE_URL'] || env['SUPABASE_URL'] || CONNECTED_SUPABASE_URL;
+  const SUPABASE_PUBLISHABLE_KEY = import.meta.env['VITE_SUPABASE_PUBLISHABLE_KEY'] || env['SUPABASE_PUBLISHABLE_KEY'] || CONNECTED_SUPABASE_PUBLISHABLE_KEY;
 
   if (!SUPABASE_URL || !SUPABASE_PUBLISHABLE_KEY) {
     const missing = [

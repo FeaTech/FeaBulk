@@ -2,7 +2,17 @@ import { createFileRoute, useRouter } from "@tanstack/react-router";
 import { FormEvent, useEffect, useState, type ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
-export const Route = createFileRoute("/auth")({ component: AuthPage });
+export const Route = createFileRoute("/auth")({
+  head: () => ({ meta: [
+    { title: "Sign In | FEA Bulk" },
+    { name: "description", content: "Sign in or create your FEA Bulk business account." },
+    { property: "og:title", content: "Sign In | FEA Bulk" },
+    { property: "og:description", content: "Sign in or create your FEA Bulk business account." },
+    { property: "og:type", content: "website" },
+    { name: "twitter:card", content: "summary" },
+  ] }),
+  component: AuthPage,
+});
 
 type AccountType = "buyer" | "seller";
 

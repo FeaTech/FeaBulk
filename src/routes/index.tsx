@@ -16,10 +16,17 @@ const ShieldCheck = (props: IconProps) => <Icon {...props}><path d="M12 22s8-4 8
 const Truck = (props: IconProps) => <Icon {...props}><path d="M10 17h4V5H2v12h3M14 9h4l4 4v4h-3M5 17a2 2 0 1 0 4 0 2 2 0 0 0-4 0M16 17a2 2 0 1 0 4 0 2 2 0 0 0-4 0" /></Icon>;
 const X = (props: IconProps) => <Icon {...props}><path d="M18 6 6 18M6 6l12 12" /></Icon>;
 
-// No head() here: the home route inherits title/description/og/twitter from
-// __root.tsx, and ships no og:image so serve-time hosting can inject the
-// project's social preview (explicit og:image or latest screenshot).
 export const Route = createFileRoute("/")({
+  head: () => ({
+    meta: [
+      { title: "FEA Bulk | Verified B2B Wholesale Trade" },
+      { name: "description", content: "Source products, compare quotes and trade with verified businesses on FEA Bulk." },
+      { property: "og:title", content: "FEA Bulk | Verified B2B Wholesale Trade" },
+      { property: "og:description", content: "Source products, compare quotes and trade with verified businesses on FEA Bulk." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
+    ],
+  }),
   component: Index,
 });
 

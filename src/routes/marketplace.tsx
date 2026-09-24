@@ -2,7 +2,17 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState, type FormEvent } from "react";
 import { getCategories, getSupplierDirectory, searchPublishedProducts, type Category, type MarketplaceProduct } from "@/lib/marketplace";
 
-export const Route = createFileRoute("/marketplace")({ component: Marketplace });
+export const Route = createFileRoute("/marketplace")({
+  head: () => ({ meta: [
+    { title: "Wholesale Marketplace | FEA Bulk" },
+    { name: "description", content: "Find approved wholesale products and verified suppliers on FEA Bulk." },
+    { property: "og:title", content: "Wholesale Marketplace | FEA Bulk" },
+    { property: "og:description", content: "Find approved wholesale products and verified suppliers on FEA Bulk." },
+    { property: "og:type", content: "website" },
+    { name: "twitter:card", content: "summary" },
+  ] }),
+  component: Marketplace,
+});
 
 function Marketplace() {
   const [term, setTerm] = useState("");
