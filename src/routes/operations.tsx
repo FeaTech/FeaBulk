@@ -21,6 +21,7 @@ import {
   type Product,
   type VerificationCase,
 } from "@/lib/marketplace";
+import { CategoriesPanel, OrdersPanel, PaymentsPanel } from "@/components/ops/AdminPanels";
 
 export const Route = createFileRoute("/operations")({
   head: () => ({ meta: [
@@ -33,7 +34,7 @@ export const Route = createFileRoute("/operations")({
   ] }),
   component: Operations,
 });
-type OperationsView = "overview" | "verification" | "catalog" | "disputes" | "health" | "accounts";
+type OperationsView = "overview" | "verification" | "catalog" | "disputes" | "health" | "accounts" | "orders" | "payments" | "categories";
 
 function Operations() {
   const [access, setAccess] = useState<boolean | null>(null);
@@ -63,6 +64,8 @@ function Operations() {
   const canModerate = hasRole("catalog_moderator", "platform_administrator");
   const canResolveDisputes = hasRole("dispute_manager", "platform_administrator");
   const canViewHealth = hasRole("support_agent", "payments_reviewer", "platform_administrator");
+  const canViewOrders = hasRole("support_agent", "payments_reviewer", "dispute_manager", "platform_administrator");
+  const canViewPayments = hasRole("payments_reviewer", "platform_administrator");
   const organizationNames = useMemo(
     () => new Map(organizations.map((item) => [item.organization_id, item.display_name])),
     [organizations],
@@ -207,12 +210,31 @@ function Operations() {
                   Platform health
                 </OpsTab>
               )}
+              {canViewOrders && (
+                <OpsTab active={view === "orders"} onClick={() => setView("orders")}>
+                  Orders
+                </OpsTab>
+              )}
+              {canViewPayments && (
+                <OpsTab active={view === "payments"} onClick={() => setView("payments")}>
+                  Payments
+                </OpsTab>
+              )}
+              {canModerate && (
+                <OpsTab active={view === "categories"} onClick={() => setView("categories")}>
+                  Categories
+                </OpsTab>
+              )}
               {platformAdmin && (
                 <OpsTab active={view === "accounts"} onClick={() => setView("accounts")}>
                   Accounts
                 </OpsTab>
               )}
             </nav>
+            {view === "orders" && canViewOrders && <OrdersPanel />}
+            {view === "payments" && canViewPayments && <PaymentsPanel />}
+            {view === "categories" && canModerate && <CategoriesPanel canEdit={platformAdmin} />}
+
 
             {view === "overview" && (
               <section className="mt-6">
