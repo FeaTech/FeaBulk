@@ -2631,6 +2631,17 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      get_all_categories_command: {
+        Args: never
+        Returns: {
+          id: string
+          is_active: boolean
+          name: string
+          parent_id: string
+          product_count: number
+          slug: string
+        }[]
+      }
       get_operations_health_command: { Args: never; Returns: Json }
       get_or_create_trade_conversation_command: {
         Args: {
@@ -2669,6 +2680,20 @@ export type Database = {
           user_id: string
         }[]
       }
+      get_platform_orders_command: {
+        Args: never
+        Returns: {
+          buyer_name: string
+          created_at: string
+          grand_total: number
+          id: string
+          order_number: string
+          payment_status: string
+          seller_name: string
+          shipment_status: string
+          status: string
+        }[]
+      }
       get_platform_organizations_command: {
         Args: never
         Returns: {
@@ -2681,6 +2706,20 @@ export type Database = {
           organization_id: string
           status: string
           verification_status: string
+        }[]
+      }
+      get_platform_payments_command: {
+        Args: never
+        Returns: {
+          amount: number
+          created_at: string
+          id: string
+          order_number: string
+          provider: string
+          provider_reference: string
+          reconciliation_status: string
+          status: string
+          verified_at: string
         }[]
       }
       initiate_payment_attempt_command: {
@@ -2821,6 +2860,7 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      ops_has_role: { Args: { _roles: string[] }; Returns: boolean }
       publish_rfq_command: {
         Args: { rfq_id_input: string }
         Returns: {
@@ -3229,6 +3269,16 @@ export type Database = {
           isOneToOne: true
           isSetofReturn: false
         }
+      }
+      upsert_category_command: {
+        Args: {
+          id_input: string
+          is_active_input: boolean
+          name_input: string
+          parent_id_input: string
+          slug_input: string
+        }
+        Returns: string
       }
     }
     Enums: {
