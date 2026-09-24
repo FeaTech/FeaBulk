@@ -22,7 +22,17 @@ import {
   type VerificationCase,
 } from "@/lib/marketplace";
 
-export const Route = createFileRoute("/operations")({ component: Operations });
+export const Route = createFileRoute("/operations")({
+  head: () => ({ meta: [
+    { title: "Operations Console | FEA Bulk" },
+    { name: "description", content: "Review FEA Bulk verification, catalog, disputes and platform operations." },
+    { property: "og:title", content: "Operations Console | FEA Bulk" },
+    { property: "og:description", content: "Review FEA Bulk verification, catalog, disputes and platform operations." },
+    { property: "og:type", content: "website" },
+    { name: "twitter:card", content: "summary" },
+  ] }),
+  component: Operations,
+});
 type OperationsView = "overview" | "verification" | "catalog" | "disputes" | "health" | "accounts";
 
 function Operations() {
