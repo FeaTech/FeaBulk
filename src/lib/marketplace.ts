@@ -299,10 +299,10 @@ export async function getNotifications(): Promise<Notification[]> {
 export async function markNotificationRead(id: string) {
   return unwrap(await db.rpc("mark_notification_read_command", { notification_id_input: id }));
 }
-export async function searchPublishedProducts(term: string, categoryId: string): Promise<MarketplaceProduct[]> {
+export async function searchPublishedProducts(term: string, categoryId: string, limit = 50): Promise<MarketplaceProduct[]> {
   let query = db.from("products").select(
     "id,name,slug,seller_sku,description,category_id,organization_id,minimum_order_quantity,available_quantity,listing_status,moderation_status,submitted_for_review_at,created_at,product_price_tiers(minimum_quantity,maximum_quantity,unit_price)",
-  ).eq("listing_status", "active").eq("moderation_status", "approved").limit(50);
+  ).eq("listing_status", "active").eq("moderation_status", "approved").limit(limit);
   if (term.trim()) query = query.textSearch("search_document", term.trim(), { type: "websearch" });
   if (categoryId) query = query.eq("category_id", categoryId);
   const products = unwrap((await query.order("created_at", { ascending: false })) as { data: MarketplaceProduct[] | null; error: { message: string } | null });

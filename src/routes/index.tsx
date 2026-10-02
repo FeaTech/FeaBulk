@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
+import { searchPublishedProducts, type MarketplaceProduct } from "@/lib/marketplace";
 
 type IconProps = { size?: number; className?: string };
 function Icon({ size = 20, className, children }: IconProps & { children: ReactNode }) {
@@ -32,6 +33,18 @@ export const Route = createFileRoute("/")({
 
 function Index() {
   const [menuOpen, setMenuOpen] = useState(false);
+  const [products, setProducts] = useState<MarketplaceProduct[]>([]);
+  const [productsLoading, setProductsLoading] = useState(true);
+  const [productsError, setProductsError] = useState(false);
+
+  useEffect(() => {
+    let active = true;
+    void searchPublishedProducts("", "", 8)
+      .then((items) => { if (active) setProducts(items); })
+      .catch(() => { if (active) setProductsError(true); })
+      .finally(() => { if (active) setProductsLoading(false); });
+    return () => { active = false; };
+  }, []);
 
   return (
     <main className="min-h-screen overflow-hidden bg-[#FDFCF8] text-[#17233A]">
@@ -95,15 +108,27 @@ function Index() {
       </section>
 
       <section id="marketplace" className="mx-auto max-w-[1240px] px-5 py-18 lg:px-8 lg:py-24">
-        <div className="flex flex-col justify-between gap-5 sm:flex-row sm:items-end"><div><p className="text-xs font-extrabold uppercase tracking-[.15em] text-[#F87908]">Source with confidence</p><h2 className="mt-3 text-3xl font-black tracking-[-.035em] text-[#102B52] sm:text-4xl">Find what your business needs</h2></div><a href="/marketplace" className="inline-flex items-center gap-2 text-sm font-extrabold text-[#102B52] hover:text-[#F87908]">View marketplace <ArrowRight size={17} /></a></div>
-        <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {[
-            ["Industrial & manufacturing", "Components, tools, consumables"],
-            ["Packaging & materials", "Films, cartons, labels, containers"],
-            ["Food & ingredients", "Bulk ingredients and food supply"],
-            ["Office & business supply", "Operational supplies for teams"],
-          ].map(([title, description], index) => <a href={`/marketplace?q=${encodeURIComponent((title ?? "").split(" ")[0] ?? "")}`} className="group border border-[#DDE5EE] bg-white p-6 transition hover:border-[#102B52] hover:shadow-[0_8px_20px_rgba(16,43,82,.08)]" key={title}><span className="mb-10 grid h-10 w-10 place-items-center bg-[#EAF2FB] text-sm font-black text-[#102B52]">0{index + 1}</span><h3 className="text-lg font-extrabold text-[#102B52]">{title}</h3><p className="mt-2 text-sm leading-6 text-[#697488]">{description}</p><span className="mt-6 inline-flex items-center gap-1 text-sm font-bold text-[#F87908]">Explore <ArrowRight size={15} className="transition group-hover:translate-x-1" /></span></a>)}
-        </div>
+        <div className="flex flex-col justify-between gap-5 sm:flex-row sm:items-end"><div><p className="text-xs font-extrabold uppercase tracking-[.15em] text-[#F87908]">Approved listings</p><h2 className="mt-3 text-3xl font-black tracking-[-.035em] text-[#102B52] sm:text-4xl">Explore wholesale products</h2><p className="mt-3 text-[#526178]">Browse live products from verified suppliers.</p></div><a href="/marketplace" className="inline-flex items-center gap-2 text-sm font-extrabold text-[#102B52] hover:text-[#F87908]">View all products <ArrowRight size={17} /></a></div>
+        {productsLoading ? (
+          <p className="mt-10 text-sm text-[#526178]" role="status">Loading products…</p>
+        ) : productsError ? (
+          <div className="mt-10 border border-[#DDE5EE] bg-white p-8"><p className="font-semibold text-[#102B52]">Products could not be loaded right now.</p><a href="/marketplace" className="mt-3 inline-flex items-center gap-2 text-sm font-bold text-[#D96806]">Open marketplace <ArrowRight size={16} /></a></div>
+        ) : products.length === 0 ? (
+          <div className="mt-10 border border-[#DDE5EE] bg-white p-8"><p className="font-semibold text-[#102B52]">No approved products are listed yet.</p><p className="mt-2 text-sm text-[#526178]">New listings will appear here after review.</p><a href="/marketplace" className="mt-4 inline-flex items-center gap-2 text-sm font-bold text-[#D96806]">Browse marketplace <ArrowRight size={16} /></a></div>
+        ) : (
+          <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            {products.map((product) => {
+              const startingPrice = product.product_price_tiers.reduce<number | null>((lowest, tier) => lowest === null ? Number(tier.unit_price) : Math.min(lowest, Number(tier.unit_price)), null);
+              return <article key={product.id} className="flex h-full flex-col border border-[#DDE5EE] bg-white p-5 transition hover:border-[#102B52] hover:shadow-[0_8px_20px_rgba(16,43,82,.08)]">
+                <div className="mb-5 flex h-28 items-center justify-center bg-[#EAF2FB] text-4xl font-black text-[#102B52]" aria-hidden="true">{product.name.charAt(0).toUpperCase()}</div>
+                <p className="text-xs font-bold uppercase tracking-wide text-[#D96806]">{product.supplier_name ?? "Verified supplier"}</p>
+                <h3 className="mt-2 text-lg font-extrabold leading-snug text-[#102B52]">{product.name}</h3>
+                <p className="mt-2 line-clamp-2 text-sm leading-6 text-[#697488]">{product.description}</p>
+                <div className="mt-auto pt-5"><p className="text-lg font-black text-[#102B52]">{startingPrice === null ? "Price by quotation" : `From ₹${startingPrice.toLocaleString("en-IN")}/unit`}</p><p className="mt-1 text-xs text-[#526178]">MOQ {product.minimum_order_quantity} · {product.available_quantity} available</p><a href="/app" className="mt-4 inline-flex items-center gap-2 text-sm font-extrabold text-[#D96806]">Create buyer RFQ <ArrowRight size={16} /></a></div>
+              </article>;
+            })}
+          </div>
+        )}
       </section>
 
       <section id="how-it-works" className="bg-[#102B52] py-18 text-white lg:py-24">
