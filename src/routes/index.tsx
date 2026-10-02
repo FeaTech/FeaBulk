@@ -7,14 +7,9 @@ function Icon({ size = 20, className, children }: IconProps & { children: ReactN
   return <svg className={className} width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">{children}</svg>;
 }
 const ArrowRight = (props: IconProps) => <Icon {...props}><path d="M5 12h14" /><path d="m13 6 6 6-6 6" /></Icon>;
-const Check = (props: IconProps) => <Icon {...props}><path d="m5 12 4 4L19 6" /></Icon>;
-const ClipboardCheck = (props: IconProps) => <Icon {...props}><rect x="5" y="4" width="14" height="17" rx="1" /><path d="M9 4V2h6v2M9 13l2 2 4-4" /></Icon>;
-const FileCheck2 = (props: IconProps) => <Icon {...props}><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><path d="M14 2v6h6M8 15l2 2 4-4" /></Icon>;
 const Menu = (props: IconProps) => <Icon {...props}><path d="M4 6h16M4 12h16M4 18h16" /></Icon>;
-const PackageCheck = (props: IconProps) => <Icon {...props}><path d="m16 16 2 2 4-4" /><path d="M21 8v12a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8l9-5zM3 8l9 5 9-5M12 13v9" /></Icon>;
 const Search = (props: IconProps) => <Icon {...props}><circle cx="11" cy="11" r="7" /><path d="m20 20-4-4" /></Icon>;
 const ShieldCheck = (props: IconProps) => <Icon {...props}><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10" /><path d="m9 12 2 2 4-4" /></Icon>;
-const Truck = (props: IconProps) => <Icon {...props}><path d="M10 17h4V5H2v12h3M14 9h4l4 4v4h-3M5 17a2 2 0 1 0 4 0 2 2 0 0 0-4 0M16 17a2 2 0 1 0 4 0 2 2 0 0 0-4 0" /></Icon>;
 const X = (props: IconProps) => <Icon {...props}><path d="M18 6 6 18M6 6l12 12" /></Icon>;
 
 export const Route = createFileRoute("/")({
