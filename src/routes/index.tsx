@@ -93,14 +93,6 @@ function Index() {
         </div>
       </section>
 
-      <section className="border-b border-[#DDE5EE] bg-white">
-        <div className="mx-auto grid max-w-[1240px] divide-y divide-[#DDE5EE] px-5 sm:grid-cols-3 sm:divide-x sm:divide-y-0 lg:px-8">
-          <TrustItem icon={<ShieldCheck />} value="Verified businesses" text="Operations-reviewed buyer and seller profiles" />
-          <TrustItem icon={<FileCheck2 />} value="Clear commercial terms" text="Versioned quotes and accepted orders" />
-          <TrustItem icon={<PackageCheck />} value="Organization access" text="Buyer and seller actions have separate permissions" />
-        </div>
-      </section>
-
       <section id="marketplace" className="mx-auto max-w-[1240px] px-5 py-18 lg:px-8 lg:py-24">
         <div className="flex flex-col justify-between gap-5 sm:flex-row sm:items-end"><div><p className="text-xs font-extrabold uppercase tracking-[.15em] text-[#F87908]">Approved listings</p><h2 className="mt-3 text-3xl font-black tracking-[-.035em] text-[#102B52] sm:text-4xl">Explore wholesale products</h2><p className="mt-3 text-[#526178]">Browse live products from verified suppliers.</p></div><a href="/marketplace" className="inline-flex items-center gap-2 text-sm font-extrabold text-[#102B52] hover:text-[#F87908]">View all products <ArrowRight size={17} /></a></div>
         {productsLoading ? (
