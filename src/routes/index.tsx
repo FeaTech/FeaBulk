@@ -112,11 +112,3 @@ function Index() {
         )}
       </section>
 
-      <section id="how-it-works" className="bg-[#102B52] py-18 text-white lg:py-24">
-        <div className="mx-auto max-w-[1240px] px-5 lg:px-8"><div className="max-w-xl"><p className="text-xs font-extrabold uppercase tracking-[.15em] text-[#F9A453]">A governed purchase journey</p><h2 className="mt-3 text-3xl font-black tracking-[-.035em] sm:text-4xl">From a requirement to an accepted order.</h2></div><div className="mt-12 grid gap-0 md:grid-cols-4">{[
-          ["01", "Post a requirement", "Create an RFQ with quantities, specifications and delivery needs."],
-          ["02", "Compare quotes", "Review normalized commercial terms and supplier information."],
-          ["03", "Confirm the order", "Accept a formal quote and create a purchase order."],
-function TrustItem({ icon, value, text }: { icon: ReactNode; value: string; text: string }) {
-  return <div className="flex gap-4 py-6 sm:px-6 sm:first:pl-0"><span className="text-[#F87908]">{icon}</span><div><p className="font-extrabold text-[#102B52]">{value}</p><p className="mt-1 text-sm leading-5 text-[#697488]">{text}</p></div></div>;
-}
