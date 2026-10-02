@@ -112,3 +112,8 @@ function Index() {
         )}
       </section>
 
+      <footer className="border-t border-[#DDE5EE] bg-white"><div className="mx-auto flex max-w-[1240px] flex-col justify-between gap-5 px-5 py-8 text-sm text-[#697488] sm:flex-row lg:px-8"><p><span className="font-extrabold text-[#102B52]">FEA<span className="text-[#F87908]">Bulk</span></span> · Wholesale marketplace in development.</p><div className="flex gap-5"><a href="/marketplace" className="hover:text-[#F87908]">Marketplace</a><a href="/auth" className="hover:text-[#F87908]">Sign in</a></div></div></footer>
+    </main>
+  );
+}
+
