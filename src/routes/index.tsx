@@ -56,9 +56,6 @@ function Index() {
           </a>
           <nav className="hidden items-center gap-7 text-sm font-semibold text-[#405069] lg:flex" aria-label="Main navigation">
             <a className="hover:text-[#F87908]" href="#marketplace">Marketplace</a>
-            <a className="hover:text-[#F87908]" href="#how-it-works">How it works</a>
-            <a className="hover:text-[#F87908]" href="#protection">Buyer protection</a>
-            <a className="hover:text-[#F87908]" href="#sell">Sell on FEA Bulk</a>
           </nav>
           <div className="hidden items-center gap-4 lg:flex">
             <a className="text-sm font-bold text-[#102B52] hover:text-[#F87908]" href="/auth">Sign in</a>
@@ -71,9 +68,6 @@ function Index() {
         {menuOpen && <nav className="border-t border-[#DDE5EE] bg-white px-5 py-4 lg:hidden" aria-label="Mobile navigation">
           <div className="mx-auto grid max-w-[1240px] gap-1 text-sm font-bold text-[#102B52]">
             <a className="py-3" href="#marketplace" onClick={() => setMenuOpen(false)}>Marketplace</a>
-            <a className="py-3" href="#how-it-works" onClick={() => setMenuOpen(false)}>How it works</a>
-            <a className="py-3" href="#protection" onClick={() => setMenuOpen(false)}>Buyer protection</a>
-            <a className="py-3" href="#sell" onClick={() => setMenuOpen(false)}>Sell on FEA Bulk</a>
           </div>
         </nav>}
       </header>
