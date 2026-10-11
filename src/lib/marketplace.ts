@@ -11,7 +11,7 @@ export type Organization = {
   kind: BusinessKind;
   status: "pending_verification" | "verified" | "suspended";
 };
-export type Category = { id: string; name: string };
+export type Category = { id: string; name: string; slug: string };
 export type Rfq = {
   id: string; title: string; status: string; required_quantity: number;
   unit_of_measure: string; delivery_pin_code: string; quote_deadline: string | null;
@@ -68,6 +68,12 @@ export type MarketplaceProduct = Product & {
   product_price_tiers: Array<{ minimum_quantity: number; maximum_quantity: number; unit_price: number }>;
   supplier_name?: string;
 };
+export type ProductDetail = MarketplaceProduct & {
+  unit_of_measure: string; lead_time_days: number; gst_rate: number | null; hsn_code: string | null;
+  brand: string | null; manufacturer: string | null; country_of_origin: string | null;
+  category: Category | null;
+};
+export type Supplier = { id: string; display_name: string; created_at: string };
 export type TradeConversation = {
   id: string; context: "quote" | "order"; buyer_organization_id: string;
   seller_organization_id: string; quote_id: string | null; order_id: string | null;
@@ -136,7 +142,7 @@ export async function getOperationsRoles(userId: string): Promise<OperationsRole
   return rows.map(item => item.role);
 }
 export async function getCategories(): Promise<Category[]> {
-  return unwrap((await db.from("categories").select("id,name").eq("is_active", true).order("name")) as { data: Category[] | null; error: { message: string } | null });
+  return unwrap((await db.from("categories").select("id,name,slug").eq("is_active", true).order("name")) as { data: Category[] | null; error: { message: string } | null });
 }
 export async function getBuyerRfqs(organizationId: string): Promise<Rfq[]> {
   return unwrap((await db.from("rfqs").select("id,title,status,required_quantity,unit_of_measure,delivery_pin_code,quote_deadline,category_id,created_at,buyer_organization_id").eq("buyer_organization_id", organizationId).order("created_at", { ascending: false }).limit(50)) as { data: Rfq[] | null; error: { message: string } | null });
@@ -299,12 +305,13 @@ export async function getNotifications(): Promise<Notification[]> {
 export async function markNotificationRead(id: string) {
   return unwrap(await db.rpc("mark_notification_read_command", { notification_id_input: id }));
 }
-export async function searchPublishedProducts(term: string, categoryId: string, limit = 50): Promise<MarketplaceProduct[]> {
+export async function searchPublishedProducts(term: string, categoryId: string, limit = 50, supplierId = ""): Promise<MarketplaceProduct[]> {
   let query = db.from("products").select(
     "id,name,slug,seller_sku,description,category_id,organization_id,minimum_order_quantity,available_quantity,listing_status,moderation_status,submitted_for_review_at,created_at,product_price_tiers(minimum_quantity,maximum_quantity,unit_price)",
   ).eq("listing_status", "active").eq("moderation_status", "approved").limit(limit);
   if (term.trim()) query = query.textSearch("search_document", term.trim(), { type: "websearch" });
   if (categoryId) query = query.eq("category_id", categoryId);
+  if (supplierId) query = query.eq("organization_id", supplierId);
   const products = unwrap((await query.order("created_at", { ascending: false })) as { data: MarketplaceProduct[] | null; error: { message: string } | null });
   if (products.length === 0) return [];
   const ids = [...new Set(products.map(item => item.organization_id))];
@@ -313,6 +320,43 @@ export async function searchPublishedProducts(term: string, categoryId: string, 
   });
   const names = new Map(suppliers.map(item => [item.id, item.display_name]));
   return products.map(item => ({ ...item, supplier_name: names.get(item.organization_id) ?? "Verified supplier" }));
+}
+const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+export function startingUnitPrice(product: Pick<MarketplaceProduct, "product_price_tiers">): number | null {
+  return product.product_price_tiers.reduce<number | null>((lowest, tier) => lowest === null ? Number(tier.unit_price) : Math.min(lowest, Number(tier.unit_price)), null);
+}
+export async function getPublishedProductBySlug(slug: string): Promise<ProductDetail | null> {
+  const { data, error } = await db.from("products").select(
+    "id,name,slug,seller_sku,description,category_id,organization_id,unit_of_measure,hsn_code,gst_rate,lead_time_days,brand,manufacturer,country_of_origin,minimum_order_quantity,available_quantity,listing_status,moderation_status,submitted_for_review_at,created_at,product_price_tiers(minimum_quantity,maximum_quantity,unit_price)",
+  ).eq("slug", slug).eq("listing_status", "active").eq("moderation_status", "approved").maybeSingle();
+  if (error) throw new Error(error.message);
+  if (!data) return null;
+  const product = data as unknown as Omit<ProductDetail, "category" | "supplier_name">;
+  const [supplier, category] = await Promise.all([
+    getSupplier(product.organization_id),
+    product.category_id
+      ? db.from("categories").select("id,name,slug").eq("id", product.category_id).maybeSingle()
+      : Promise.resolve({ data: null, error: null }),
+  ]);
+  if (category.error) throw new Error(category.error.message);
+  return {
+    ...product,
+    product_price_tiers: [...product.product_price_tiers].sort((a, b) => Number(a.minimum_quantity) - Number(b.minimum_quantity)),
+    supplier_name: supplier?.display_name ?? "Verified supplier",
+    category: category.data as Category | null,
+  };
+}
+export async function getCategoryBySlug(slug: string): Promise<Category | null> {
+  const { data, error } = await db.from("categories").select("id,name,slug").eq("slug", slug).eq("is_active", true).maybeSingle();
+  if (error) throw new Error(error.message);
+  return data as Category | null;
+}
+// Suppliers have no slug column yet, so public supplier URLs carry the organization ID.
+export async function getSupplier(id: string): Promise<Supplier | null> {
+  if (!UUID_PATTERN.test(id)) return null;
+  const { data, error } = await db.from("supplier_directory").select("id,display_name,created_at").eq("id", id).maybeSingle();
+  if (error) throw new Error(error.message);
+  return data as Supplier | null;
 }
 export async function getSupplierDirectory(): Promise<Array<{ id: string; display_name: string }>> {
   return unwrap((await db.from("supplier_directory").select("id,display_name").order("display_name").limit(100)) as {

@@ -14,6 +14,9 @@ import { Route as AppRouteImport } from './routes/app'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as MarketplaceRouteImport } from './routes/marketplace'
 import { Route as OperationsRouteImport } from './routes/operations'
+import { Route as CategoriesSlugRouteImport } from './routes/categories/$slug'
+import { Route as ProductsSlugRouteImport } from './routes/products/$slug'
+import { Route as SuppliersSlugRouteImport } from './routes/suppliers/$slug'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -40,6 +43,21 @@ const OperationsRoute = OperationsRouteImport.update({
   path: '/operations',
   getParentRoute: () => rootRouteImport,
 } as any)
+const CategoriesSlugRoute = CategoriesSlugRouteImport.update({
+  id: '/categories/$slug',
+  path: '/categories/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ProductsSlugRoute = ProductsSlugRouteImport.update({
+  id: '/products/$slug',
+  path: '/products/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SuppliersSlugRoute = SuppliersSlugRouteImport.update({
+  id: '/suppliers/$slug',
+  path: '/suppliers/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -47,6 +65,9 @@ export interface FileRoutesByFullPath {
   '/auth': typeof AuthRoute
   '/marketplace': typeof MarketplaceRoute
   '/operations': typeof OperationsRoute
+  '/categories/$slug': typeof CategoriesSlugRoute
+  '/products/$slug': typeof ProductsSlugRoute
+  '/suppliers/$slug': typeof SuppliersSlugRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -54,6 +75,9 @@ export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/marketplace': typeof MarketplaceRoute
   '/operations': typeof OperationsRoute
+  '/categories/$slug': typeof CategoriesSlugRoute
+  '/products/$slug': typeof ProductsSlugRoute
+  '/suppliers/$slug': typeof SuppliersSlugRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -62,13 +86,41 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/marketplace': typeof MarketplaceRoute
   '/operations': typeof OperationsRoute
+  '/categories/$slug': typeof CategoriesSlugRoute
+  '/products/$slug': typeof ProductsSlugRoute
+  '/suppliers/$slug': typeof SuppliersSlugRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/app' | '/auth' | '/marketplace' | '/operations'
+  fullPaths:
+    | '/'
+    | '/app'
+    | '/auth'
+    | '/marketplace'
+    | '/operations'
+    | '/categories/$slug'
+    | '/products/$slug'
+    | '/suppliers/$slug'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/app' | '/auth' | '/marketplace' | '/operations'
-  id: '__root__' | '/' | '/app' | '/auth' | '/marketplace' | '/operations'
+  to:
+    | '/'
+    | '/app'
+    | '/auth'
+    | '/marketplace'
+    | '/operations'
+    | '/categories/$slug'
+    | '/products/$slug'
+    | '/suppliers/$slug'
+  id:
+    | '__root__'
+    | '/'
+    | '/app'
+    | '/auth'
+    | '/marketplace'
+    | '/operations'
+    | '/categories/$slug'
+    | '/products/$slug'
+    | '/suppliers/$slug'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -77,6 +129,9 @@ export interface RootRouteChildren {
   AuthRoute: typeof AuthRoute
   MarketplaceRoute: typeof MarketplaceRoute
   OperationsRoute: typeof OperationsRoute
+  CategoriesSlugRoute: typeof CategoriesSlugRoute
+  ProductsSlugRoute: typeof ProductsSlugRoute
+  SuppliersSlugRoute: typeof SuppliersSlugRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -116,6 +171,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof OperationsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/categories/$slug': {
+      id: '/categories/$slug'
+      path: '/categories/$slug'
+      fullPath: '/categories/$slug'
+      preLoaderRoute: typeof CategoriesSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/products/$slug': {
+      id: '/products/$slug'
+      path: '/products/$slug'
+      fullPath: '/products/$slug'
+      preLoaderRoute: typeof ProductsSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/suppliers/$slug': {
+      id: '/suppliers/$slug'
+      path: '/suppliers/$slug'
+      fullPath: '/suppliers/$slug'
+      preLoaderRoute: typeof SuppliersSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -125,6 +201,9 @@ const rootRouteChildren: RootRouteChildren = {
   AuthRoute: AuthRoute,
   MarketplaceRoute: MarketplaceRoute,
   OperationsRoute: OperationsRoute,
+  CategoriesSlugRoute: CategoriesSlugRoute,
+  ProductsSlugRoute: ProductsSlugRoute,
+  SuppliersSlugRoute: SuppliersSlugRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
