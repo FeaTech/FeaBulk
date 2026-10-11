@@ -35,6 +35,7 @@ import {
   getSellerQuotes,
   getSellerRfqs,
   getSupplierDirectory,
+  getSupplierRatings,
   getTeamMembers,
   getVerificationCase,
   initiateOrderPayment,
@@ -61,12 +62,14 @@ import {
   type ProductDetail,
   type Quote,
   type Rfq,
+  type SupplierRating as Rating,
   type TeamMember,
   type TeamRole,
   type TradeConversation,
   type TradeMessage,
   type VerificationCase,
 } from "@/lib/marketplace";
+import { SupplierRating } from "@/components/marketplace/SupplierRating";
 import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/app")({
@@ -197,6 +200,7 @@ function Workspace() {
   const [opportunities, setOpportunities] = useState<Rfq[]>([]);
   const [sellerQuotes, setSellerQuotes] = useState<Quote[]>([]);
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
+  const [supplierRatings, setSupplierRatings] = useState<Map<string, Rating>>(new Map());
   const [quotes, setQuotes] = useState<Quote[]>([]);
   const [selectedRfq, setSelectedRfq] = useState("");
   const [products, setProducts] = useState<Product[]>([]);
@@ -330,6 +334,10 @@ function Workspace() {
     setTeam(nextTeam);
     setInvitations(nextInvitations);
     setSuppliers(nextSuppliers);
+    // Ratings are supporting detail, so a failure here must not block the workspace.
+    void getSupplierRatings(nextSuppliers.map((item) => item.id))
+      .then(setSupplierRatings)
+      .catch(() => undefined);
   }, [organization, buyer, seller]);
   useEffect(() => {
     if (!organization) return;
@@ -984,9 +992,12 @@ function Workspace() {
                             <h3 className="mt-2 text-lg font-extrabold text-[#102B52]">
                               {item.display_name}
                             </h3>
+                            <p className="mt-1">
+                              <SupplierRating rating={supplierRatings.get(item.id)} />
+                            </p>
                             <a
                               className="mt-4 inline-block text-sm font-bold text-[#D96806]"
-                              href="/marketplace"
+                              href={`/suppliers/${item.id}`}
                             >
                               View approved products →
                             </a>

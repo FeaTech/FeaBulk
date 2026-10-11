@@ -2,7 +2,13 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { PriceCalculator } from "@/components/marketplace/PriceCalculator";
 import { Breadcrumbs, PageMessage, PublicShell } from "@/components/marketplace/PublicShell";
-import { getPublishedProductBySlug, type ProductDetail } from "@/lib/marketplace";
+import { SupplierRating } from "@/components/marketplace/SupplierRating";
+import {
+  getPublishedProductBySlug,
+  getSupplierRatings,
+  type ProductDetail,
+  type SupplierRating as Rating,
+} from "@/lib/marketplace";
 
 export const Route = createFileRoute("/products/$slug")({
   head: () => ({
@@ -27,6 +33,7 @@ export const Route = createFileRoute("/products/$slug")({
 function ProductPage() {
   const { slug } = Route.useParams();
   const [product, setProduct] = useState<ProductDetail | null>(null);
+  const [rating, setRating] = useState<Rating | undefined>(undefined);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -38,7 +45,14 @@ function ProductPage() {
       .then((item) => {
         if (!active) return;
         setProduct(item);
-        if (item) document.title = `${item.name} | FEA Bulk`;
+        if (!item) return;
+        document.title = `${item.name} | FEA Bulk`;
+        // Ratings are supporting detail, so a failure here must not hide the product.
+        void getSupplierRatings([item.organization_id])
+          .then((ratings) => {
+            if (active) setRating(ratings.get(item.organization_id));
+          })
+          .catch(() => undefined);
       })
       .catch((err) => {
         if (active) setError(err instanceof Error ? err.message : "Product failed to load.");
@@ -107,6 +121,9 @@ function ProductPage() {
         <section>
           <p className="text-xs font-black uppercase tracking-wider text-[#F87908]">
             <a href={`/suppliers/${product.organization_id}`}>{product.supplier_name}</a>
+          </p>
+          <p className="mt-1">
+            <SupplierRating rating={rating} />
           </p>
           <h1 className="mt-2 text-3xl font-black text-[#102B52]">{product.name}</h1>
           <p className="mt-4 whitespace-pre-wrap text-sm leading-6">{product.description}</p>

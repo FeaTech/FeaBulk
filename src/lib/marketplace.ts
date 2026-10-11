@@ -74,6 +74,10 @@ export type ProductDetail = MarketplaceProduct & {
   category: Category | null;
 };
 export type Supplier = { id: string; display_name: string; created_at: string };
+export type SupplierRating = {
+  organization_id: string; rating: number; review_count: number; order_completion_rate: number;
+};
+export type SupplierReview = { id: string; rating: number; body: string | null; created_at: string };
 export type TradeConversation = {
   id: string; context: "quote" | "order"; buyer_organization_id: string;
   seller_organization_id: string; quote_id: string | null; order_id: string | null;
@@ -357,6 +361,30 @@ export async function getSupplier(id: string): Promise<Supplier | null> {
   const { data, error } = await db.from("supplier_directory").select("id,display_name,created_at").eq("id", id).maybeSingle();
   if (error) throw new Error(error.message);
   return data as Supplier | null;
+}
+// supplier_metrics is refreshed by a trigger on reviews, so a supplier without a row has no reviews.
+export async function getSupplierRatings(supplierIds: string[]): Promise<Map<string, SupplierRating>> {
+  const ids = [...new Set(supplierIds)];
+  if (ids.length === 0) return new Map();
+  const [metrics, reviews] = await Promise.all([
+    db.from("supplier_metrics").select("organization_id,rating,order_completion_rate").in("organization_id", ids),
+    db.from("reviews").select("seller_organization_id").in("seller_organization_id", ids).limit(5000),
+  ]);
+  if (metrics.error) throw new Error(metrics.error.message);
+  if (reviews.error) throw new Error(reviews.error.message);
+  const counts = new Map<string, number>();
+  for (const review of reviews.data ?? []) counts.set(review.seller_organization_id, (counts.get(review.seller_organization_id) ?? 0) + 1);
+  return new Map((metrics.data ?? []).map(item => [item.organization_id, {
+    organization_id: item.organization_id, rating: Number(item.rating),
+    review_count: counts.get(item.organization_id) ?? 0,
+    order_completion_rate: Number(item.order_completion_rate),
+  }]));
+}
+export async function getSupplierReviews(supplierId: string, limit = 20): Promise<SupplierReview[]> {
+  return unwrap((await db.from("reviews").select("id,rating,body,created_at")
+    .eq("seller_organization_id", supplierId).order("created_at", { ascending: false }).limit(limit)) as {
+    data: SupplierReview[] | null; error: { message: string } | null;
+  });
 }
 export async function getSupplierDirectory(): Promise<Array<{ id: string; display_name: string }>> {
   return unwrap((await db.from("supplier_directory").select("id,display_name").order("display_name").limit(100)) as {
