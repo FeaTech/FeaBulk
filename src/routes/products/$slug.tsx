@@ -143,7 +143,10 @@ function ProductPage() {
             quote.
           </p>
 
-          <a href="/app" className="button mt-6 inline-block">
+          <a
+            href={`/app?product=${encodeURIComponent(product.slug)}`}
+            className="button mt-6 inline-block"
+          >
             Request quote for this product
           </a>
         </section>

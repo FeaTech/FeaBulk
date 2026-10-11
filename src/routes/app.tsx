@@ -26,6 +26,7 @@ import {
   getOperationsAccess,
   getOrders,
   getPaymentAvailability,
+  getPublishedProductBySlug,
   getOrCreateConversation,
   getOrganizationInvitations,
   getOrganizations,
@@ -57,6 +58,7 @@ import {
   type Organization,
   type OrganizationInvitation,
   type Product,
+  type ProductDetail,
   type Quote,
   type Rfq,
   type TeamMember,
@@ -68,14 +70,22 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/app")({
-  head: () => ({ meta: [
-    { title: "Business Workspace | FEA Bulk" },
-    { name: "description", content: "Manage your FEA Bulk organization, quotes, orders, catalog and team." },
-    { property: "og:title", content: "Business Workspace | FEA Bulk" },
-    { property: "og:description", content: "Manage your FEA Bulk organization, quotes, orders, catalog and team." },
-    { property: "og:type", content: "website" },
-    { name: "twitter:card", content: "summary" },
-  ] }),
+  head: () => ({
+    meta: [
+      { title: "Business Workspace | FEA Bulk" },
+      {
+        name: "description",
+        content: "Manage your FEA Bulk organization, quotes, orders, catalog and team.",
+      },
+      { property: "og:title", content: "Business Workspace | FEA Bulk" },
+      {
+        property: "og:description",
+        content: "Manage your FEA Bulk organization, quotes, orders, catalog and team.",
+      },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
+    ],
+  }),
   component: Workspace,
 });
 type View =
@@ -86,6 +96,23 @@ const formValues = (event: FormEvent<HTMLFormElement>): FormValues =>
   Object.fromEntries(new FormData(event.currentTarget));
 const errorText = (error: unknown) =>
   error instanceof Error ? error.message : "Request failed. Try again.";
+// Survives the sign-in redirect so a quote request started on a product page is not lost.
+const RFQ_PRODUCT_STORAGE_KEY = "feabulk:rfq-product";
+function readPendingRfqProduct() {
+  try {
+    return window.sessionStorage.getItem(RFQ_PRODUCT_STORAGE_KEY) ?? "";
+  } catch {
+    return "";
+  }
+}
+function storePendingRfqProduct(slug: string) {
+  try {
+    if (slug) window.sessionStorage.setItem(RFQ_PRODUCT_STORAGE_KEY, slug);
+    else window.sessionStorage.removeItem(RFQ_PRODUCT_STORAGE_KEY);
+  } catch {
+    // Storage can be unavailable in private or embedded browsers; the prefill is optional.
+  }
+}
 const input = "w-full border border-[#C9D3DF] bg-white px-3 py-2 text-[#17233A]";
 const INVITABLE_TEAM_ROLES: TeamRole[] = [
   "procurement_manager",
@@ -186,6 +213,8 @@ function Workspace() {
   const [view, setView] = useState<View>("overview");
   const [form, setForm] = useState<"organization" | "rfq" | "product" | "quote" | null>(null);
   const [quoteRfq, setQuoteRfq] = useState<Rfq | null>(null);
+  const [pendingRfqProduct, setPendingRfqProduct] = useState("");
+  const [rfqProduct, setRfqProduct] = useState<ProductDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -309,6 +338,45 @@ function Workspace() {
     setMessages([]);
     void loadData().catch((err) => setError(errorText(err)));
   }, [loadData, organization]);
+
+  useEffect(() => {
+    const requested = new URLSearchParams(window.location.search).get("product");
+    if (requested) {
+      storePendingRfqProduct(requested);
+      window.history.replaceState(null, "", window.location.pathname);
+    }
+    setPendingRfqProduct(requested ?? readPendingRfqProduct());
+  }, []);
+  useEffect(() => {
+    if (!pendingRfqProduct || !organization || team.length === 0) return;
+    if (!canManageRfqs) {
+      setError(
+        "Requesting a quote needs a buyer business where you are an owner, administrator or procurement manager.",
+      );
+      return;
+    }
+    let active = true;
+    void getPublishedProductBySlug(pendingRfqProduct)
+      .then((item) => {
+        if (!active) return;
+        storePendingRfqProduct("");
+        setPendingRfqProduct("");
+        if (!item) {
+          setError("That product is no longer listed, so the quote request was not prefilled.");
+          return;
+        }
+        setError("");
+        setRfqProduct(item);
+        setView("rfqs");
+        setForm("rfq");
+      })
+      .catch((err) => {
+        if (active) setError(errorText(err));
+      });
+    return () => {
+      active = false;
+    };
+  }, [pendingRfqProduct, organization, team, canManageRfqs]);
 
   async function run(action: () => Promise<unknown>, success: string) {
     setBusy(true);
@@ -537,7 +605,9 @@ function Workspace() {
         shipping_responsibility: String(f["shipping"]),
         quote_deadline: new Date(String(f["deadline"])).toISOString(),
         visibility: "verified_sellers",
+        ...(rfqProduct ? { product_id: rfqProduct.id } : {}),
       });
+      setRfqProduct(null);
       setForm(null);
     }, "RFQ draft saved.");
   }
@@ -991,12 +1061,46 @@ function Workspace() {
                     />
                     {canManageRfqs && form === "rfq" && (
                       <form
+                        key={rfqProduct?.id ?? "blank"}
                         className="mt-4 grid gap-3 border bg-white p-6 sm:grid-cols-2"
                         onSubmit={submitRfq}
                       >
-                        <Text name="title" label="What do you need?" minLength={8} />
+                        {rfqProduct && (
+                          <div className="flex flex-wrap items-center justify-between gap-3 border border-[#C9D3DF] bg-[#EAF2FB] p-3 text-sm sm:col-span-2">
+                            <p>
+                              Requesting a quote for{" "}
+                              <a
+                                className="font-bold underline"
+                                href={`/products/${rfqProduct.slug}`}
+                              >
+                                {rfqProduct.name}
+                              </a>{" "}
+                              from {rfqProduct.supplier_name}. Minimum order{" "}
+                              {rfqProduct.minimum_order_quantity} {rfqProduct.unit_of_measure}.
+                            </p>
+                            <button
+                              type="button"
+                              className="button-secondary"
+                              onClick={() => setRfqProduct(null)}
+                            >
+                              Remove product
+                            </button>
+                          </div>
+                        )}
+                        <Text
+                          name="title"
+                          label="What do you need?"
+                          minLength={8}
+                          maxLength={180}
+                          defaultValue={rfqProduct ? rfqProduct.name.slice(0, 180) : ""}
+                        />
                         <Field label="Category">
-                          <select name="category" required className={input}>
+                          <select
+                            name="category"
+                            required
+                            className={input}
+                            defaultValue={rfqProduct?.category_id ?? ""}
+                          >
                             <option value="">Select a category</option>
                             {categories.map((item) => (
                               <option key={item.id} value={item.id}>
@@ -1008,8 +1112,18 @@ function Workspace() {
                         <Field label="Specifications">
                           <textarea name="specifications" required className={input} />
                         </Field>
-                        <Text name="quantity" label="Quantity" type="number" min={1} />
-                        <Text name="unit" label="Unit" defaultValue="units" />
+                        <Text
+                          name="quantity"
+                          label="Quantity"
+                          type="number"
+                          min={rfqProduct?.minimum_order_quantity ?? 1}
+                          defaultValue={rfqProduct?.minimum_order_quantity ?? ""}
+                        />
+                        <Text
+                          name="unit"
+                          label="Unit"
+                          defaultValue={rfqProduct?.unit_of_measure ?? "units"}
+                        />
                         <Text name="address" label="Delivery address" />
                         <Text name="pin" label="Delivery PIN" pattern="[0-9]{6}" />
                         <Text name="deadline" label="Quote deadline" type="datetime-local" />
