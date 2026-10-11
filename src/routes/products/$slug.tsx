@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
+import { PriceCalculator } from "@/components/marketplace/PriceCalculator";
 import { Breadcrumbs, PageMessage, PublicShell } from "@/components/marketplace/PublicShell";
 import { getPublishedProductBySlug, type ProductDetail } from "@/lib/marketplace";
 
@@ -142,6 +143,14 @@ function ProductPage() {
             Prices exclude GST and freight. The final price is confirmed on the supplier&apos;s
             quote.
           </p>
+          {product.product_price_tiers.length > 0 && (
+            <PriceCalculator
+              tiers={product.product_price_tiers}
+              minimumOrderQuantity={product.minimum_order_quantity}
+              unit={unit}
+              gstRate={product.gst_rate}
+            />
+          )}
 
           <a
             href={`/app?product=${encodeURIComponent(product.slug)}`}
