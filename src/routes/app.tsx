@@ -1,5 +1,5 @@
 import { createFileRoute, useRouter } from "@tanstack/react-router";
-import { useCallback, useEffect, useState, type FormEvent, type ReactNode } from "react";
+import { useCallback, useEffect, useRef, useState, type FormEvent, type ReactNode } from "react";
 import {
   acceptOrganizationInvitation,
   acceptQuote,
@@ -52,6 +52,7 @@ import {
   submitProductForReview,
   submitQuote,
   submitVerification,
+  subscribeToMessages,
   transitionOrder,
   updateProductDraft,
   uploadProductImage,
@@ -218,6 +219,7 @@ function Workspace() {
   const [invitations, setInvitations] = useState<OrganizationInvitation[]>([]);
   const [conversation, setConversation] = useState<TradeConversation | null>(null);
   const [messages, setMessages] = useState<TradeMessage[]>([]);
+  const messageListRef = useRef<HTMLDivElement>(null);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [showNotifications, setShowNotifications] = useState(false);
   const [verification, setVerification] = useState<VerificationCase | null>(null);
@@ -432,17 +434,40 @@ function Workspace() {
       setBusy(false);
     }
   }
+  const addMessage = useCallback((message: TradeMessage) => {
+    setMessages((current) =>
+      current.some((item) => item.id === message.id) ? current : [...current, message],
+    );
+  }, []);
+  const conversationId = conversation?.id;
+  useEffect(() => {
+    if (!conversationId) return;
+    return subscribeToMessages(conversationId, addMessage, () => {
+      void getMessages(conversationId)
+        .then(setMessages)
+        .catch((err) => setError(errorText(err)));
+    });
+  }, [conversationId, addMessage]);
+  useEffect(() => {
+    const list = messageListRef.current;
+    if (list) list.scrollTop = list.scrollHeight;
+  }, [messages]);
   function submitMessage(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!conversation || !organization) return;
     const formElement = event.currentTarget;
     const body = String(formValues(event)["body"] ?? "").trim();
     if (!body) return;
-    void run(async () => {
-      await sendMessage(conversation.id, organization.id, body);
-      setMessages(await getMessages(conversation.id));
-      formElement.reset();
-    }, "Message sent.");
+    // Chat skips run(): reloading the whole workspace on every message would stall the thread.
+    setBusy(true);
+    setError("");
+    void sendMessage(conversation.id, organization.id, body)
+      .then((sent) => {
+        addMessage(sent);
+        formElement.reset();
+      })
+      .catch((err) => setError(errorText(err)))
+      .finally(() => setBusy(false));
   }
   function submitInvitation(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -1920,7 +1945,7 @@ function Workspace() {
                         Close
                       </button>
                     </div>
-                    <div className="mt-4 max-h-80 space-y-3 overflow-y-auto">
+                    <div ref={messageListRef} className="mt-4 max-h-80 space-y-3 overflow-y-auto">
                       {messages.length === 0 ? (
                         <p className="text-sm text-[#526178]">No messages yet.</p>
                       ) : (

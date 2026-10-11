@@ -452,6 +452,18 @@ export async function getMessages(conversationId: string): Promise<TradeMessage[
     data: TradeMessage[] | null; error: { message: string } | null;
   });
 }
+// Calls onMessage for each new message the caller is allowed to read, and onSubscribed
+// once the stream is live so the caller can reload anything sent while it was connecting.
+// Needs public.messages in the supabase_realtime publication; without it no events arrive.
+export function subscribeToMessages(conversationId: string, onMessage: (message: TradeMessage) => void, onSubscribed?: () => void): () => void {
+  const channel = db.channel(`trade-messages:${conversationId}`)
+    .on("postgres_changes", { event: "INSERT", schema: "public", table: "messages", filter: `conversation_id=eq.${conversationId}` }, payload => {
+      const row = payload.new as TradeMessage;
+      onMessage({ id: row.id, conversation_id: row.conversation_id, sender_organization_id: row.sender_organization_id, body: row.body, created_at: row.created_at });
+    })
+    .subscribe(status => { if (status === "SUBSCRIBED") onSubscribed?.(); });
+  return () => { void db.removeChannel(channel); };
+}
 export async function sendMessage(conversationId: string, senderOrganizationId: string, body: string): Promise<TradeMessage> {
   return unwrap((await db.rpc("send_trade_message_command", {
     conversation_id_input: conversationId, sender_organization_id_input: senderOrganizationId,
