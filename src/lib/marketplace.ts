@@ -1,7 +1,10 @@
 import { supabase } from "@/integrations/supabase/client";
 import type { Database, Json } from "@/integrations/supabase/types";
+import type { SupabaseClient } from "@supabase/supabase-js";
 
 const db = supabase;
+// product_images and its commands are missing from the generated types until they are regenerated.
+const untypedDb = supabase as unknown as SupabaseClient;
 
 export type BusinessKind = "buyer" | "seller" | "both";
 export type Organization = {
@@ -67,6 +70,10 @@ export type MarketplaceProduct = Product & {
   description: string; category_id: string | null; organization_id: string;
   product_price_tiers: Array<{ minimum_quantity: number; maximum_quantity: number; unit_price: number }>;
   supplier_name?: string;
+  images?: ProductImage[];
+};
+export type ProductImage = {
+  id: string; product_id: string; storage_path: string; alt_text: string | null; url: string;
 };
 export type ProductDetail = MarketplaceProduct & {
   unit_of_measure: string; lead_time_days: number; gst_rate: number | null; hsn_code: string | null;
@@ -323,7 +330,8 @@ export async function searchPublishedProducts(term: string, categoryId: string, 
     data: Array<{ id: string; display_name: string }> | null; error: { message: string } | null;
   });
   const names = new Map(suppliers.map(item => [item.id, item.display_name]));
-  return products.map(item => ({ ...item, supplier_name: names.get(item.organization_id) ?? "Verified supplier" }));
+  const images = await getProductImages(products.map(item => item.id));
+  return products.map(item => ({ ...item, supplier_name: names.get(item.organization_id) ?? "Verified supplier", images: images.get(item.id) ?? [] }));
 }
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 export function startingUnitPrice(product: Pick<MarketplaceProduct, "product_price_tiers">): number | null {
@@ -336,8 +344,9 @@ export async function getPublishedProductBySlug(slug: string): Promise<ProductDe
   if (error) throw new Error(error.message);
   if (!data) return null;
   const product = data as unknown as Omit<ProductDetail, "category" | "supplier_name">;
-  const [supplier, category] = await Promise.all([
+  const [supplier, images, category] = await Promise.all([
     getSupplier(product.organization_id),
+    getProductImages([product.id]),
     product.category_id
       ? db.from("categories").select("id,name,slug").eq("id", product.category_id).maybeSingle()
       : Promise.resolve({ data: null, error: null }),
@@ -347,8 +356,49 @@ export async function getPublishedProductBySlug(slug: string): Promise<ProductDe
     ...product,
     product_price_tiers: [...product.product_price_tiers].sort((a, b) => Number(a.minimum_quantity) - Number(b.minimum_quantity)),
     supplier_name: supplier?.display_name ?? "Verified supplier",
+    images: images.get(product.id) ?? [],
     category: category.data as Category | null,
   };
+}
+const PRODUCT_IMAGE_BUCKET = "product-images";
+const PRODUCT_IMAGE_EXTENSIONS: Record<string, string> = { "image/jpeg": "jpg", "image/png": "png", "image/webp": "webp" };
+export const PRODUCT_IMAGE_ACCEPT = Object.keys(PRODUCT_IMAGE_EXTENSIONS).join(",");
+export const PRODUCT_IMAGE_MAX_BYTES = 5 * 1024 * 1024;
+export const PRODUCT_IMAGE_LIMIT = 6;
+// Images are optional, so a failed read (for example before the product_images
+// migration is applied) falls back to the placeholder instead of breaking the page.
+export async function getProductImages(productIds: string[]): Promise<Map<string, ProductImage[]>> {
+  const images = new Map<string, ProductImage[]>();
+  if (productIds.length === 0) return images;
+  const { data, error } = await untypedDb.from("product_images").select("id,product_id,storage_path,alt_text")
+    .in("product_id", productIds).order("sort_order").order("created_at");
+  if (error || !data) return images;
+  for (const row of data as Array<Omit<ProductImage, "url">>) {
+    const url = db.storage.from(PRODUCT_IMAGE_BUCKET).getPublicUrl(row.storage_path).data.publicUrl;
+    images.set(row.product_id, [...(images.get(row.product_id) ?? []), { ...row, url }]);
+  }
+  return images;
+}
+export async function uploadProductImage(productId: string, file: File, altText: string): Promise<void> {
+  const extension = PRODUCT_IMAGE_EXTENSIONS[file.type];
+  if (!extension) throw new Error("Upload a JPEG, PNG or WebP image.");
+  if (file.size > PRODUCT_IMAGE_MAX_BYTES) throw new Error("Images can be at most 5 MB.");
+  const path = `${productId}/${crypto.randomUUID()}.${extension}`;
+  const upload = await db.storage.from(PRODUCT_IMAGE_BUCKET).upload(path, file, { contentType: file.type, cacheControl: "31536000" });
+  if (upload.error) throw new Error(upload.error.message);
+  const { error } = await untypedDb.rpc("add_product_image_command", {
+    product_id_input: productId, storage_path_input: path, alt_text_input: altText,
+  });
+  if (error) {
+    await db.storage.from(PRODUCT_IMAGE_BUCKET).remove([path]);
+    throw new Error(error.message);
+  }
+}
+export async function deleteProductImage(image: ProductImage): Promise<void> {
+  const { error } = await untypedDb.rpc("delete_product_image_command", { image_id_input: image.id });
+  if (error) throw new Error(error.message);
+  // The listing no longer references the file; a failed cleanup only leaves an unused object.
+  await db.storage.from(PRODUCT_IMAGE_BUCKET).remove([image.storage_path]);
 }
 export async function getCategoryBySlug(slug: string): Promise<Category | null> {
   const { data, error } = await db.from("categories").select("id,name,slug").eq("slug", slug).eq("is_active", true).maybeSingle();

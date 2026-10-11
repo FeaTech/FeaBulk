@@ -5,6 +5,7 @@ import {
   getDisputeQueue,
   getIdentity,
   getModerationQueue,
+  getProductImages,
   getOperationsHealth,
   getOperationsRoles,
   getPlatformAccounts,
@@ -19,28 +20,47 @@ import {
   type PlatformAccount,
   type PlatformOrganization,
   type Product,
+  type ProductImage,
   type VerificationCase,
 } from "@/lib/marketplace";
 import { CategoriesPanel, OrdersPanel, PaymentsPanel } from "@/components/ops/AdminPanels";
 
 export const Route = createFileRoute("/operations")({
-  head: () => ({ meta: [
-    { title: "Operations Console | FEA Bulk" },
-    { name: "description", content: "Review FEA Bulk verification, catalog, disputes and platform operations." },
-    { property: "og:title", content: "Operations Console | FEA Bulk" },
-    { property: "og:description", content: "Review FEA Bulk verification, catalog, disputes and platform operations." },
-    { property: "og:type", content: "website" },
-    { name: "twitter:card", content: "summary" },
-  ] }),
+  head: () => ({
+    meta: [
+      { title: "Operations Console | FEA Bulk" },
+      {
+        name: "description",
+        content: "Review FEA Bulk verification, catalog, disputes and platform operations.",
+      },
+      { property: "og:title", content: "Operations Console | FEA Bulk" },
+      {
+        property: "og:description",
+        content: "Review FEA Bulk verification, catalog, disputes and platform operations.",
+      },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
+    ],
+  }),
   component: Operations,
 });
-type OperationsView = "overview" | "verification" | "catalog" | "disputes" | "health" | "accounts" | "orders" | "payments" | "categories";
+type OperationsView =
+  | "overview"
+  | "verification"
+  | "catalog"
+  | "disputes"
+  | "health"
+  | "accounts"
+  | "orders"
+  | "payments"
+  | "categories";
 
 function Operations() {
   const [access, setAccess] = useState<boolean | null>(null);
   const [roles, setRoles] = useState<OperationsRole[]>([]);
   const [cases, setCases] = useState<VerificationCase[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
+  const [productImages, setProductImages] = useState<Map<string, ProductImage[]>>(new Map());
   const [disputes, setDisputes] = useState<Dispute[]>([]);
   const [accounts, setAccounts] = useState<PlatformAccount[]>([]);
   const [organizations, setOrganizations] = useState<PlatformOrganization[]>([]);
@@ -64,7 +84,12 @@ function Operations() {
   const canModerate = hasRole("catalog_moderator", "platform_administrator");
   const canResolveDisputes = hasRole("dispute_manager", "platform_administrator");
   const canViewHealth = hasRole("support_agent", "payments_reviewer", "platform_administrator");
-  const canViewOrders = hasRole("support_agent", "payments_reviewer", "dispute_manager", "platform_administrator");
+  const canViewOrders = hasRole(
+    "support_agent",
+    "payments_reviewer",
+    "dispute_manager",
+    "platform_administrator",
+  );
   const canViewPayments = hasRole("payments_reviewer", "platform_administrator");
   const organizationNames = useMemo(
     () => new Map(organizations.map((item) => [item.organization_id, item.display_name])),
@@ -108,6 +133,7 @@ function Operations() {
     setRoles(nextRoles);
     setCases(nextCases);
     setProducts(nextProducts);
+    setProductImages(await getProductImages(nextProducts.map((item) => item.id)));
     setDisputes(nextDisputes);
     setHealth(nextHealth);
     setAccounts(nextAccounts);
@@ -234,7 +260,6 @@ function Operations() {
             {view === "orders" && canViewOrders && <OrdersPanel />}
             {view === "payments" && canViewPayments && <PaymentsPanel />}
             {view === "categories" && canModerate && <CategoriesPanel canEdit={platformAdmin} />}
-
 
             {view === "overview" && (
               <section className="mt-6">
@@ -425,6 +450,19 @@ function Operations() {
                         SKU {item.seller_sku} · MOQ {item.minimum_order_quantity} · stock{" "}
                         {item.available_quantity}
                       </p>
+                      {(productImages.get(item.id) ?? []).length > 0 && (
+                        <div className="mt-3 flex flex-wrap gap-2">
+                          {(productImages.get(item.id) ?? []).map((image) => (
+                            <a key={image.id} href={image.url} target="_blank" rel="noreferrer">
+                              <img
+                                src={image.url}
+                                alt={image.alt_text ?? item.name}
+                                className="h-24 w-24 border object-cover"
+                              />
+                            </a>
+                          ))}
+                        </div>
+                      )}
                       <DecisionInput id={item.id} notes={notes} setNotes={setNotes} />
                       <div className="mt-3 flex gap-2">
                         <button

@@ -1,7 +1,12 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { PriceCalculator } from "@/components/marketplace/PriceCalculator";
-import { Breadcrumbs, PageMessage, PublicShell } from "@/components/marketplace/PublicShell";
+import {
+  Breadcrumbs,
+  PageMessage,
+  ProductPicture,
+  PublicShell,
+} from "@/components/marketplace/PublicShell";
 import { SupplierRating } from "@/components/marketplace/SupplierRating";
 import {
   getPublishedProductBySlug,
@@ -34,6 +39,7 @@ function ProductPage() {
   const { slug } = Route.useParams();
   const [product, setProduct] = useState<ProductDetail | null>(null);
   const [rating, setRating] = useState<Rating | undefined>(undefined);
+  const [selectedImage, setSelectedImage] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -41,6 +47,7 @@ function ProductPage() {
     let active = true;
     setLoading(true);
     setError("");
+    setSelectedImage(0);
     void getPublishedProductBySlug(slug)
       .then((item) => {
         if (!active) return;
@@ -89,6 +96,8 @@ function ProductPage() {
     );
 
   const unit = product.unit_of_measure;
+  const images = product.images ?? [];
+  const shownImage = images[selectedImage] ?? images[0];
   const facts: Array<[string, string]> = [
     ["Minimum order", `${product.minimum_order_quantity.toLocaleString("en-IN")} ${unit}`],
     ["Available", `${product.available_quantity.toLocaleString("en-IN")} ${unit}`],
@@ -112,11 +121,27 @@ function ProductPage() {
         ]}
       />
       <div className="mt-6 grid gap-8 lg:grid-cols-[1fr_1.1fr]">
-        <div
-          className="flex aspect-[4/3] items-center justify-center bg-[#EAF2FB] text-8xl font-black text-[#102B52]"
-          aria-hidden="true"
-        >
-          {product.name.charAt(0).toUpperCase()}
+        <div>
+          <ProductPicture
+            product={{ name: product.name, images: shownImage ? [shownImage] : [] }}
+            className="aspect-[4/3] w-full text-8xl"
+          />
+          {images.length > 1 && (
+            <div className="mt-3 flex flex-wrap gap-2">
+              {images.map((image, index) => (
+                <button
+                  key={image.id}
+                  type="button"
+                  aria-label={`Show image ${index + 1} of ${images.length}`}
+                  aria-pressed={image.id === shownImage?.id}
+                  className={`border-2 ${image.id === shownImage?.id ? "border-[#F87908]" : "border-transparent"}`}
+                  onClick={() => setSelectedImage(index)}
+                >
+                  <img src={image.url} alt="" className="h-16 w-16 object-cover" />
+                </button>
+              ))}
+            </div>
+          )}
         </div>
         <section>
           <p className="text-xs font-black uppercase tracking-wider text-[#F87908]">

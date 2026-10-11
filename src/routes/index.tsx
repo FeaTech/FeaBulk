@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState, type ReactNode } from "react";
+import { ProductPicture } from "@/components/marketplace/PublicShell";
 import { searchPublishedProducts, type MarketplaceProduct } from "@/lib/marketplace";
 
 type IconProps = { size?: number; className?: string };
@@ -101,7 +102,7 @@ function Index() {
             {products.map((product) => {
               const startingPrice = product.product_price_tiers.reduce<number | null>((lowest, tier) => lowest === null ? Number(tier.unit_price) : Math.min(lowest, Number(tier.unit_price)), null);
               return <article key={product.id} className="flex h-full flex-col border border-[#DDE5EE] bg-white p-5 transition hover:border-[#102B52] hover:shadow-[0_8px_20px_rgba(16,43,82,.08)]">
-                <div className="mb-5 flex h-28 items-center justify-center bg-[#EAF2FB] text-4xl font-black text-[#102B52]" aria-hidden="true">{product.name.charAt(0).toUpperCase()}</div>
+                <ProductPicture product={product} className="mb-5 h-28 w-full text-4xl" />
                 <p className="text-xs font-bold uppercase tracking-wide text-[#D96806]"><a href={`/suppliers/${product.organization_id}`}>{product.supplier_name ?? "Verified supplier"}</a></p>
                 <h3 className="mt-2 text-lg font-extrabold leading-snug text-[#102B52]"><a className="hover:text-[#F87908]" href={`/products/${product.slug}`}>{product.name}</a></h3>
                 <p className="mt-2 line-clamp-2 text-sm leading-6 text-[#697488]">{product.description}</p>

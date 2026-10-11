@@ -52,18 +52,38 @@ export function PageMessage({ title, children }: { title: string; children?: Rea
   );
 }
 
+export function ProductPicture({
+  product,
+  className,
+}: {
+  product: Pick<MarketplaceProduct, "name" | "images">;
+  className: string;
+}) {
+  const image = product.images?.[0];
+  return image ? (
+    <img
+      src={image.url}
+      alt={image.alt_text ?? product.name}
+      loading="lazy"
+      className={`${className} bg-[#EAF2FB] object-cover`}
+    />
+  ) : (
+    <div
+      className={`${className} flex items-center justify-center bg-[#EAF2FB] font-black text-[#102B52]`}
+      aria-hidden="true"
+    >
+      {product.name.charAt(0).toUpperCase()}
+    </div>
+  );
+}
+
 export function ProductCard({ product }: { product: MarketplaceProduct }) {
   const price = startingUnitPrice(product);
   const href = `/products/${product.slug}`;
   return (
     <article className="flex h-full flex-col border bg-white p-5">
-      <a
-        href={href}
-        className="mb-4 flex h-28 items-center justify-center bg-[#EAF2FB] text-4xl font-black text-[#102B52]"
-        aria-hidden="true"
-        tabIndex={-1}
-      >
-        {product.name.charAt(0).toUpperCase()}
+      <a href={href} className="mb-4 block" aria-hidden="true" tabIndex={-1}>
+        <ProductPicture product={product} className="h-28 w-full text-4xl" />
       </a>
       <h3 className="text-lg font-extrabold text-[#102B52]">
         <a className="hover:text-[#F87908]" href={href}>

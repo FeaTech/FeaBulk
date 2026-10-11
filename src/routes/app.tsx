@@ -15,6 +15,7 @@ import {
   createRfq,
   createShipment,
   deletePriceTier,
+  deleteProductImage,
   dispatchShipment,
   generateCommercialDocument,
   getBuyerRfqs,
@@ -30,6 +31,7 @@ import {
   getOrCreateConversation,
   getOrganizationInvitations,
   getOrganizations,
+  getProductImages,
   getProducts,
   getQuotesForRfq,
   getSellerQuotes,
@@ -52,6 +54,9 @@ import {
   submitVerification,
   transitionOrder,
   updateProductDraft,
+  uploadProductImage,
+  PRODUCT_IMAGE_ACCEPT,
+  PRODUCT_IMAGE_LIMIT,
   type Category,
   type CommercialDocument,
   type Notification,
@@ -60,6 +65,7 @@ import {
   type OrganizationInvitation,
   type Product,
   type ProductDetail,
+  type ProductImage,
   type Quote,
   type Rfq,
   type SupplierRating as Rating,
@@ -204,6 +210,7 @@ function Workspace() {
   const [quotes, setQuotes] = useState<Quote[]>([]);
   const [selectedRfq, setSelectedRfq] = useState("");
   const [products, setProducts] = useState<Product[]>([]);
+  const [productImages, setProductImages] = useState<Map<string, ProductImage[]>>(new Map());
   const [editingProductId, setEditingProductId] = useState("");
   const [orderActionId, setOrderActionId] = useState("");
   const [orders, setOrders] = useState<Order[]>([]);
@@ -329,6 +336,7 @@ function Workspace() {
     setOpportunities(nextOpportunities);
     setSellerQuotes(nextSellerQuotes);
     setProducts(nextProducts);
+    setProductImages(await getProductImages(nextProducts.map((item) => item.id)));
     setOrders(nextOrders);
     setVerification(nextVerification);
     setTeam(nextTeam);
@@ -1640,6 +1648,77 @@ function Workspace() {
                                   />
                                   <button disabled={busy} className="button">
                                     Add price tier
+                                  </button>
+                                </form>
+                              )}
+                            {(productImages.get(item.id) ?? []).length > 0 && (
+                              <div className="mt-4 flex flex-wrap gap-3 border-t pt-4">
+                                {(productImages.get(item.id) ?? []).map((image) => (
+                                  <figure key={image.id} className="w-24 text-xs">
+                                    <img
+                                      src={image.url}
+                                      alt={image.alt_text ?? item.name}
+                                      className="h-24 w-24 border object-cover"
+                                    />
+                                    {canManageCatalog &&
+                                      item.listing_status === "draft" &&
+                                      !item.submitted_for_review_at && (
+                                        <button
+                                          disabled={busy}
+                                          className="mt-1 text-red-700 underline"
+                                          onClick={() =>
+                                            void run(
+                                              () => deleteProductImage(image),
+                                              "Product image removed.",
+                                            )
+                                          }
+                                        >
+                                          Remove image
+                                        </button>
+                                      )}
+                                  </figure>
+                                ))}
+                              </div>
+                            )}
+                            {canManageCatalog &&
+                              item.listing_status === "draft" &&
+                              !item.submitted_for_review_at &&
+                              (productImages.get(item.id) ?? []).length < PRODUCT_IMAGE_LIMIT && (
+                                <form
+                                  className="mt-4 flex flex-wrap items-end gap-2 border-t pt-4"
+                                  onSubmit={(event) => {
+                                    event.preventDefault();
+                                    const formElement = event.currentTarget;
+                                    const f = formValues(event);
+                                    const file = f["image"];
+                                    if (!(file instanceof File)) return;
+                                    void run(async () => {
+                                      await uploadProductImage(
+                                        item.id,
+                                        file,
+                                        String(f["alt"] ?? ""),
+                                      );
+                                      formElement.reset();
+                                    }, "Product image added.");
+                                  }}
+                                >
+                                  <Field label="Product image (JPEG, PNG or WebP, up to 5 MB)">
+                                    <input
+                                      name="image"
+                                      type="file"
+                                      accept={PRODUCT_IMAGE_ACCEPT}
+                                      required
+                                      className={input}
+                                    />
+                                  </Field>
+                                  <Text
+                                    name="alt"
+                                    label="Image description"
+                                    required={false}
+                                    maxLength={200}
+                                  />
+                                  <button disabled={busy} className="button">
+                                    Upload image
                                   </button>
                                 </form>
                               )}
