@@ -374,7 +374,7 @@ export async function getProductImages(productIds: string[]): Promise<Map<string
     .in("product_id", productIds).order("sort_order").order("created_at");
   if (error || !data) return images;
   for (const row of data as Array<Omit<ProductImage, "url">>) {
-    const url = db.storage.from(PRODUCT_IMAGE_BUCKET).getPublicUrl(row.storage_path).data.publicUrl;
+    const url = /^(https?:)?\//.test(row.storage_path) ? row.storage_path : db.storage.from(PRODUCT_IMAGE_BUCKET).getPublicUrl(row.storage_path).data.publicUrl;
     images.set(row.product_id, [...(images.get(row.product_id) ?? []), { ...row, url }]);
   }
   return images;
