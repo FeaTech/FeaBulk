@@ -10,10 +10,13 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AdminRouteImport } from './routes/admin'
 import { Route as AppRouteImport } from './routes/app'
 import { Route as AuthRouteImport } from './routes/auth'
+import { Route as BuyerRouteImport } from './routes/buyer'
 import { Route as MarketplaceRouteImport } from './routes/marketplace'
 import { Route as OperationsRouteImport } from './routes/operations'
+import { Route as SellerRouteImport } from './routes/seller'
 import { Route as CategoriesSlugRouteImport } from './routes/categories/$slug'
 import { Route as ProductsSlugRouteImport } from './routes/products/$slug'
 import { Route as SuppliersSlugRouteImport } from './routes/suppliers/$slug'
@@ -21,6 +24,11 @@ import { Route as SuppliersSlugRouteImport } from './routes/suppliers/$slug'
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminRoute = AdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AppRoute = AppRouteImport.update({
@@ -33,6 +41,11 @@ const AuthRoute = AuthRouteImport.update({
   path: '/auth',
   getParentRoute: () => rootRouteImport,
 } as any)
+const BuyerRoute = BuyerRouteImport.update({
+  id: '/buyer',
+  path: '/buyer',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const MarketplaceRoute = MarketplaceRouteImport.update({
   id: '/marketplace',
   path: '/marketplace',
@@ -41,6 +54,11 @@ const MarketplaceRoute = MarketplaceRouteImport.update({
 const OperationsRoute = OperationsRouteImport.update({
   id: '/operations',
   path: '/operations',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SellerRoute = SellerRouteImport.update({
+  id: '/seller',
+  path: '/seller',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CategoriesSlugRoute = CategoriesSlugRouteImport.update({
@@ -61,20 +79,26 @@ const SuppliersSlugRoute = SuppliersSlugRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/admin': typeof AdminRoute
   '/app': typeof AppRoute
   '/auth': typeof AuthRoute
+  '/buyer': typeof BuyerRoute
   '/marketplace': typeof MarketplaceRoute
   '/operations': typeof OperationsRoute
+  '/seller': typeof SellerRoute
   '/categories/$slug': typeof CategoriesSlugRoute
   '/products/$slug': typeof ProductsSlugRoute
   '/suppliers/$slug': typeof SuppliersSlugRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/admin': typeof AdminRoute
   '/app': typeof AppRoute
   '/auth': typeof AuthRoute
+  '/buyer': typeof BuyerRoute
   '/marketplace': typeof MarketplaceRoute
   '/operations': typeof OperationsRoute
+  '/seller': typeof SellerRoute
   '/categories/$slug': typeof CategoriesSlugRoute
   '/products/$slug': typeof ProductsSlugRoute
   '/suppliers/$slug': typeof SuppliersSlugRoute
@@ -82,10 +106,13 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/admin': typeof AdminRoute
   '/app': typeof AppRoute
   '/auth': typeof AuthRoute
+  '/buyer': typeof BuyerRoute
   '/marketplace': typeof MarketplaceRoute
   '/operations': typeof OperationsRoute
+  '/seller': typeof SellerRoute
   '/categories/$slug': typeof CategoriesSlugRoute
   '/products/$slug': typeof ProductsSlugRoute
   '/suppliers/$slug': typeof SuppliersSlugRoute
@@ -94,30 +121,39 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/admin'
     | '/app'
     | '/auth'
+    | '/buyer'
     | '/marketplace'
     | '/operations'
+    | '/seller'
     | '/categories/$slug'
     | '/products/$slug'
     | '/suppliers/$slug'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/admin'
     | '/app'
     | '/auth'
+    | '/buyer'
     | '/marketplace'
     | '/operations'
+    | '/seller'
     | '/categories/$slug'
     | '/products/$slug'
     | '/suppliers/$slug'
   id:
     | '__root__'
     | '/'
+    | '/admin'
     | '/app'
     | '/auth'
+    | '/buyer'
     | '/marketplace'
     | '/operations'
+    | '/seller'
     | '/categories/$slug'
     | '/products/$slug'
     | '/suppliers/$slug'
@@ -125,10 +161,13 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AdminRoute: typeof AdminRoute
   AppRoute: typeof AppRoute
   AuthRoute: typeof AuthRoute
+  BuyerRoute: typeof BuyerRoute
   MarketplaceRoute: typeof MarketplaceRoute
   OperationsRoute: typeof OperationsRoute
+  SellerRoute: typeof SellerRoute
   CategoriesSlugRoute: typeof CategoriesSlugRoute
   ProductsSlugRoute: typeof ProductsSlugRoute
   SuppliersSlugRoute: typeof SuppliersSlugRoute
@@ -141,6 +180,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin': {
+      id: '/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AdminRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/app': {
@@ -157,6 +203,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/buyer': {
+      id: '/buyer'
+      path: '/buyer'
+      fullPath: '/buyer'
+      preLoaderRoute: typeof BuyerRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/marketplace': {
       id: '/marketplace'
       path: '/marketplace'
@@ -169,6 +222,13 @@ declare module '@tanstack/react-router' {
       path: '/operations'
       fullPath: '/operations'
       preLoaderRoute: typeof OperationsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/seller': {
+      id: '/seller'
+      path: '/seller'
+      fullPath: '/seller'
+      preLoaderRoute: typeof SellerRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/categories/$slug': {
@@ -197,10 +257,13 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AdminRoute: AdminRoute,
   AppRoute: AppRoute,
   AuthRoute: AuthRoute,
+  BuyerRoute: BuyerRoute,
   MarketplaceRoute: MarketplaceRoute,
   OperationsRoute: OperationsRoute,
+  SellerRoute: SellerRoute,
   CategoriesSlugRoute: CategoriesSlugRoute,
   ProductsSlugRoute: ProductsSlugRoute,
   SuppliersSlugRoute: SuppliersSlugRoute,
