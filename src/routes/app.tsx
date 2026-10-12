@@ -124,20 +124,11 @@ function storePendingRfqProduct(slug: string) {
   }
 }
 const input = "w-full border border-[#C9D3DF] bg-white px-3 py-2 text-[#17233A]";
-const INVITABLE_TEAM_ROLES: TeamRole[] = [
-  "procurement_manager",
-  "purchase_approver",
-  "accountant",
-  "sales_manager",
-  "sales_representative",
-  "catalog_manager",
-  "inventory_manager",
-  "warehouse_operator",
-  "viewer",
-];
+// Simplified model: teammates are "Member" with the same access as the owner.
+const INVITABLE_TEAM_ROLES: TeamRole[] = ["administrator"];
 const TEAM_ROLE_LABELS: Record<TeamRole, string> = {
-  owner: "Business owner",
-  administrator: "Business administrator",
+  owner: "Owner",
+  administrator: "Member",
   procurement_manager: "Procurement manager",
   purchase_approver: "Purchase approver",
   accountant: "Accountant",
