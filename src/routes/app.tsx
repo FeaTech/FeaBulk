@@ -1870,22 +1870,7 @@ function Workspace() {
                           <Text name="email" label="Confirmed work email" type="email" />
                           <Field label="Business role">
                             <select name="role" className={input}>
-                              {INVITABLE_TEAM_ROLES.filter(
-                                (role) =>
-                                  organization.kind === "both" ||
-                                  role === "viewer" ||
-                                  role === "accountant" ||
-                                  (buyer &&
-                                    ["procurement_manager", "purchase_approver"].includes(role)) ||
-                                  (seller &&
-                                    [
-                                      "sales_manager",
-                                      "sales_representative",
-                                      "catalog_manager",
-                                      "inventory_manager",
-                                      "warehouse_operator",
-                                    ].includes(role)),
-                              ).map((role) => (
+                              {INVITABLE_TEAM_ROLES.map((role) => (
                                 <option key={role} value={role}>
                                   {teamRoleLabel(role)}
                                 </option>
