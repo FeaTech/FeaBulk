@@ -10,7 +10,7 @@ export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "14.5"
+    PostgrestVersion: "14.17"
   }
   public: {
     Tables: {
@@ -1239,6 +1239,44 @@ export type Database = {
           },
         ]
       }
+      product_images: {
+        Row: {
+          alt_text: string | null
+          created_at: string
+          created_by: string | null
+          id: string
+          product_id: string
+          sort_order: number
+          storage_path: string
+        }
+        Insert: {
+          alt_text?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          product_id: string
+          sort_order?: number
+          storage_path: string
+        }
+        Update: {
+          alt_text?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          product_id?: string
+          sort_order?: number
+          storage_path?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_images_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       product_price_tiers: {
         Row: {
           created_at: string
@@ -2139,6 +2177,28 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      add_product_image_command: {
+        Args: {
+          alt_text_input?: string
+          product_id_input: string
+          storage_path_input: string
+        }
+        Returns: {
+          alt_text: string | null
+          created_at: string
+          created_by: string | null
+          id: string
+          product_id: string
+          sort_order: number
+          storage_path: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "product_images"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       add_product_price_tier_command: {
         Args: {
           maximum_quantity_input: number
@@ -2540,6 +2600,10 @@ export type Database = {
           isOneToOne: true
           isSetofReturn: false
         }
+      }
+      delete_product_image_command: {
+        Args: { image_id_input: string }
+        Returns: undefined
       }
       delete_product_price_tier_command: {
         Args: { tier_id_input: string }
