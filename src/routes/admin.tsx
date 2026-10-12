@@ -170,7 +170,7 @@ function Operations() {
             FEA<span className="text-[#F87908]">Bulk</span>
           </a>
           <a href="/marketplace" className="text-sm font-bold text-[#102B52]">
-            Business workspace
+            Marketplace
           </a>
         </div>
       </header>
