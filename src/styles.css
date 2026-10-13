@@ -47,6 +47,19 @@
   --color-input: var(--input);
   --color-ring: var(--ring);
   --color-ring-offset-background: var(--background);
+  --color-workspace-brand: var(--workspace-brand);
+  --color-workspace-canvas: var(--workspace-canvas);
+  --color-workspace-nav: var(--workspace-nav);
+  --color-workspace-nav-foreground: var(--workspace-nav-foreground);
+  --color-workspace-nav-muted: var(--workspace-nav-muted);
+  --color-workspace-action: var(--workspace-action);
+  --color-workspace-action-foreground: var(--workspace-action-foreground);
+  --color-workspace-action-hover: var(--workspace-action-hover);
+  --color-workspace-success: var(--workspace-success);
+  --color-workspace-success-soft: var(--workspace-success-soft);
+  --color-workspace-warning: var(--workspace-warning);
+  --color-workspace-warning-soft: var(--workspace-warning-soft);
+  --color-workspace-info-soft: var(--workspace-info-soft);
   --color-chart-1: var(--chart-1);
   --color-chart-2: var(--chart-2);
   --color-chart-3: var(--chart-3);
@@ -63,6 +76,19 @@
 }
 
 :root {
+  --workspace-brand: oklch(0.29 0.078 257);
+  --workspace-canvas: oklch(0.977 0.004 250);
+  --workspace-nav: oklch(0.238 0.06 258);
+  --workspace-nav-foreground: oklch(0.98 0.004 250);
+  --workspace-nav-muted: oklch(0.73 0.03 255);
+  --workspace-action: oklch(0.69 0.19 48);
+  --workspace-action-foreground: oklch(0.19 0.03 255);
+  --workspace-action-hover: oklch(0.75 0.17 53);
+  --workspace-success: oklch(0.44 0.105 164);
+  --workspace-success-soft: oklch(0.95 0.03 164);
+  --workspace-warning: oklch(0.47 0.115 60);
+  --workspace-warning-soft: oklch(0.96 0.05 85);
+  --workspace-info-soft: oklch(0.95 0.025 250);
   --radius: 0.625rem;
   --background: oklch(1 0 0);
   --foreground: oklch(0.129 0.042 264.695);
@@ -99,6 +125,19 @@
 }
 
 .dark {
+  --workspace-brand: oklch(0.9 0.03 250);
+  --workspace-canvas: oklch(0.16 0.02 250);
+  --workspace-nav: oklch(0.19 0.025 255);
+  --workspace-nav-foreground: oklch(0.98 0.004 250);
+  --workspace-nav-muted: oklch(0.73 0.03 255);
+  --workspace-action: oklch(0.74 0.17 53);
+  --workspace-action-foreground: oklch(0.19 0.03 255);
+  --workspace-action-hover: oklch(0.8 0.14 60);
+  --workspace-success: oklch(0.78 0.12 164);
+  --workspace-success-soft: oklch(0.26 0.04 164);
+  --workspace-warning: oklch(0.83 0.13 85);
+  --workspace-warning-soft: oklch(0.28 0.04 70);
+  --workspace-info-soft: oklch(0.26 0.035 250);
   --background: oklch(0.129 0.042 264.695);
   --foreground: oklch(0.984 0.003 247.858);
   --card: oklch(0.208 0.042 265.755);
@@ -145,6 +184,28 @@
 }
 
 @layer components {
+  .business-workspace .button {
+    background: var(--workspace-action);
+    color: var(--workspace-action-foreground);
+    border-radius: .375rem;
+  }
+  .business-workspace .button:hover { background: var(--workspace-action-hover); }
+  .business-workspace .button-secondary {
+    border-color: var(--border);
+    background: var(--card);
+    color: var(--workspace-brand);
+    border-radius: .375rem;
+  }
+  .business-workspace :is(input, select, textarea) {
+    border-radius: .375rem;
+    max-width: 100%;
+    min-width: 0;
+  }
+  .business-workspace :is(input, select, textarea):focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
+  }
+  .business-workspace :is(h1, h2, h3, p, span) { overflow-wrap: anywhere; }
   .button { background: #f87908; color: white; padding: .65rem 1rem; font-size: .875rem; font-weight: 800; cursor: pointer; }
   .button:hover { background: #d96806; }
   .button:disabled { opacity: .55; cursor: not-allowed; }
