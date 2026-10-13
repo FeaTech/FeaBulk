@@ -1,3 +1,4 @@
+import { Link } from "@tanstack/react-router";
 import type { ReactNode } from "react";
 import { startingUnitPrice, type MarketplaceProduct } from "@/lib/marketplace";
 
@@ -6,13 +7,13 @@ export function PublicShell({ children }: { children: ReactNode }) {
     <main className="min-h-screen bg-[#F7F8FA] text-[#17233A]">
       <header className="border-b bg-white">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-5 py-4">
-          <a href="/" className="text-xl font-black text-[#102B52]">
+          <Link to="/" className="text-xl font-black text-[#102B52]">
             FEA<span className="text-[#F87908]">Bulk</span>
-          </a>
+          </Link>
           <div className="flex gap-4 text-sm font-bold">
-            <a href="/marketplace">Marketplace</a>
-            <a href="/app">Workspace</a>
-            <a href="/auth">Sign in</a>
+            <Link to="/marketplace">Marketplace</Link>
+            <Link to="/app">Workspace</Link>
+            <Link to="/auth">Sign in</Link>
           </div>
         </div>
       </header>
@@ -45,9 +46,9 @@ export function PageMessage({ title, children }: { title: string; children?: Rea
     <section className="border bg-white p-8">
       <h1 className="text-2xl font-black text-[#102B52]">{title}</h1>
       {children && <p className="mt-2 text-sm text-[#526178]">{children}</p>}
-      <a href="/marketplace" className="mt-4 inline-block text-sm font-extrabold text-[#D96806]">
+      <Link to="/marketplace" className="mt-4 inline-block text-sm font-extrabold text-[#D96806]">
         Browse the marketplace →
-      </a>
+      </Link>
     </section>
   );
 }
@@ -80,16 +81,15 @@ export function ProductPicture({
 
 export function ProductCard({ product }: { product: MarketplaceProduct }) {
   const price = startingUnitPrice(product);
-  const href = `/products/${product.slug}`;
   return (
     <article className="flex h-full flex-col border bg-white p-5">
-      <a href={href} className="mb-4 block" aria-hidden="true" tabIndex={-1}>
+      <Link to="/products/$slug" params={{ slug: product.slug }} className="mb-4 block" aria-hidden="true" tabIndex={-1}>
         <ProductPicture product={product} className="h-28 w-full text-4xl" />
-      </a>
+      </Link>
       <h3 className="text-lg font-extrabold text-[#102B52]">
-        <a className="hover:text-[#F87908]" href={href}>
+        <Link className="hover:text-[#F87908]" to="/products/$slug" params={{ slug: product.slug }}>
           {product.name}
-        </a>
+        </Link>
       </h3>
       <p className="mt-1 text-sm text-[#526178]">
         <a className="hover:text-[#F87908]" href={`/suppliers/${product.organization_id}`}>
@@ -106,9 +106,9 @@ export function ProductCard({ product }: { product: MarketplaceProduct }) {
             ? "Price by quotation"
             : `From ₹${price.toLocaleString("en-IN")} per unit`}
         </p>
-        <a href={href} className="mt-4 inline-block text-sm font-extrabold text-[#D96806]">
+        <Link to="/products/$slug" params={{ slug: product.slug }} className="mt-4 inline-block text-sm font-extrabold text-[#D96806]">
           View product →
-        </a>
+        </Link>
       </div>
     </article>
   );
