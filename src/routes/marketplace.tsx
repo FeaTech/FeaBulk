@@ -26,6 +26,7 @@ function Marketplace() {
   const [ratings, setRatings] = useState<Map<string, Rating>>(new Map());
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [signedIn, setSignedIn] = useState(false);
   async function search(nextTerm: string, nextCategory: string) {
     const id = ++requestId.current;
     setLoading(true); setError("");
