@@ -6,6 +6,6 @@
 
 # Loading performance
 
-- [ ] Measure product and page loading and remove unnecessary waiting.
-- [ ] Reuse public catalog data on navigation and improve image decoding.
-- [ ] Verify product search and page navigation with live data.
+- [x] Measure product and page loading and remove unnecessary waiting.
+- [x] Reuse public catalog data on navigation and improve image decoding.
+- [x] Verify product search and page navigation with live data; signed-in workspace timing remains unavailable for the external Supabase connection.
