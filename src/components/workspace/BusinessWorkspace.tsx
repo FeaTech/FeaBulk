@@ -79,6 +79,7 @@ import {
 import { SupplierRating } from "@/components/marketplace/SupplierRating";
 import { FieldLabel } from "@/components/InfoTip";
 import { supabase } from "@/integrations/supabase/client";
+import { LISTING_STAGE_LABELS, listingStage, submissionBlockers, tierCoversMinimumOrder } from "@/lib/listing";
 import { slugCandidate, slugify } from "@/lib/slug";
 import { Button } from "@/components/ui/button";
 import { WorkspaceLayout, BusinessIdentity, AddBusinessButton } from "./WorkspaceLayout";
@@ -673,7 +674,7 @@ export function Workspace({ expected }: { expected?: "buyer" | "seller" }) {
       setProductSlug("");
       setProductSlugEdited(false);
       setForm(null);
-    }, "Product draft saved.").then(() => {
+    }, "Product draft saved. Next: on the product below, add a price tier and photos, then press Submit for review so the FeaBulk admin can approve it.").then(() => {
       if (savedSlug !== requestedSlug)
         setNotice(
           `Product draft saved. Another product already uses "${requestedSlug}", so this one's web address is /products/${savedSlug}.`,
@@ -1495,7 +1496,7 @@ export function Workspace({ expected }: { expected?: "buyer" | "seller" }) {
                               {productImages.get(item.id)?.[0] && <img src={productImages.get(item.id)?.[0]?.url} alt={productImages.get(item.id)?.[0]?.alt_text ?? item.name} className="size-20 shrink-0 rounded border bg-muted object-contain" />}
                               <div className="min-w-0"><h3 className="font-extrabold text-workspace-brand">{item.name}</h3>
                               <p className="mt-1 text-sm text-muted-foreground">SKU {item.seller_sku} · MOQ {item.minimum_order_quantity} · Stock {item.available_quantity}</p>
-                              <p className="mt-1 text-xs capitalize text-muted-foreground">{item.listing_status} · {item.moderation_status}</p></div>
+                              <p className="mt-1 text-xs font-semibold text-muted-foreground">{LISTING_STAGE_LABELS[listingStage(item)]}</p></div>
                             </div>
                             {item.moderation_notes && (
                               <p className="mt-2 border-l-2 border-workspace-action pl-3 text-sm">
@@ -1661,25 +1662,30 @@ export function Workspace({ expected }: { expected?: "buyer" | "seller" }) {
                                   className="mt-4 flex flex-wrap items-end gap-2 border-t pt-4"
                                   onSubmit={(event) => {
                                     event.preventDefault();
+                                    const formElement = event.currentTarget;
                                     const f = formValues(event);
-                                    void run(
-                                      () =>
-                                        addPriceTier(
-                                          item.id,
-                                          Number(f["min"]),
-                                          Number(f["max"]),
-                                          Number(f["price"]),
-                                        ),
-                                      "Price tier added.",
-                                    );
+                                    void run(async () => {
+                                      await addPriceTier(
+                                        item.id,
+                                        Number(f["min"]),
+                                        Number(f["max"]),
+                                        Number(f["price"]),
+                                      );
+                                      formElement.reset();
+                                    }, "Price tier added.");
                                   }}
                                 >
                                   <Text
+                                    // The first tier has to start at the minimum order quantity.
+                                    key={tierCoversMinimumOrder(item) ? "next-tier" : "first-tier"}
                                     name="min"
                                     label="From quantity"
-                                    hint="The smallest quantity this price applies to. It cannot be below the minimum order quantity."
+                                    hint="The smallest quantity this price applies to. Your first tier must start at the minimum order quantity."
                                     type="number"
                                     min={item.minimum_order_quantity}
+                                    defaultValue={
+                                      tierCoversMinimumOrder(item) ? "" : item.minimum_order_quantity
+                                    }
                                   />
                                   <Text
                                     name="max"
@@ -1780,18 +1786,44 @@ export function Workspace({ expected }: { expected?: "buyer" | "seller" }) {
                               item.listing_status === "draft" &&
                               item.moderation_status === "pending" &&
                               !item.submitted_for_review_at && (
-                                <Button variant="outline"
-                                  disabled={busy}
-                                  className="button mt-3"
-                                  onClick={() =>
-                                    void run(
-                                      () => submitProductForReview(item.id),
-                                      "Product submitted for moderation.",
-                                    )
-                                  }
-                                >
-                                  Submit for review
-                                </Button>
+                                <div className="mt-4 border-t pt-4">
+                                  <p className="text-sm font-bold">
+                                    The FeaBulk admin cannot see this product until you submit it.
+                                  </p>
+                                  {submissionBlockers(item, organization.status === "verified")
+                                    .length > 0 ? (
+                                    <ul className="mt-2 list-disc pl-5 text-sm" role="status">
+                                      {submissionBlockers(
+                                        item,
+                                        organization.status === "verified",
+                                      ).map((blocker) => (
+                                        <li key={blocker}>{blocker}</li>
+                                      ))}
+                                    </ul>
+                                  ) : (
+                                    <p className="mt-1 text-sm text-muted-foreground">
+                                      {(productImages.get(item.id) ?? []).length === 0
+                                        ? "Ready to send. Adding a photo first is recommended, because the admin and buyers will see it."
+                                        : "Ready to send. Prices and photos lock once you submit."}
+                                    </p>
+                                  )}
+                                  <Button variant="outline"
+                                    disabled={
+                                      busy ||
+                                      submissionBlockers(item, organization.status === "verified")
+                                        .length > 0
+                                    }
+                                    className="button mt-3"
+                                    onClick={() =>
+                                      void run(
+                                        () => submitProductForReview(item.id),
+                                        "Product sent to the FeaBulk admin for review.",
+                                      )
+                                    }
+                                  >
+                                    Submit for review
+                                  </Button>
+                                </div>
                               )}
                             {canAdjustInventory && (
                               <form

@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
 import {
   acknowledgeOperationalIncident,
+  getCategories,
   getDisputeQueue,
   getIdentity,
   getModerationQueue,
@@ -10,10 +11,13 @@ import {
   getOperationsRoles,
   getPlatformAccounts,
   getPlatformOrganizations,
+  getSupplierDirectory,
+  getUnsubmittedProductDrafts,
   getVerificationQueue,
   moderateProduct,
   resolveDispute,
   reviewVerification,
+  type Category,
   type Dispute,
   type OperationsHealth,
   type OperationsRole,
@@ -25,6 +29,8 @@ import {
 } from "@/lib/marketplace";
 import { FieldLabel } from "@/components/InfoTip";
 import { CategoriesPanel, OrdersPanel, PaymentsPanel } from "@/components/ops/AdminPanels";
+import { ProductReviewDetails } from "@/components/ops/ProductReview";
+import { submissionBlockers } from "@/lib/listing";
 
 export const Route = createFileRoute("/admin")({
   head: () => ({
@@ -62,6 +68,9 @@ function Operations() {
   const [cases, setCases] = useState<VerificationCase[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
   const [productImages, setProductImages] = useState<Map<string, ProductImage[]>>(new Map());
+  const [drafts, setDrafts] = useState<Product[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [sellerNames, setSellerNames] = useState<Map<string, string>>(new Map());
   const [disputes, setDisputes] = useState<Dispute[]>([]);
   const [accounts, setAccounts] = useState<PlatformAccount[]>([]);
   const [organizations, setOrganizations] = useState<PlatformOrganization[]>([]);
@@ -134,7 +143,29 @@ function Operations() {
     setRoles(nextRoles);
     setCases(nextCases);
     setProducts(nextProducts);
-    setProductImages(await getProductImages(nextProducts.map((item) => item.id)));
+    // Supporting detail for the review cards; a failure here must not hide the queue itself.
+    const canModerateCatalog = canLoad(["catalog_moderator", "platform_administrator"]);
+    const [nextDrafts, nextCategories, nextSuppliers] = canModerateCatalog
+      ? await Promise.all([
+          getUnsubmittedProductDrafts().catch(() => []),
+          getCategories().catch(() => []),
+          getSupplierDirectory().catch(() => []),
+        ])
+      : [[], [], []];
+    setDrafts(nextDrafts);
+    setCategories(nextCategories);
+    setSellerNames(
+      new Map([
+        ...nextSuppliers.map((item): [string, string] => [item.id, item.display_name]),
+        ...nextOrganizations.map((item): [string, string] => [
+          item.organization_id,
+          item.display_name,
+        ]),
+      ]),
+    );
+    setProductImages(
+      await getProductImages([...nextProducts, ...nextDrafts].map((item) => item.id)),
+    );
     setDisputes(nextDisputes);
     setHealth(nextHealth);
     setAccounts(nextAccounts);
@@ -430,24 +461,15 @@ function Operations() {
                 <div className="mt-3 grid gap-3">
                   {products.map((item) => (
                     <article key={item.id} className="rounded-xl border border-[#DDE5EE] bg-white p-5 shadow-sm">
-                      <h3 className="font-bold">{item.name}</h3>
-                      <p className="mt-1 text-sm text-[#526178]">
-                        SKU {item.seller_sku} · MOQ {item.minimum_order_quantity} · stock{" "}
-                        {item.available_quantity}
-                      </p>
-                      {(productImages.get(item.id) ?? []).length > 0 && (
-                        <div className="mt-3 flex flex-wrap gap-2">
-                          {(productImages.get(item.id) ?? []).map((image) => (
-                            <a key={image.id} href={image.url} target="_blank" rel="noreferrer">
-                              <img
-                                src={image.url}
-                                alt={image.alt_text ?? item.name}
-                                className="h-24 w-24 border object-cover"
-                              />
-                            </a>
-                          ))}
-                        </div>
-                      )}
+                      <ProductReviewDetails
+                        product={item}
+                        images={productImages.get(item.id) ?? []}
+                        sellerName={sellerNames.get(item.organization_id ?? "") ?? "Unknown seller"}
+                        categoryName={
+                          categories.find((category) => category.id === item.category_id)?.name ??
+                          "Not set"
+                        }
+                      />
                       <DecisionInput id={item.id} notes={notes} setNotes={setNotes} />
                       <div className="mt-3 flex gap-2">
                         <button
@@ -472,6 +494,54 @@ function Operations() {
                     </article>
                   ))}
                 </div>
+                {drafts.length > 0 && (
+                  <div className="mt-8">
+                    <h2 className="text-lg font-black">
+                      Saved by sellers, not submitted yet ({drafts.length})
+                    </h2>
+                    <p className="mt-1 text-sm text-[#526178]">
+                      These drafts are still with the seller. They appear above for approval once
+                      the seller presses Submit for review.
+                    </p>
+                    <div className="mt-3 grid gap-3">
+                      {drafts.map((item) => {
+                        const blockers = submissionBlockers(item, true);
+                        return (
+                          <details
+                            key={item.id}
+                            className="rounded-xl border border-[#DDE5EE] bg-white p-5 shadow-sm"
+                          >
+                            <summary className="cursor-pointer font-bold">
+                              {item.name}
+                              <span className="ml-2 font-normal text-[#526178]">
+                                · {sellerNames.get(item.organization_id ?? "") ?? "Unknown seller"}{" "}
+                                · saved {new Date(item.created_at).toLocaleDateString("en-IN")}
+                              </span>
+                            </summary>
+                            <p className="mt-3 border-l-2 border-[#F87908] pl-3 text-sm">
+                              {blockers.length > 0
+                                ? `Waiting on the seller: ${blockers.join(" ")}`
+                                : "Ready to submit. Waiting for the seller to press Submit for review."}
+                            </p>
+                            <div className="mt-3">
+                              <ProductReviewDetails
+                                product={item}
+                                images={productImages.get(item.id) ?? []}
+                                sellerName={
+                                  sellerNames.get(item.organization_id ?? "") ?? "Unknown seller"
+                                }
+                                categoryName={
+                                  categories.find((category) => category.id === item.category_id)
+                                    ?.name ?? "Not set"
+                                }
+                              />
+                            </div>
+                          </details>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
               </section>
             )}
 

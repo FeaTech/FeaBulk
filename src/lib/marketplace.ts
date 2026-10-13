@@ -39,6 +39,7 @@ export type Product = {
   listing_status: string; moderation_status: string; submitted_for_review_at: string | null; created_at: string;
   description?: string; category_id?: string | null; unit_of_measure?: string; hsn_code?: string | null;
   gst_rate?: number | null; lead_time_days?: number; moderation_notes?: string | null;
+  organization_id?: string;
   product_price_tiers?: Array<{ id: string; minimum_quantity: number; maximum_quantity: number; unit_price: number }>;
 };
 export type Order = {
@@ -315,9 +316,18 @@ export async function reviewVerification(id: string, approve: boolean, notes: st
     notes_input: notes.trim().length >= 10 ? notes.trim() : (notes.trim() ? `${notes.trim()} — reviewed by FeaBulk Admin` : approve ? "Approved by FeaBulk Admin" : "Rejected by FeaBulk Admin"),
   }));
 }
+// What a moderator needs to judge a listing, not just identify it.
+const MODERATION_FIELDS = "id,name,slug,seller_sku,description,category_id,organization_id,unit_of_measure,hsn_code,gst_rate,lead_time_days,minimum_order_quantity,available_quantity,listing_status,moderation_status,submitted_for_review_at,created_at,product_price_tiers(id,minimum_quantity,maximum_quantity,unit_price)";
+// Drafts that sellers saved but have not sent for review. Moderators cannot act on these;
+// they are shown so "I saved a product but the admin cannot see it" has a visible answer.
+export async function getUnsubmittedProductDrafts(): Promise<Product[]> {
+  return unwrap((await db.from("products").select(MODERATION_FIELDS)
+    .eq("listing_status", "draft").eq("moderation_status", "pending").is("submitted_for_review_at", null)
+    .order("created_at", { ascending: false }).limit(50)) as { data: Product[] | null; error: { message: string } | null });
+}
 export async function getModerationQueue(): Promise<Product[]> {
   return unwrap((await db.from("products")
-    .select("id,name,slug,seller_sku,minimum_order_quantity,available_quantity,listing_status,moderation_status,submitted_for_review_at,created_at")
+    .select(MODERATION_FIELDS)
     .eq("moderation_status", "pending").not("submitted_for_review_at", "is", null)
     .order("submitted_for_review_at")) as { data: Product[] | null; error: { message: string } | null });
 }
