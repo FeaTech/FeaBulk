@@ -11,7 +11,7 @@ const icons = { overview: LayoutDashboard, rfqs: FileText, suppliers: Store, ord
 
 export function WorkspaceLayout({ role, view, setView, signedIn, hasOrganization, organizationName, unread, showNotifications, onNotifications, onSignOut, children }: {
   role: "buyer" | "seller"; view: WorkspaceView; setView: (view: WorkspaceView) => void;
-  signedIn: boolean; hasOrganization: boolean; organizationName?: string; unread: number; showNotifications: boolean;
+  signedIn: boolean; hasOrganization: boolean; organizationName?: string | undefined; unread: number; showNotifications: boolean;
   onNotifications: () => void; onSignOut: () => void; children: ReactNode;
 }) {
   const sections: WorkspaceView[] = role === "buyer" ? ["overview", "rfqs", "suppliers", "orders", "team"] : ["overview", "opportunities", "quotes", "catalog", "orders", "team"];
@@ -47,7 +47,7 @@ export function WorkspaceLayout({ role, view, setView, signedIn, hasOrganization
   </div>;
 }
 
-export function BusinessIdentity({ name, status, children }: { name: string; status?: string; children: ReactNode }) {
+export function BusinessIdentity({ name, status, children }: { name: string; status?: string | undefined; children: ReactNode }) {
   return <div className="mb-6 flex flex-wrap items-center justify-between gap-4 border-b pb-6">
     <div className="flex min-w-0 items-center gap-3"><div className="flex size-11 shrink-0 items-center justify-center rounded-md border bg-card text-workspace-brand"><Building2 className="size-5" /></div><div className="min-w-0"><h2 className="text-lg font-bold text-workspace-brand">{name}</h2>{status && <p className={`mt-1 inline-flex items-center gap-1.5 text-xs font-semibold ${status === "verified" ? "text-workspace-success" : "text-workspace-warning"}`}><span className="size-1.5 rounded-full bg-current" />{status === "verified" ? "Verified business" : status.replaceAll("_", " ")}</p>}</div></div>
     <div className="flex max-w-full flex-wrap items-center gap-2">{children}</div>
