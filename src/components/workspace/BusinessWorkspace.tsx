@@ -10,7 +10,7 @@ import {
   confirmShipmentDelivery,
   createOrganization,
   createOrganizationInvitation,
-  createProduct,
+  createProductWithUniqueSlug,
   createReview,
   createRfq,
   createShipment,
@@ -78,6 +78,7 @@ import {
 } from "@/lib/marketplace";
 import { SupplierRating } from "@/components/marketplace/SupplierRating";
 import { supabase } from "@/integrations/supabase/client";
+import { slugCandidate, slugify } from "@/lib/slug";
 import { Button } from "@/components/ui/button";
 import { WorkspaceLayout, BusinessIdentity, AddBusinessButton } from "./WorkspaceLayout";
 import { WorkspaceOverview } from "./WorkspaceOverview";
@@ -188,6 +189,9 @@ export function Workspace({ expected }: { expected?: "buyer" | "seller" }) {
   const [products, setProducts] = useState<Product[]>([]);
   const [productImages, setProductImages] = useState<Map<string, ProductImage[]>>(new Map());
   const [editingProductId, setEditingProductId] = useState("");
+  // The new product's slug follows its name until the seller types a slug of their own.
+  const [productSlug, setProductSlug] = useState("");
+  const [productSlugEdited, setProductSlugEdited] = useState(false);
   const [orderActionId, setOrderActionId] = useState("");
   const [orders, setOrders] = useState<Order[]>([]);
   const [team, setTeam] = useState<TeamMember[]>([]);
@@ -383,6 +387,11 @@ export function Workspace({ expected }: { expected?: "buyer" | "seller" }) {
     };
   }, [pendingRfqProduct, organization, team, canManageRfqs]);
 
+  useEffect(() => {
+    if (form === "product") return;
+    setProductSlug("");
+    setProductSlugEdited(false);
+  }, [form]);
   async function run(action: () => Promise<unknown>, success: string) {
     setBusy(true);
     setError("");
@@ -643,10 +652,12 @@ export function Workspace({ expected }: { expected?: "buyer" | "seller" }) {
     event.preventDefault();
     if (!organization) return;
     const f = formValues(event);
+    const requestedSlug = slugCandidate(String(f["slug"]) || String(f["name"]), 1);
+    let savedSlug = requestedSlug;
     void run(async () => {
-      await createProduct(organization.id, {
+      const created = await createProductWithUniqueSlug(organization.id, {
         name: String(f["name"]),
-        slug: String(f["slug"]),
+        slug: requestedSlug,
         category_id: String(f["category"]),
         description: String(f["description"]),
         seller_sku: String(f["sku"]),
@@ -657,8 +668,16 @@ export function Workspace({ expected }: { expected?: "buyer" | "seller" }) {
         gst_rate: Number(f["gst"]),
         lead_time_days: Number(f["lead"]),
       });
+      savedSlug = created.slug;
+      setProductSlug("");
+      setProductSlugEdited(false);
       setForm(null);
-    }, "Product draft saved.");
+    }, "Product draft saved.").then(() => {
+      if (savedSlug !== requestedSlug)
+        setNotice(
+          `Product draft saved. Another product already uses "${requestedSlug}", so this one's web address is /products/${savedSlug}.`,
+        );
+    });
   }
   function submitEditProduct(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -1329,11 +1348,25 @@ export function Workspace({ expected }: { expected?: "buyer" | "seller" }) {
                         className="mt-4 grid gap-3 border bg-card p-6 sm:grid-cols-2"
                         onSubmit={submitProduct}
                       >
-                        <Text name="name" label="Product name" minLength={3} />
+                        <Text
+                          name="name"
+                          label="Product name"
+                          minLength={3}
+                          onChange={(event) => {
+                            if (!productSlugEdited) setProductSlug(slugify(event.target.value));
+                          }}
+                        />
                         <Text
                           name="slug"
-                          label="Unique URL slug"
+                          label="Web address slug (filled in from the name)"
                           pattern="[a-z0-9]+(-[a-z0-9]+)*"
+                          maxLength={80}
+                          value={productSlug}
+                          onChange={(event) => {
+                            // Clearing the box hands control back to the product name.
+                            setProductSlugEdited(event.target.value !== "");
+                            setProductSlug(event.target.value);
+                          }}
                         />
                         <Field label="Category">
                           <select name="category" required className={input}>

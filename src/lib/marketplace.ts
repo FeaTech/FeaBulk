@@ -1,6 +1,7 @@
 import { supabase } from "@/integrations/supabase/client";
 import type { Database, Json } from "@/integrations/supabase/types";
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { slugCandidate } from "@/lib/slug";
 import { createPublicReadCache } from "./public-read-cache";
 
 const publicCatalogCache = createPublicReadCache();
@@ -245,6 +246,19 @@ export async function createProduct(organizationId: string, payload: Record<stri
   return unwrap((await db.rpc("create_product_command", {
     organization_id_input: organizationId, payload, idempotency_key_input: crypto.randomUUID(),
   })) as { data: Product | null; error: { message: string } | null });
+}
+const SLUG_ATTEMPTS = 20;
+// Slugs are unique across every seller, and a seller cannot see other sellers' drafts, so a
+// clash only shows up on save. Retry with "-2", "-3"... instead of making the seller pick again.
+export async function createProductWithUniqueSlug(organizationId: string, payload: Record<string, Json> & { slug: string }): Promise<Product> {
+  for (let attempt = 1; ; attempt++) {
+    try {
+      return await createProduct(organizationId, { ...payload, slug: slugCandidate(payload.slug, attempt) });
+    } catch (err) {
+      const slugTaken = err instanceof Error && err.message.includes("products_slug_key");
+      if (!slugTaken || attempt >= SLUG_ATTEMPTS) throw err;
+    }
+  }
 }
 export async function addPriceTier(productId: string, minimumQuantity: number, maximumQuantity: number, unitPrice: number) {
   return unwrap(await db.rpc("add_product_price_tier_command", {
