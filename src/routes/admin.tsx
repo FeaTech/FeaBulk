@@ -651,7 +651,7 @@ function DecisionInput({
 }) {
   return (
     <label className="mt-3 grid gap-1 text-sm font-semibold">
-      Decision notes (at least {minLength} characters)
+      Decision notes{minLength > 10 ? ` (at least ${minLength} characters)` : " (optional)"}
       <textarea
         required
         className="border border-[#C9D3DF] p-2"
