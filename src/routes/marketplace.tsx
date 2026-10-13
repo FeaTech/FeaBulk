@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { ProductPicture } from "@/components/marketplace/PublicShell";
 import { SupplierRating } from "@/components/marketplace/SupplierRating";
-import { getCategories, getSupplierDirectory, getSupplierRatings, searchPublishedProducts, type Category, type MarketplaceProduct, type SupplierRating as Rating } from "@/lib/marketplace";
+import { getCategories, getIdentity, getSupplierDirectory, getSupplierRatings, searchPublishedProducts, type Category, type MarketplaceProduct, type SupplierRating as Rating } from "@/lib/marketplace";
 
 export const Route = createFileRoute("/marketplace")({
   head: () => ({ meta: [
