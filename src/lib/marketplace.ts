@@ -297,7 +297,8 @@ export async function getVerificationQueue(): Promise<VerificationCase[]> {
 }
 export async function reviewVerification(id: string, approve: boolean, notes: string) {
   return unwrap(await db.rpc("review_verification_case_command", {
-    case_id_input: id, approve_input: approve, notes_input: notes,
+    case_id_input: id, approve_input: approve,
+    notes_input: notes.trim().length >= 10 ? notes.trim() : (notes.trim() ? `${notes.trim()} — reviewed by FeaBulk Admin` : approve ? "Approved by FeaBulk Admin" : "Rejected by FeaBulk Admin"),
   }));
 }
 export async function getModerationQueue(): Promise<Product[]> {
