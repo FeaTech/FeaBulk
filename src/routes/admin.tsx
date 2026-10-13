@@ -655,9 +655,9 @@ function DecisionInput({
     <label className="mt-3 grid gap-1 text-sm font-semibold">
       Decision notes{optional ? " (optional)" : ` (at least ${minLength} characters)`}
       <textarea
-        required
+        required={!optional}
         className="border border-[#C9D3DF] p-2"
-        minLength={minLength}
+        minLength={optional ? undefined : minLength}
         value={notes[id] ?? ""}
         onChange={(event) => setNotes((current) => ({ ...current, [id]: event.target.value }))}
       />
