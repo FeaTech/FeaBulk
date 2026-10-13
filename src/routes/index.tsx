@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState, type ReactNode } from "react";
 import { ProductPicture } from "@/components/marketplace/PublicShell";
 import { searchPublishedProducts, type MarketplaceProduct } from "@/lib/marketplace";
@@ -54,8 +54,8 @@ function Index() {
             <a className="hover:text-[#F87908]" href="#marketplace">Marketplace</a>
           </nav>
           <div className="hidden items-center gap-4 lg:flex">
-            <a className="text-sm font-bold text-[#102B52] hover:text-[#F87908]" href="/auth">Sign in</a>
-            <a className="bg-[#F87908] px-5 py-3 text-sm font-bold text-white transition hover:bg-[#d96806]" href="/auth">Create business account</a>
+            <Link className="text-sm font-bold text-[#102B52] hover:text-[#F87908]" to="/auth">Sign in</Link>
+            <Link className="bg-[#F87908] px-5 py-3 text-sm font-bold text-white transition hover:bg-[#d96806]" to="/auth">Create business account</Link>
           </div>
           <button className="grid h-10 w-10 place-items-center border border-[#DDE5EE] text-[#102B52] lg:hidden" onClick={() => setMenuOpen(!menuOpen)} aria-expanded={menuOpen} aria-label="Toggle navigation">
             {menuOpen ? <X size={20} /> : <Menu size={20} />}
@@ -90,13 +90,13 @@ function Index() {
       </section>
 
       <section id="marketplace" className="mx-auto max-w-[1240px] px-5 py-18 lg:px-8 lg:py-24">
-        <div className="flex flex-col justify-between gap-5 sm:flex-row sm:items-end"><div><p className="text-xs font-extrabold uppercase tracking-[.15em] text-[#F87908]">Approved listings</p><h2 className="mt-3 text-3xl font-black tracking-[-.035em] text-[#102B52] sm:text-4xl">Explore wholesale products</h2><p className="mt-3 text-[#526178]">Browse live products from verified suppliers.</p></div><a href="/marketplace" className="inline-flex items-center gap-2 text-sm font-extrabold text-[#102B52] hover:text-[#F87908]">View all products <ArrowRight size={17} /></a></div>
+        <div className="flex flex-col justify-between gap-5 sm:flex-row sm:items-end"><div><p className="text-xs font-extrabold uppercase tracking-[.15em] text-[#F87908]">Approved listings</p><h2 className="mt-3 text-3xl font-black tracking-[-.035em] text-[#102B52] sm:text-4xl">Explore wholesale products</h2><p className="mt-3 text-[#526178]">Browse live products from verified suppliers.</p></div><Link to="/marketplace" className="inline-flex items-center gap-2 text-sm font-extrabold text-[#102B52] hover:text-[#F87908]">View all products <ArrowRight size={17} /></Link></div>
         {productsLoading ? (
           <p className="mt-10 text-sm text-[#526178]" role="status">Loading products…</p>
         ) : productsError ? (
-          <div className="mt-10 border border-[#DDE5EE] bg-white p-8"><p className="font-semibold text-[#102B52]">Products could not be loaded right now.</p><a href="/marketplace" className="mt-3 inline-flex items-center gap-2 text-sm font-bold text-[#D96806]">Open marketplace <ArrowRight size={16} /></a></div>
+          <div className="mt-10 border border-[#DDE5EE] bg-white p-8"><p className="font-semibold text-[#102B52]">Products could not be loaded right now.</p><Link to="/marketplace" className="mt-3 inline-flex items-center gap-2 text-sm font-bold text-[#D96806]">Open marketplace <ArrowRight size={16} /></Link></div>
         ) : products.length === 0 ? (
-          <div className="mt-10 border border-[#DDE5EE] bg-white p-8"><p className="font-semibold text-[#102B52]">No approved products are listed yet.</p><p className="mt-2 text-sm text-[#526178]">New listings will appear here after review.</p><a href="/marketplace" className="mt-4 inline-flex items-center gap-2 text-sm font-bold text-[#D96806]">Browse marketplace <ArrowRight size={16} /></a></div>
+          <div className="mt-10 border border-[#DDE5EE] bg-white p-8"><p className="font-semibold text-[#102B52]">No approved products are listed yet.</p><p className="mt-2 text-sm text-[#526178]">New listings will appear here after review.</p><Link to="/marketplace" className="mt-4 inline-flex items-center gap-2 text-sm font-bold text-[#D96806]">Browse marketplace <ArrowRight size={16} /></Link></div>
         ) : (
           <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {products.map((product) => {
@@ -104,16 +104,16 @@ function Index() {
               return <article key={product.id} className="flex h-full flex-col border border-[#DDE5EE] bg-white p-5 transition hover:border-[#102B52] hover:shadow-[0_8px_20px_rgba(16,43,82,.08)]">
                 <ProductPicture product={product} className="mb-5 h-28 w-full text-4xl" />
                 <p className="text-xs font-bold uppercase tracking-wide text-[#D96806]"><a href={`/suppliers/${product.organization_id}`}>{product.supplier_name ?? "Verified supplier"}</a></p>
-                <h3 className="mt-2 text-lg font-extrabold leading-snug text-[#102B52]"><a className="hover:text-[#F87908]" href={`/products/${product.slug}`}>{product.name}</a></h3>
+                <h3 className="mt-2 text-lg font-extrabold leading-snug text-[#102B52]"><Link className="hover:text-[#F87908]" to="/products/$slug" params={{ slug: product.slug }}>{product.name}</Link></h3>
                 <p className="mt-2 line-clamp-2 text-sm leading-6 text-[#697488]">{product.description}</p>
-                <div className="mt-auto pt-5"><p className="text-lg font-black text-[#102B52]">{startingPrice === null ? "Price by quotation" : `From ₹${startingPrice.toLocaleString("en-IN")}/unit`}</p><p className="mt-1 text-xs text-[#526178]">MOQ {product.minimum_order_quantity} · {product.available_quantity} available</p><a href={`/products/${product.slug}`} className="mt-4 inline-flex items-center gap-2 text-sm font-extrabold text-[#D96806]">View product <ArrowRight size={16} /></a></div>
+                <div className="mt-auto pt-5"><p className="text-lg font-black text-[#102B52]">{startingPrice === null ? "Price by quotation" : `From ₹${startingPrice.toLocaleString("en-IN")}/unit`}</p><p className="mt-1 text-xs text-[#526178]">MOQ {product.minimum_order_quantity} · {product.available_quantity} available</p><Link to="/products/$slug" params={{ slug: product.slug }} className="mt-4 inline-flex items-center gap-2 text-sm font-extrabold text-[#D96806]">View product <ArrowRight size={16} /></Link></div>
               </article>;
             })}
           </div>
         )}
       </section>
 
-      <footer className="border-t border-[#DDE5EE] bg-white"><div className="mx-auto flex max-w-[1240px] flex-col justify-between gap-5 px-5 py-8 text-sm text-[#697488] sm:flex-row lg:px-8"><p><span className="font-extrabold text-[#102B52]">FEA<span className="text-[#F87908]">Bulk</span></span> · Wholesale marketplace in development.</p><div className="flex gap-5"><a href="/marketplace" className="hover:text-[#F87908]">Marketplace</a><a href="/auth" className="hover:text-[#F87908]">Sign in</a></div></div></footer>
+      <footer className="border-t border-[#DDE5EE] bg-white"><div className="mx-auto flex max-w-[1240px] flex-col justify-between gap-5 px-5 py-8 text-sm text-[#697488] sm:flex-row lg:px-8"><p><span className="font-extrabold text-[#102B52]">FEA<span className="text-[#F87908]">Bulk</span></span> · Wholesale marketplace in development.</p><div className="flex gap-5"><Link to="/marketplace" className="hover:text-[#F87908]">Marketplace</Link><Link to="/auth" className="hover:text-[#F87908]">Sign in</Link></div></div></footer>
     </main>
   );
 }

@@ -240,20 +240,20 @@ export function Workspace({ expected }: { expected?: "buyer" | "seller" }) {
       setLoading(false);
       return;
     }
-    const [nextOrganizations, nextCategories, nextOps, nextNotifications, nextPaymentAvailable] =
+    // Payment-provider availability is not needed to open the workspace.
+    void getPaymentAvailability().then(setPaymentAvailable).catch(() => setPaymentAvailable(false));
+    const [nextOrganizations, nextCategories, nextOps, nextNotifications] =
       await Promise.all([
         getOrganizations(),
         getCategories(),
         getOperationsAccess(user.id),
         getNotifications(),
-        getPaymentAvailability(),
       ]);
     setUserId(user.id);
     setOrganizations(nextOrganizations);
     setCategories(nextCategories);
     setOps(nextOps);
     setNotifications(nextNotifications);
-    setPaymentAvailable(nextPaymentAvailable);
     setOrganizationId((current) =>
       nextOrganizations.some((item) => item.id === current)
         ? current
@@ -324,7 +324,8 @@ export function Workspace({ expected }: { expected?: "buyer" | "seller" }) {
     setOpportunities(nextOpportunities);
     setSellerQuotes(nextSellerQuotes);
     setProducts(nextProducts);
-    setProductImages(await getProductImages(nextProducts.map((item) => item.id)));
+    // Images must not delay orders, team permissions, or verification status.
+    void getProductImages(nextProducts.map(item => item.id)).then(setProductImages).catch(() => undefined);
     setOrders(nextOrders);
     setVerification(nextVerification);
     setTeam(nextTeam);
