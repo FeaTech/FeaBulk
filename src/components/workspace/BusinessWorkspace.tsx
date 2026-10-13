@@ -890,25 +890,13 @@ export function Workspace({ expected }: { expected?: "buyer" | "seller" }) {
                           Verified supplier network ({suppliers.length})
                         </h2>
                         <p className="mt-1 text-sm text-muted-foreground">
-                          Discover approved sellers, then publish an RFQ with your exact commercial
-                          requirements.
+                          Discover approved sellers and buy their products directly.
                         </p>
                       </div>
                       <div className="flex gap-2">
                         <a className="button-secondary" href="/marketplace">
                           Browse catalog
                         </a>
-                        {canManageRfqs && (
-                          <Button variant="outline"
-                            className="button"
-                            onClick={() => {
-                              setView("rfqs");
-                              setForm("rfq");
-                            }}
-                          >
-                            Create RFQ
-                          </Button>
-                        )}
                       </div>
                     </div>
                     {suppliers.length === 0 ? (

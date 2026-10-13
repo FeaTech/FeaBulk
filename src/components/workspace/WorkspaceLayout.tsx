@@ -14,7 +14,7 @@ export function WorkspaceLayout({ role, view, setView, signedIn, hasOrganization
   signedIn: boolean; hasOrganization: boolean; organizationName?: string | undefined; unread: number; showNotifications: boolean;
   onNotifications: () => void; onSignOut: () => void; children: ReactNode;
 }) {
-  const sections: WorkspaceView[] = role === "buyer" ? ["overview", "rfqs", "suppliers", "orders", "team"] : ["overview", "opportunities", "quotes", "catalog", "orders", "team"];
+  const sections: WorkspaceView[] = role === "buyer" ? ["overview", "suppliers", "orders", "team"] : ["overview", "catalog", "orders", "team"];
   const label = role === "buyer" ? "Buyer" : "Seller";
   return <div className="business-workspace flex min-h-screen bg-workspace-canvas text-foreground">
     <aside className="sticky top-0 hidden h-screen w-60 shrink-0 flex-col bg-workspace-nav text-workspace-nav-foreground lg:flex">
