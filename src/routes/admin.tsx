@@ -604,21 +604,37 @@ function Operations() {
   );
 }
 
+function NavGroup({ label, children }: { label: string; children: ReactNode }) {
+  return (
+    <div className="mb-5">
+      <p className="px-3 pb-2 text-[10px] font-black uppercase tracking-widest text-[#6F819C]">{label}</p>
+      <div className="grid gap-0.5">{children}</div>
+    </div>
+  );
+}
 function OpsTab({
   active,
   onClick,
   children,
+  count,
+  urgent = false,
 }: {
   active: boolean;
   onClick: () => void;
   children: ReactNode;
+  count?: number;
+  urgent?: boolean;
 }) {
   return (
     <button
-      className={`px-4 py-2 text-sm font-bold ${active ? "bg-[#102B52] text-white" : "border bg-white text-[#102B52]"}`}
+      className={`flex w-full items-center justify-between rounded-md px-3 py-2 text-left text-sm font-semibold transition-colors ${active ? "bg-white/10 text-white shadow-[inset_3px_0_0_#F87908]" : "hover:bg-white/5 hover:text-white"}`}
       onClick={onClick}
+      aria-current={active ? "page" : undefined}
     >
-      {children}
+      <span>{children}</span>
+      {count !== undefined && count > 0 && (
+        <span className={`rounded-full px-2 py-0.5 text-[11px] font-black text-white ${urgent ? "bg-red-500" : "bg-[#F87908]"}`}>{count}</span>
+      )}
     </button>
   );
 }
@@ -657,25 +673,22 @@ function Metric({
   urgent?: boolean;
   onClick?: () => void;
 }) {
+  const cls = `group rounded-xl border bg-white p-5 text-left shadow-sm transition ${urgent ? "border-red-300" : "border-[#DDE5EE]"} ${onClick ? "hover:-translate-y-0.5 hover:shadow-md" : ""}`;
   const content = (
     <>
-      <p className="text-2xl font-black">{value}</p>
       <p className="text-xs font-bold uppercase tracking-wider text-[#526178]">{label}</p>
+      <p className={`mt-3 text-3xl font-black ${urgent ? "text-red-600" : "text-[#102B52]"}`}>{value}</p>
+      {onClick && <p className="mt-3 text-xs font-bold text-[#D96806] opacity-0 transition group-hover:opacity-100">Open →</p>}
     </>
   );
   return onClick ? (
-    <button
-      className={`border bg-white p-4 text-left ${urgent ? "border-red-400" : ""}`}
-      onClick={onClick}
-    >
-      {content}
-    </button>
+    <button className={cls} onClick={onClick}>{content}</button>
   ) : (
-    <div className={`border bg-white p-4 ${urgent ? "border-red-400" : ""}`}>{content}</div>
+    <div className={cls}>{content}</div>
   );
 }
 function Empty({ children }: { children: ReactNode }) {
-  return <p className="mt-3 border bg-white p-5 text-sm">{children}</p>;
+  return <p className="mt-3 rounded-xl border border-dashed border-[#C9D3DF] bg-white p-8 text-center text-sm text-[#526178]">{children}</p>;
 }
 function Status({ children }: { children: ReactNode }) {
   return (
