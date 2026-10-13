@@ -2925,6 +2925,41 @@ export type Database = {
         }
       }
       ops_has_role: { Args: { _roles: string[] }; Returns: boolean }
+      place_direct_order_command: {
+        Args: {
+          buyer_organization_id_input: string
+          delivery_address_input: Json
+          product_id_input: string
+          quantity_input: number
+        }
+        Returns: {
+          additional_charge_amount: number
+          buyer_organization_id: string
+          created_at: string
+          created_by: string
+          currency: string
+          delivery_address: Json
+          discount_amount: number
+          freight_amount: number
+          grand_total: number | null
+          gst_amount: number
+          id: string
+          inspection_ends_at: string | null
+          order_number: string
+          quote_id: string | null
+          rfq_id: string | null
+          seller_organization_id: string
+          status: Database["public"]["Enums"]["order_status"]
+          taxable_amount: number
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "orders"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       publish_rfq_command: {
         Args: { rfq_id_input: string }
         Returns: {
