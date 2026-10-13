@@ -1,8 +1,16 @@
 import { Link } from "@tanstack/react-router";
-import type { ReactNode } from "react";
-import { startingUnitPrice, type MarketplaceProduct } from "@/lib/marketplace";
+import { useEffect, useState, type ReactNode } from "react";
+import { getIdentity, startingUnitPrice, type MarketplaceProduct } from "@/lib/marketplace";
 
 export function PublicShell({ children }: { children: ReactNode }) {
+  const [signedIn, setSignedIn] = useState(false);
+  useEffect(() => {
+    let active = true;
+    void getIdentity()
+      .then(user => { if (active) setSignedIn(Boolean(user)); })
+      .catch(() => undefined);
+    return () => { active = false; };
+  }, []);
   return (
     <main className="min-h-screen bg-[#F7F8FA] text-[#17233A]">
       <header className="border-b bg-white">
@@ -13,7 +21,7 @@ export function PublicShell({ children }: { children: ReactNode }) {
           <div className="flex gap-4 text-sm font-bold">
             <Link to="/marketplace">Marketplace</Link>
             <Link to="/app">Workspace</Link>
-            <Link to="/auth">Sign in</Link>
+            {!signedIn && <Link to="/auth">Sign in</Link>}
           </div>
         </div>
       </header>
