@@ -215,7 +215,7 @@ function Operations() {
             </NavGroup>
           </nav>
         )}
-        <div className="border-t border-white/10 px-6 py-5 text-xs">
+        <div className="mt-auto border-t border-white/10 px-6 py-5 text-xs">
           <a href="/marketplace" className="font-bold text-white hover:text-[#F87908]">View marketplace →</a>
           {platformAdmin && <p className="mt-2 text-[#8A9BB4]">Signed in as FeaBulk Admin</p>}
         </div>
