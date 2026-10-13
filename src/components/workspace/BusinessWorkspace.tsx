@@ -77,6 +77,7 @@ import {
   type VerificationCase,
 } from "@/lib/marketplace";
 import { SupplierRating } from "@/components/marketplace/SupplierRating";
+import { FieldLabel } from "@/components/InfoTip";
 import { supabase } from "@/integrations/supabase/client";
 import { slugCandidate, slugify } from "@/lib/slug";
 import { Button } from "@/components/ui/button";
@@ -828,25 +829,50 @@ export function Workspace({ expected }: { expected?: "buyer" | "seller" }) {
               <section className="mt-6 border bg-card p-6">
                 <h2 className="text-xl font-black">Create a business workspace</h2>
                 <form className="mt-4 grid gap-3 sm:grid-cols-2" onSubmit={submitOrganization}>
-                  <Field label="Business role">
+                  <Field
+                    label="Business role"
+                    hint="Choose Buyer if this business purchases goods, or Seller if it lists products for sale."
+                  >
                     <select name="kind" className={input}>
                       <option value="buyer">Buyer</option>
                       <option value="seller">Seller</option>
                     </select>
                   </Field>
-                  <Text name="legalName" label="Legal business name" minLength={2} />
-                  <Text name="displayName" label="Trading name" minLength={2} />
-                  <Text name="businessType" label="Business type" />
+                  <Text
+                    name="legalName" label="Legal business name" minLength={2}
+                    hint="The registered name exactly as it appears on your GST or incorporation certificate."
+                  />
+                  <Text
+                    name="displayName" label="Trading name" minLength={2}
+                    hint="The name customers know you by. It is shown on your listings and orders."
+                  />
+                  <Text
+                    name="businessType" label="Business type"
+                    hint="Your legal structure, for example Proprietorship, Partnership, LLP or Private limited company."
+                  />
                   <Text
                     name="gstin"
                     label="GSTIN (optional)"
+                    hint="Your 15-character GST number, for example 27AAAAA0000A1Z5. Leave blank if you are not GST registered."
                     required={false}
                     pattern="[0-9]{2}[A-Za-z]{5}[0-9]{4}[A-Za-z][A-Za-z0-9]Z[A-Za-z0-9]"
                   />
-                  <Text name="address" label="Registered address" />
-                  <Text name="city" label="City" />
-                  <Text name="state" label="State" />
-                  <Text name="pin" label="PIN code" pattern="[0-9]{6}" />
+                  <Text
+                    name="address" label="Registered address"
+                    hint="Street address of your registered office, as shown on your registration documents."
+                  />
+                  <Text
+                    name="city" label="City"
+                    hint="City or town of the registered office."
+                  />
+                  <Text
+                    name="state" label="State"
+                    hint="State of the registered office, for example Telangana."
+                  />
+                  <Text
+                    name="pin" label="PIN code" pattern="[0-9]{6}"
+                    hint="6-digit postal code of the registered office."
+                  />
                   <Action busy={busy}>Create business</Action>
                 </form>
               </section>
@@ -1039,11 +1065,15 @@ export function Workspace({ expected }: { expected?: "buyer" | "seller" }) {
                         <Text
                           name="title"
                           label="What do you need?"
+                          hint="A short title for your requirement, for example 5-ply corrugated cartons. At least 8 characters."
                           minLength={8}
                           maxLength={180}
                           defaultValue={rfqProduct ? rfqProduct.name.slice(0, 180) : ""}
                         />
-                        <Field label="Category">
+                        <Field
+                          label="Category"
+                          hint="The category that best matches what you want to buy. Sellers in this category will see your request."
+                        >
                           <select
                             name="category"
                             required
@@ -1058,12 +1088,16 @@ export function Workspace({ expected }: { expected?: "buyer" | "seller" }) {
                             ))}
                           </select>
                         </Field>
-                        <Field label="Specifications">
+                        <Field
+                          label="Specifications"
+                          hint="Describe size, material, grade, packaging and any standards the product must meet."
+                        >
                           <textarea name="specifications" required className={input} />
                         </Field>
                         <Text
                           name="quantity"
                           label="Quantity"
+                          hint="How many units you want to buy, counted in the unit you enter next."
                           type="number"
                           min={rfqProduct?.minimum_order_quantity ?? 1}
                           defaultValue={rfqProduct?.minimum_order_quantity ?? ""}
@@ -1071,12 +1105,25 @@ export function Workspace({ expected }: { expected?: "buyer" | "seller" }) {
                         <Text
                           name="unit"
                           label="Unit"
+                          hint="The unit you count in, for example pieces, cartons, kg or rolls."
                           defaultValue={rfqProduct?.unit_of_measure ?? "units"}
                         />
-                        <Text name="address" label="Delivery address" />
-                        <Text name="pin" label="Delivery PIN" pattern="[0-9]{6}" />
-                        <Text name="deadline" label="Quote deadline" type="datetime-local" />
-                        <Field label="Shipping">
+                        <Text
+                          name="address" label="Delivery address"
+                          hint="Full address where the goods should be delivered."
+                        />
+                        <Text
+                          name="pin" label="Delivery PIN" pattern="[0-9]{6}"
+                          hint="6-digit postal code of the delivery address. Sellers use it to work out freight."
+                        />
+                        <Text
+                          name="deadline" label="Quote deadline" type="datetime-local"
+                          hint="The last date and time sellers can send a quote. It must be in the future."
+                        />
+                        <Field
+                          label="Shipping"
+                          hint="Who arranges transport: the seller, you, or to be agreed during negotiation."
+                        >
                           <select name="shipping" className={input}>
                             <option value="seller">Seller arranged</option>
                             <option value="buyer">Buyer arranged</option>
@@ -1268,6 +1315,7 @@ export function Workspace({ expected }: { expected?: "buyer" | "seller" }) {
                         <Text
                           name="price"
                           label="Unit price (INR)"
+                          hint="Your price for one unit in rupees, before GST and freight."
                           type="number"
                           min={0.01}
                           step="0.01"
@@ -1275,6 +1323,7 @@ export function Workspace({ expected }: { expected?: "buyer" | "seller" }) {
                         <Text
                           name="quantity"
                           label="Quantity"
+                          hint="How many units you can supply at this price."
                           type="number"
                           min={1}
                           defaultValue={quoteRfq.required_quantity}
@@ -1282,6 +1331,7 @@ export function Workspace({ expected }: { expected?: "buyer" | "seller" }) {
                         <Text
                           name="gst"
                           label="GST rate (%)"
+                          hint="The GST percentage that applies to this product, for example 5, 12 or 18."
                           type="number"
                           min={0}
                           max={100}
@@ -1290,14 +1340,24 @@ export function Workspace({ expected }: { expected?: "buyer" | "seller" }) {
                         <Text
                           name="freight"
                           label="Freight (INR)"
+                          hint="Total delivery charge in rupees for this order. Enter 0 if delivery is included in the price."
                           type="number"
                           min={0}
                           defaultValue={0}
                           step="0.01"
                         />
-                        <Text name="lead" label="Lead time (days)" type="number" min={0} />
-                        <Text name="validUntil" label="Valid until" type="datetime-local" />
-                        <Field label="Notes">
+                        <Text
+                          name="lead" label="Lead time (days)" type="number" min={0}
+                          hint="Days you need from order confirmation until the goods are dispatched."
+                        />
+                        <Text
+                          name="validUntil" label="Valid until" type="datetime-local"
+                          hint="The date and time this quote expires. The buyer must accept it before then."
+                        />
+                        <Field
+                          label="Notes"
+                          hint="Anything the buyer should know, such as brand, packing or payment terms. Optional."
+                        >
                           <textarea name="notes" className={input} />
                         </Field>
                         <Action busy={busy}>Submit quote</Action>
@@ -1351,6 +1411,7 @@ export function Workspace({ expected }: { expected?: "buyer" | "seller" }) {
                         <Text
                           name="name"
                           label="Product name"
+                          hint="The name buyers will see, for example Stainless steel hex bolts, M8 x 30 mm. At least 3 characters."
                           minLength={3}
                           onChange={(event) => {
                             if (!productSlugEdited) setProductSlug(slugify(event.target.value));
@@ -1359,6 +1420,7 @@ export function Workspace({ expected }: { expected?: "buyer" | "seller" }) {
                         <Text
                           name="slug"
                           label="Web address slug (filled in from the name)"
+                          hint="The last part of the product's web address. It fills in from the name; change it only if you want a different address. Lowercase letters, numbers and hyphens only."
                           pattern="[a-z0-9]+(-[a-z0-9]+)*"
                           maxLength={80}
                           value={productSlug}
@@ -1368,7 +1430,10 @@ export function Workspace({ expected }: { expected?: "buyer" | "seller" }) {
                             setProductSlug(event.target.value);
                           }}
                         />
-                        <Field label="Category">
+                        <Field
+                          label="Category"
+                          hint="The category buyers will browse to find this product."
+                        >
                           <select name="category" required className={input}>
                             <option value="">Select a category</option>
                             {categories.map((item) => (
@@ -1378,23 +1443,45 @@ export function Workspace({ expected }: { expected?: "buyer" | "seller" }) {
                             ))}
                           </select>
                         </Field>
-                        <Text name="sku" label="Seller SKU" />
-                        <Text name="hsn" label="HSN code" pattern="[0-9]{4,8}" />
-                        <Field label="Description (20+ characters)">
+                        <Text
+                          name="sku" label="Seller SKU"
+                          hint="Your own stock code for this product. It must be unique within your catalog."
+                        />
+                        <Text
+                          name="hsn" label="HSN code" pattern="[0-9]{4,8}"
+                          hint="The 4 to 8 digit HSN tax code for this product. It is printed on GST invoices."
+                        />
+                        <Field
+                          label="Description (20+ characters)"
+                          hint="Describe the product: material, size, grade, packing and typical use. At least 20 characters."
+                        >
                           <textarea name="description" required minLength={20} className={input} />
                         </Field>
-                        <Text name="unit" label="Unit" defaultValue="units" />
-                        <Text name="moq" label="Minimum order quantity" type="number" min={1} />
-                        <Text name="stock" label="Available quantity" type="number" min={0} />
+                        <Text
+                          name="unit" label="Unit" defaultValue="units"
+                          hint="The unit you sell in, for example pieces, cartons, kg or rolls."
+                        />
+                        <Text
+                          name="moq" label="Minimum order quantity" type="number" min={1}
+                          hint="The smallest quantity a buyer can order."
+                        />
+                        <Text
+                          name="stock" label="Available quantity" type="number" min={0}
+                          hint="How many units you have in stock and ready to sell right now."
+                        />
                         <Text
                           name="gst"
                           label="GST rate (%)"
+                          hint="The GST percentage that applies to this product, for example 5, 12 or 18."
                           type="number"
                           min={0}
                           max={100}
                           step="0.01"
                         />
-                        <Text name="lead" label="Lead time (days)" type="number" min={0} />
+                        <Text
+                          name="lead" label="Lead time (days)" type="number" min={0}
+                          hint="Days you need from order confirmation until the goods are dispatched."
+                        />
                         <Action busy={busy}>Save product draft</Action>
                       </form>
                     )}
@@ -1450,16 +1537,21 @@ export function Workspace({ expected }: { expected?: "buyer" | "seller" }) {
                                 <Text
                                   name="name"
                                   label="Product name"
+                                  hint="The name buyers will see, for example Stainless steel hex bolts, M8 x 30 mm. At least 3 characters."
                                   defaultValue={item.name}
                                   minLength={3}
                                 />
                                 <Text
                                   name="slug"
                                   label="URL slug"
+                                  hint="The last part of the product's web address. Use lowercase letters, numbers and hyphens only."
                                   defaultValue={item.slug}
                                   pattern="[a-z0-9]+(-[a-z0-9]+)*"
                                 />
-                                <Field label="Category">
+                                <Field
+                                  label="Category"
+                                  hint="The category buyers will browse to find this product."
+                                >
                                   <select
                                     name="category"
                                     defaultValue={item.category_id ?? ""}
@@ -1473,14 +1565,21 @@ export function Workspace({ expected }: { expected?: "buyer" | "seller" }) {
                                     ))}
                                   </select>
                                 </Field>
-                                <Text name="sku" label="SKU" defaultValue={item.seller_sku} />
+                                <Text
+                                  name="sku" label="SKU" defaultValue={item.seller_sku}
+                                  hint="Your own stock code for this product. It must be unique within your catalog."
+                                />
                                 <Text
                                   name="hsn"
                                   label="HSN code"
+                                  hint="The 4 to 8 digit HSN tax code for this product. It is printed on GST invoices."
                                   pattern="[0-9]{4,8}"
                                   defaultValue={item.hsn_code ?? ""}
                                 />
-                                <Field label="Description">
+                                <Field
+                                  label="Description"
+                                  hint="Describe the product: material, size, grade, packing and typical use. At least 20 characters."
+                                >
                                   <textarea
                                     name="description"
                                     defaultValue={item.description}
@@ -1492,11 +1591,13 @@ export function Workspace({ expected }: { expected?: "buyer" | "seller" }) {
                                 <Text
                                   name="unit"
                                   label="Unit"
+                                  hint="The unit you sell in, for example pieces, cartons, kg or rolls."
                                   defaultValue={item.unit_of_measure}
                                 />
                                 <Text
                                   name="moq"
                                   label="MOQ"
+                                  hint="The smallest quantity a buyer can order."
                                   type="number"
                                   min={1}
                                   defaultValue={item.minimum_order_quantity}
@@ -1504,6 +1605,7 @@ export function Workspace({ expected }: { expected?: "buyer" | "seller" }) {
                                 <Text
                                   name="gst"
                                   label="GST rate (%)"
+                                  hint="The GST percentage that applies to this product, for example 5, 12 or 18."
                                   type="number"
                                   min={0}
                                   max={100}
@@ -1513,6 +1615,7 @@ export function Workspace({ expected }: { expected?: "buyer" | "seller" }) {
                                 <Text
                                   name="lead"
                                   label="Lead time (days)"
+                                  hint="Days you need from order confirmation until the goods are dispatched."
                                   type="number"
                                   min={0}
                                   defaultValue={item.lead_time_days ?? 0}
@@ -1574,18 +1677,21 @@ export function Workspace({ expected }: { expected?: "buyer" | "seller" }) {
                                   <Text
                                     name="min"
                                     label="From quantity"
+                                    hint="The smallest quantity this price applies to. It cannot be below the minimum order quantity."
                                     type="number"
                                     min={item.minimum_order_quantity}
                                   />
                                   <Text
                                     name="max"
                                     label="To quantity"
+                                    hint="The largest quantity this price applies to. Price ranges must not overlap."
                                     type="number"
                                     min={item.minimum_order_quantity}
                                   />
                                   <Text
                                     name="price"
                                     label="Unit price (INR)"
+                                    hint="Price for one unit in rupees within this quantity range, before GST."
                                     type="number"
                                     min={0.01}
                                     step="0.01"
@@ -1646,7 +1752,10 @@ export function Workspace({ expected }: { expected?: "buyer" | "seller" }) {
                                     }, "Product image added.");
                                   }}
                                 >
-                                  <Field label="Product image (JPEG, PNG or WebP, up to 5 MB)">
+                                  <Field
+                                    label="Product image (JPEG, PNG or WebP, up to 5 MB)"
+                                    hint="A clear photo of the product. JPEG, PNG or WebP, up to 5 MB each, and up to 6 images per listing."
+                                  >
                                     <input
                                       name="image"
                                       type="file"
@@ -1658,6 +1767,7 @@ export function Workspace({ expected }: { expected?: "buyer" | "seller" }) {
                                   <Text
                                     name="alt"
                                     label="Image description"
+                                    hint="A few words describing the photo, for buyers who cannot see images. Optional."
                                     required={false}
                                     maxLength={200}
                                   />
@@ -1703,11 +1813,15 @@ export function Workspace({ expected }: { expected?: "buyer" | "seller" }) {
                                 <Text
                                   name="delta"
                                   label="Stock adjustment (+/-)"
+                                  hint="Units to add or remove. Enter a positive number to add stock, or a negative number to reduce it."
                                   type="number"
                                   required
                                   step={1}
                                 />
-                                <Text name="reason" label="Reason" minLength={5} />
+                                <Text
+                                  name="reason" label="Reason" minLength={5}
+                                  hint="Why the stock changed, for example new shipment received or damaged goods. At least 5 characters."
+                                />
                                 <Button variant="outline" disabled={busy} className="button" type="submit">
                                   Update inventory
                                 </Button>
@@ -1795,8 +1909,14 @@ export function Workspace({ expected }: { expected?: "buyer" | "seller" }) {
                               managed separately.
                             </p>
                           </div>
-                          <Text name="email" label="Confirmed work email" type="email" />
-                          <Field label="Business role">
+                          <Text
+                            name="email" label="Confirmed work email" type="email"
+                            hint="Email of the person you are inviting. They must already have a FeaBulk account with a confirmed email."
+                          />
+                          <Field
+                            label="Business role"
+                            hint="What this person will be able to do in your business workspace."
+                          >
                             <select name="role" className={input}>
                               {INVITABLE_TEAM_ROLES.map((role) => (
                                 <option key={role} value={role}>
@@ -2157,6 +2277,7 @@ function OrderCard(props: OrderCardProps) {
               key={line.id}
               name={`hsn-${line.id}`}
               label={`HSN: ${line.description}`}
+              hint="The 4 to 8 digit HSN tax code for this item. It is printed on the tax invoice."
               pattern="[0-9]{4,8}"
               defaultValue={line.hsn_code ?? ""}
             />
@@ -2286,14 +2407,20 @@ function OrderCard(props: OrderCardProps) {
           className="mt-4 grid gap-3 border-t pt-4 sm:grid-cols-2"
           onSubmit={(event) => props.submitShipment(event, order)}
         >
-          <Field label="Shipping mode">
+          <Field
+            label="Shipping mode"
+            hint="Who moves the goods: you arrange transport, the buyer collects, or FeaBulk logistics."
+          >
             <select name="shippingMode" className={input}>
               <option value="seller_arranged">Seller arranged</option>
               <option value="buyer_pickup">Buyer pickup</option>
               <option value="platform_logistics">Platform logistics</option>
             </select>
           </Field>
-          <Field label="Freight type">
+          <Field
+            label="Freight type"
+            hint="How the goods are packed and carried, from a single parcel up to a full truck, air or sea."
+          >
             <select name="freightType" className={input}>
               <option value="parcel">Parcel</option>
               <option value="carton">Carton</option>
@@ -2304,14 +2431,24 @@ function OrderCard(props: OrderCardProps) {
               <option value="ocean">Ocean</option>
             </select>
           </Field>
-          <Text name="carrier" label="Carrier" />
-          <Text name="trackingNumber" label="Tracking number" />
-          <Text name="estimatedDelivery" label="Estimated delivery" type="datetime-local" />
+          <Text
+            name="carrier" label="Carrier"
+            hint="Name of the transport company or courier carrying the goods."
+          />
+          <Text
+            name="trackingNumber" label="Tracking number"
+            hint="The consignment, LR or AWB number the buyer can use to track the shipment."
+          />
+          <Text
+            name="estimatedDelivery" label="Estimated delivery" type="datetime-local"
+            hint="The date and time you expect the goods to reach the buyer."
+          />
           {order.order_lines.map((line) => (
             <Text
               key={line.id}
               name={`quantity-${line.id}`}
               label={`Ship quantity: ${line.description}`}
+              hint="Units of this item in this shipment. Enter 0 to leave the item out."
               type="number"
               min={0}
               max={line.quantity}
@@ -2326,7 +2463,10 @@ function OrderCard(props: OrderCardProps) {
           className="mt-4 grid gap-3 border-t pt-4"
           onSubmit={(event) => props.submitDispute(event, order)}
         >
-          <Field label="Issue type">
+          <Field
+            label="Issue type"
+            hint="The kind of problem you had with this order."
+          >
             <select name="type" className={input}>
               <option value="missing_quantity">Missing quantity</option>
               <option value="damaged_goods">Damaged goods</option>
@@ -2338,7 +2478,10 @@ function OrderCard(props: OrderCardProps) {
               <option value="other">Other</option>
             </select>
           </Field>
-          <Field label="Description (20+ characters)">
+          <Field
+            label="Description (20+ characters)"
+            hint="Explain what went wrong, with quantities and dates. At least 20 characters."
+          >
             <textarea
               name="description"
               required
@@ -2355,7 +2498,10 @@ function OrderCard(props: OrderCardProps) {
           className="mt-4 grid gap-3 border-t pt-4"
           onSubmit={(event) => props.submitReview(event, order)}
         >
-          <Field label="Rating">
+          <Field
+            label="Rating"
+            hint="Your overall rating of this seller for this order. 5 is the best."
+          >
             <select name="rating" className={input}>
               {[5, 4, 3, 2, 1].map((value) => (
                 <option key={value} value={value}>
@@ -2364,7 +2510,10 @@ function OrderCard(props: OrderCardProps) {
               ))}
             </select>
           </Field>
-          <Field label="Review">
+          <Field
+            label="Review"
+            hint="Say what went well or badly. Other buyers will see this. Optional."
+          >
             <textarea name="body" maxLength={2000} className={input} />
           </Field>
           <Action busy={busy}>Publish review</Action>
@@ -2374,10 +2523,18 @@ function OrderCard(props: OrderCardProps) {
   );
 }
 
-function Field({ label, children }: { label: string; children: ReactNode }) {
+function Field({
+  label,
+  hint,
+  children,
+}: {
+  label: string;
+  hint?: string | undefined;
+  children: ReactNode;
+}) {
   return (
     <label className="grid gap-1 text-sm font-semibold text-muted-foreground">
-      {label}
+      <FieldLabel label={label} hint={hint} />
       {children}
     </label>
   );
@@ -2385,15 +2542,17 @@ function Field({ label, children }: { label: string; children: ReactNode }) {
 function Text({
   name,
   label,
+  hint,
   required = true,
   ...props
 }: {
   name: string;
   label: string;
+  hint?: string | undefined;
   required?: boolean;
 } & React.InputHTMLAttributes<HTMLInputElement>) {
   return (
-    <Field label={label}>
+    <Field label={label} hint={hint}>
       <input name={name} required={required} className={input} {...props} />
     </Field>
   );

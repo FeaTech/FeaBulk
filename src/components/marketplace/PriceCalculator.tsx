@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { FieldLabel } from "@/components/InfoTip";
 import { estimatePrice, formatInr, type PriceTier } from "@/lib/pricing";
 
 export function PriceCalculator({
@@ -21,7 +22,12 @@ export function PriceCalculator({
         Price calculator
       </h2>
       <label className="mt-3 grid gap-1 text-sm font-semibold text-[#405069]">
-        Quantity ({unit})
+        <FieldLabel
+          label="Quantity"
+          hint="Type how many units you plan to buy to see the unit price and total for that quantity."
+        >
+          Quantity ({unit})
+        </FieldLabel>
         <input
           type="number"
           inputMode="numeric"

@@ -1,5 +1,6 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { useRouter } from "@tanstack/react-router";
+import { FieldLabel } from "@/components/InfoTip";
 import { getIdentity, getOrganizations, placeDirectOrder, type Organization } from "@/lib/marketplace";
 
 type Tier = { minimum_quantity: number | string; maximum_quantity: number | string; unit_price: number | string };
@@ -50,13 +51,13 @@ export function BuyNow({ productId, slug, moq, available, unit, tiers }: { produ
   return (
     <form onSubmit={submit} className="mt-6 grid gap-3 border bg-white p-5">
       <h2 className="text-lg font-black">Buy now</h2>
-      <label className="grid gap-1 text-sm font-semibold">Quantity ({unit}) — min {moq.toLocaleString("en-IN")}, {available.toLocaleString("en-IN")} available
+      <label className="grid gap-1 text-sm font-semibold"><FieldLabel label="Quantity" hint="How many units you want to order. It must be at least the minimum and no more than the stock available.">Quantity ({unit}) — min {moq.toLocaleString("en-IN")}, {available.toLocaleString("en-IN")} available</FieldLabel>
         <input type="number" required min={moq} max={available} value={quantity} onChange={(e) => setQuantity(e.target.value)} className="border border-[#C9D3DF] px-3 py-2 font-normal" />
       </label>
-      <label className="grid gap-1 text-sm font-semibold">Delivery address
+      <label className="grid gap-1 text-sm font-semibold"><FieldLabel label="Delivery address" hint="Full address where the goods should be delivered, including building, street and city." />
         <textarea required minLength={10} value={address} onChange={(e) => setAddress(e.target.value)} className="border border-[#C9D3DF] px-3 py-2 font-normal" rows={2} />
       </label>
-      <label className="grid gap-1 text-sm font-semibold">PIN code
+      <label className="grid gap-1 text-sm font-semibold"><FieldLabel label="PIN code" hint="6-digit postal code of the delivery address." />
         <input required pattern="[1-9][0-9]{5}" value={pin} onChange={(e) => setPin(e.target.value)} className="border border-[#C9D3DF] px-3 py-2 font-normal" />
       </label>
       {subtotal !== null && qty >= moq && <p className="text-sm">Subtotal <b>₹{subtotal.toLocaleString("en-IN")}</b> + GST. The seller confirms, then you pay from your Orders screen.</p>}

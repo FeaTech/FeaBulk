@@ -23,6 +23,7 @@ import {
   type ProductImage,
   type VerificationCase,
 } from "@/lib/marketplace";
+import { FieldLabel } from "@/components/InfoTip";
 import { CategoriesPanel, OrdersPanel, PaymentsPanel } from "@/components/ops/AdminPanels";
 
 export const Route = createFileRoute("/admin")({
@@ -486,7 +487,10 @@ function Operations() {
                       </h3>
                       <p className="mt-2 whitespace-pre-wrap text-sm">{item.description}</p>
                       <label className="mt-3 grid gap-1 text-sm font-semibold">
-                        Outcome
+                        <FieldLabel
+                          label="Outcome"
+                          hint="How the dispute ends: complete the order for the seller, require a return, or cancel the order."
+                        />
                         <select
                           className="border border-[#C9D3DF] p-2"
                           value={outcomes[item.id] ?? "seller_release"}
@@ -653,7 +657,12 @@ function DecisionInput({
 }) {
   return (
     <label className="mt-3 grid gap-1 text-sm font-semibold">
-      Decision notes{optional ? " (optional)" : ` (at least ${minLength} characters)`}
+      <FieldLabel
+        label="Decision notes"
+        hint="Why you approved or rejected this. The business sees these notes, so say what they need to fix."
+      >
+        Decision notes{optional ? " (optional)" : ` (at least ${minLength} characters)`}
+      </FieldLabel>
       <textarea
         required={!optional}
         className="border border-[#C9D3DF] p-2"
