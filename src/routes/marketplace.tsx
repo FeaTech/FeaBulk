@@ -45,7 +45,9 @@ function Marketplace() {
       setSuppliers(nextSuppliers);
       void getSupplierRatings(nextSuppliers.map(item => item.id)).then(setRatings).catch(() => undefined);
     }).catch(() => undefined);
-    return () => { requestId.current++; };
+    // Leaving the page invalidates any search still in flight.
+    const requests = requestId;
+    return () => { requests.current++; };
   }, []);
   function submit(event: FormEvent) { event.preventDefault(); void search(term, categoryId); }
   return <main className="min-h-screen bg-[#F7F8FA] text-[#17233A]">
