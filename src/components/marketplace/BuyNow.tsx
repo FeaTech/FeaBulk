@@ -1,7 +1,6 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { useRouter } from "@tanstack/react-router";
 import { getIdentity, getOrganizations, placeDirectOrder, type Organization } from "@/lib/marketplace";
-import { quoteForQuantity } from "@/lib/pricing";
 
 type Tier = { minimum_quantity: number | string; maximum_quantity: number | string; unit_price: number | string };
 
@@ -30,7 +29,6 @@ export function BuyNow({ productId, slug, moq, available, unit, tiers }: { produ
   const tier = tiers.find((t) => qty >= Number(t.minimum_quantity) && qty <= Number(t.maximum_quantity))
     ?? [...tiers].sort((a, b) => Number(b.minimum_quantity) - Number(a.minimum_quantity)).find((t) => qty >= Number(t.minimum_quantity));
   const subtotal = tier ? Number(tier.unit_price) * qty : null;
-  void quoteForQuantity;
 
   async function submit(event: FormEvent) {
     event.preventDefault();
@@ -45,7 +43,7 @@ export function BuyNow({ productId, slug, moq, available, unit, tiers }: { produ
   }
 
   if (state === "loading") return null;
-  if (state === "signed_out") return <a href={`/auth?redirect=${encodeURIComponent(`/products/${slug}`)}`} className="button mt-6 inline-block">Sign in to buy</a>;
+  if (state === "signed_out") return <a href="/auth" className="button mt-6 inline-block">Sign in to buy</a>;
   if (state === "not_buyer") return <p className="mt-6 border bg-white p-4 text-sm">Only buyer accounts can place orders.</p>;
   if (available < moq) return <p className="mt-6 border bg-white p-4 text-sm">Out of stock right now.</p>;
 

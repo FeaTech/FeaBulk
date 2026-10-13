@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
+import { BuyNow } from "@/components/marketplace/BuyNow";
 import { PriceCalculator } from "@/components/marketplace/PriceCalculator";
 import {
   Breadcrumbs,
@@ -156,7 +157,7 @@ function ProductPage() {
           <h2 className="mt-8 text-lg font-black">Bulk pricing</h2>
           {product.product_price_tiers.length === 0 ? (
             <p className="mt-3 border bg-white p-4 text-sm">
-              This supplier prices by quotation. Send an RFQ to receive a quote.
+              This supplier has not listed a price yet.
             </p>
           ) : (
             <table className="mt-3 w-full border bg-white text-left text-sm">
@@ -182,8 +183,7 @@ function ProductPage() {
             </table>
           )}
           <p className="mt-2 text-xs text-[#526178]">
-            Prices exclude GST and freight. The final price is confirmed on the supplier&apos;s
-            quote.
+            Prices exclude GST and freight. GST is added at checkout.
           </p>
           {product.product_price_tiers.length > 0 && (
             <PriceCalculator
@@ -194,12 +194,18 @@ function ProductPage() {
             />
           )}
 
-          <a
-            href={`/app?product=${encodeURIComponent(product.slug)}`}
-            className="button mt-6 inline-block"
-          >
-            Request quote for this product
-          </a>
+          {product.product_price_tiers.length > 0 ? (
+            <BuyNow
+              productId={product.id}
+              slug={product.slug}
+              moq={Number(product.minimum_order_quantity)}
+              available={Number(product.available_quantity)}
+              unit={unit}
+              tiers={product.product_price_tiers}
+            />
+          ) : (
+            <p className="mt-6 border bg-white p-4 text-sm">This product is not available to buy yet.</p>
+          )}
         </section>
       </div>
 
