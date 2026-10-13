@@ -298,8 +298,8 @@ function Operations() {
             )}
 
             {view === "health" && canViewHealth && (
-              <section className="mt-8">
-                <h2 className="text-xl font-black">Platform health</h2>
+              <section>
+                <h2 className="sr-only">Platform health</h2>
                 <div className="mt-3 grid gap-3 sm:grid-cols-4">
                   <Metric label="Open" value={health.summary.open} />
                   <Metric label="Acknowledged" value={health.summary.acknowledged} />
@@ -372,12 +372,12 @@ function Operations() {
             )}
 
             {view === "verification" && canVerify && (
-              <section className="mt-8">
-                <h2 className="text-xl font-black">Business verification ({cases.length})</h2>
+              <section>
+                <h2 className="sr-only">Business verification ({cases.length})</h2>
                 {cases.length === 0 && <Empty>No cases awaiting review.</Empty>}
                 <div className="mt-3 grid gap-3">
                   {cases.map((item) => (
-                    <article key={item.id} className="border bg-white p-5">
+                    <article key={item.id} className="rounded-xl border border-[#DDE5EE] bg-white p-5 shadow-sm">
                       <h3 className="font-bold">
                         {organizationNames.get(item.organization_id) ??
                           `Organization ${item.organization_id}`}
@@ -423,12 +423,12 @@ function Operations() {
             )}
 
             {view === "catalog" && canModerate && (
-              <section className="mt-8">
-                <h2 className="text-xl font-black">Product moderation ({products.length})</h2>
+              <section>
+                <h2 className="sr-only">Product moderation ({products.length})</h2>
                 {products.length === 0 && <Empty>No listings awaiting moderation.</Empty>}
                 <div className="mt-3 grid gap-3">
                   {products.map((item) => (
-                    <article key={item.id} className="border bg-white p-5">
+                    <article key={item.id} className="rounded-xl border border-[#DDE5EE] bg-white p-5 shadow-sm">
                       <h3 className="font-bold">{item.name}</h3>
                       <p className="mt-1 text-sm text-[#526178]">
                         SKU {item.seller_sku} · MOQ {item.minimum_order_quantity} · stock{" "}
@@ -475,12 +475,12 @@ function Operations() {
             )}
 
             {view === "disputes" && canResolveDisputes && (
-              <section className="mt-8">
-                <h2 className="text-xl font-black">Disputes ({disputes.length})</h2>
+              <section>
+                <h2 className="sr-only">Disputes ({disputes.length})</h2>
                 {disputes.length === 0 && <Empty>No open disputes.</Empty>}
                 <div className="mt-3 grid gap-3">
                   {disputes.map((item) => (
-                    <article key={item.id} className="border bg-white p-5">
+                    <article key={item.id} className="rounded-xl border border-[#DDE5EE] bg-white p-5 shadow-sm">
                       <h3 className="font-bold">
                         {item.type.replaceAll("_", " ")} · order {item.order_id}
                       </h3>
@@ -530,13 +530,13 @@ function Operations() {
             )}
 
             {view === "accounts" && platformAdmin && (
-              <section className="mt-8">
+              <section>
                 <div className="grid gap-8 xl:grid-cols-2">
                   <div>
                     <h2 className="text-xl font-black">User accounts ({accounts.length})</h2>
                     <div className="mt-3 grid gap-3">
                       {accounts.map((item) => (
-                        <article key={item.user_id} className="border bg-white p-4">
+                        <article key={item.user_id} className="rounded-xl border border-[#DDE5EE] bg-white p-4 shadow-sm">
                           <div className="flex flex-wrap items-start justify-between gap-3">
                             <div>
                               <h3 className="font-bold">{item.full_name || item.email}</h3>
@@ -572,7 +572,7 @@ function Operations() {
                     <h2 className="text-xl font-black">Organizations ({organizations.length})</h2>
                     <div className="mt-3 grid gap-3">
                       {organizations.map((item) => (
-                        <article key={item.organization_id} className="border bg-white p-4">
+                        <article key={item.organization_id} className="rounded-xl border border-[#DDE5EE] bg-white p-4 shadow-sm">
                           <div className="flex flex-wrap items-start justify-between gap-3">
                             <div>
                               <h3 className="font-bold">{item.display_name}</h3>
