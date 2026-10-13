@@ -391,7 +391,7 @@ function Operations() {
                       <pre className="mt-3 overflow-auto bg-[#F7F8FA] p-3 text-xs">
                         {JSON.stringify(item.registered_address, null, 2)}
                       </pre>
-                      <DecisionInput id={item.id} notes={notes} setNotes={setNotes} />
+                      <DecisionInput optional id={item.id} notes={notes} setNotes={setNotes} />
                       <div className="mt-3 flex gap-2">
                         <button
                           disabled={busy}
@@ -643,19 +643,21 @@ function DecisionInput({
   notes,
   setNotes,
   minLength = 10,
+  optional = false,
 }: {
   id: string;
   notes: Record<string, string>;
   setNotes: React.Dispatch<React.SetStateAction<Record<string, string>>>;
   minLength?: number;
+  optional?: boolean;
 }) {
   return (
     <label className="mt-3 grid gap-1 text-sm font-semibold">
-      Decision notes (at least {minLength} characters)
+      Decision notes{optional ? " (optional)" : ` (at least ${minLength} characters)`}
       <textarea
-        required
+        required={!optional}
         className="border border-[#C9D3DF] p-2"
-        minLength={minLength}
+        minLength={optional ? undefined : minLength}
         value={notes[id] ?? ""}
         onChange={(event) => setNotes((current) => ({ ...current, [id]: event.target.value }))}
       />
