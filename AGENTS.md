@@ -10,3 +10,5 @@
 <!-- LOVABLE:END -->
 - Roles are simplified to Buyer, Seller (organization kind) and FeaBulk Admin (operations_members = platform_administrator); DB triggers coerce org roles to owner/administrator("Member") so legacy enum values stay but are never assigned. Why: avoids rewriting ~35 role-checking SQL functions.
 - /app only redirects; /buyer and /seller render components/workspace/BusinessWorkspace, /admin is the ops console. Why: each user type gets its own screen.
+
+- Buyer and seller presentation uses WorkspaceLayout and WorkspaceOverview with semantic workspace tokens; BusinessWorkspace retains actions and access checks. Why: keeps role-specific design independent of trading logic.

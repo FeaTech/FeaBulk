@@ -78,6 +78,9 @@ import {
 } from "@/lib/marketplace";
 import { SupplierRating } from "@/components/marketplace/SupplierRating";
 import { supabase } from "@/integrations/supabase/client";
+import { Button } from "@/components/ui/button";
+import { WorkspaceLayout, BusinessIdentity, AddBusinessButton } from "./WorkspaceLayout";
+import { WorkspaceOverview } from "./WorkspaceOverview";
 
 type View =
   "overview" | "rfqs" | "suppliers" | "orders" | "catalog" | "opportunities" | "quotes" | "team";
@@ -104,7 +107,7 @@ function storePendingRfqProduct(slug: string) {
     // Storage can be unavailable in private or embedded browsers; the prefill is optional.
   }
 }
-const input = "w-full border border-[#C9D3DF] bg-white px-3 py-2 text-[#17233A]";
+const input = "w-full border border-input bg-card px-3 py-2 text-foreground";
 // Simplified model: teammates are "Member" with the same access as the owner.
 const INVITABLE_TEAM_ROLES: TeamRole[] = ["administrator"];
 const TEAM_ROLE_LABELS: Record<TeamRole, string> = {
@@ -696,51 +699,31 @@ export function Workspace({ expected }: { expected?: "buyer" | "seller" }) {
   }
 
   return (
-    <main className="min-h-screen bg-[#F7F8FA] text-[#17233A]">
-      <header className="border-b border-[#DDE5EE] bg-white">
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-5 py-4">
-          <a href="/" className="text-xl font-black text-[#102B52]">
-            FEA<span className="text-[#F87908]">Bulk</span>
-          </a>
-          <div className="flex gap-4 text-sm font-bold">
-            <a href="/">Marketplace</a>
-            {userId && (
-              <button onClick={() => setShowNotifications((value) => !value)}>
-                Notifications ({notifications.filter((item) => !item.read_at).length})
-              </button>
-            )}
-            {userId && (
-              <button
-                onClick={() =>
-                  void signOut()
-                    .then(() => router.navigate({ to: "/auth" }))
-                    .catch((err) => setError(errorText(err)))
-                }
-              >
-                Sign out
-              </button>
-            )}
-          </div>
-        </div>
-      </header>
-      <div className="mx-auto max-w-7xl px-5 py-8">
+    <WorkspaceLayout
+      role={expected ?? (seller ? "seller" : "buyer")}
+      view={view} setView={setView} signedIn={Boolean(userId)}
+      hasOrganization={Boolean(organization)} organizationName={organization?.display_name}
+      unread={notifications.filter(item => !item.read_at).length} showNotifications={showNotifications}
+      onNotifications={() => setShowNotifications(value => !value)}
+      onSignOut={() => void signOut().then(() => router.navigate({ to: "/auth" })).catch(err => setError(errorText(err)))}
+    >
         {loading ? (
           <p>Loading account…</p>
         ) : !userId ? (
-          <section className="border bg-white p-6">
+          <section className="border bg-card p-6">
             <h1 className="text-2xl font-black">
               {error ? "We could not load your account" : "Sign in to continue"}
             </h1>
             {error && (
               <p
                 role="alert"
-                className="mt-3 border border-red-300 bg-red-50 p-3 text-sm text-red-800"
+                className="mt-3 border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive"
               >
                 {error}
               </p>
             )}
             <a
-              className="mt-4 inline-block bg-[#F87908] px-4 py-2 font-bold text-white"
+              className="mt-4 inline-block bg-workspace-action px-4 py-2 font-bold text-workspace-action-foreground"
               href="/auth"
             >
               {error ? "Return to sign in" : "Sign in"}
@@ -748,47 +731,14 @@ export function Workspace({ expected }: { expected?: "buyer" | "seller" }) {
           </section>
         ) : (
           <>
-            <div className="flex flex-wrap items-start justify-between gap-4">
-              <div>
-                <p className="text-xs font-black uppercase tracking-wider text-[#F87908]">
-                  Business workspace
-                </p>
-                <h1 className="mt-2 text-3xl font-black text-[#102B52]">
-                  {organization?.display_name ?? "Set up your business"}
-                </h1>
-                {organization && (
-                  <p className="mt-2 text-sm text-[#526178]">
-                    {organization.kind} · Verification: {organization.status.replaceAll("_", " ")}
-                  </p>
-                )}
-              </div>
-              <div className="flex gap-2">
-                {organizations.length > 1 && (
-                  <select
-                    aria-label="Organization"
-                    className={input}
-                    value={organizationId}
-                    onChange={(e) => setOrganizationId(e.target.value)}
-                  >
-                    {organizations.map((item) => (
-                      <option key={item.id} value={item.id}>
-                        {item.display_name} ({item.kind})
-                      </option>
-                    ))}
-                  </select>
-                )}
-                <button
-                  className="border border-[#102B52] px-4 py-2 text-sm font-bold"
-                  onClick={() => setForm(form === "organization" ? null : "organization")}
-                >
-                  Add business
-                </button>
-              </div>
-            </div>
+            <BusinessIdentity name={organization?.display_name ?? "Set up your business"} status={organization?.status}>
+              {organizations.length > 1 && <select aria-label="Organization" className={input} value={organizationId} onChange={e => setOrganizationId(e.target.value)}>{organizations.map(item => <option key={item.id} value={item.id}>{item.display_name} ({item.kind})</option>)}</select>}
+              <AddBusinessButton onClick={() => setForm(form === "organization" ? null : "organization")} />
+            </BusinessIdentity>
             {error && (
               <p
                 role="alert"
-                className="mt-5 border border-red-300 bg-red-50 p-3 text-sm text-red-800"
+                className="mt-5 border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive"
               >
                 {error}
               </p>
@@ -796,13 +746,13 @@ export function Workspace({ expected }: { expected?: "buyer" | "seller" }) {
             {notice && (
               <p
                 role="status"
-                className="mt-5 border border-green-300 bg-green-50 p-3 text-sm text-green-800"
+                className="mt-5 border border-workspace-success/30 bg-workspace-success-soft p-3 text-sm text-workspace-success"
               >
                 {notice}
               </p>
             )}
             {showNotifications && (
-              <section className="mt-5 border bg-white p-5">
+              <section className="mt-5 border bg-card p-5">
                 <h2 className="font-black">Notifications</h2>
                 {notifications.length === 0 ? (
                   <p className="mt-2 text-sm">No notifications yet.</p>
@@ -818,7 +768,7 @@ export function Workspace({ expected }: { expected?: "buyer" | "seller" }) {
                           {new Date(item.created_at).toLocaleString()}
                         </span>
                         {!item.read_at && (
-                          <button
+                          <Button variant="outline"
                             className="button-secondary"
                             onClick={() =>
                               void markNotificationRead(item.id)
@@ -827,7 +777,7 @@ export function Workspace({ expected }: { expected?: "buyer" | "seller" }) {
                             }
                           >
                             Mark read
-                          </button>
+                          </Button>
                         )}
                       </div>
                     ))}
@@ -835,7 +785,7 @@ export function Workspace({ expected }: { expected?: "buyer" | "seller" }) {
                 )}
               </section>
             )}
-            <details className="mt-5 border bg-white p-4">
+            <details className="my-5 border-b pb-4">
               <summary className="cursor-pointer text-sm font-bold">
                 Join a team with an invitation code
               </summary>
@@ -846,16 +796,16 @@ export function Workspace({ expected }: { expected?: "buyer" | "seller" }) {
                   required
                   minLength={36}
                   maxLength={36}
-                  className="min-w-64 flex-1 border border-[#C9D3DF] p-2"
+                  className="min-w-64 flex-1 border border-input p-2"
                   placeholder="Paste the invitation code"
                 />
-                <button disabled={busy} className="button">
+                <Button variant="outline" disabled={busy} className="button" type="submit">
                   Join team
-                </button>
+                </Button>
               </form>
             </details>
             {(form === "organization" || organizations.length === 0) && (
-              <section className="mt-6 border bg-white p-6">
+              <section className="mt-6 border bg-card p-6">
                 <h2 className="text-xl font-black">Create a business workspace</h2>
                 <form className="mt-4 grid gap-3 sm:grid-cols-2" onSubmit={submitOrganization}>
                   <Field label="Business role">
@@ -883,45 +833,8 @@ export function Workspace({ expected }: { expected?: "buyer" | "seller" }) {
             )}
             {organization && (
               <>
-                <div className="mt-7 flex flex-wrap gap-2 border-b pb-3">
-                  <Tab active={view === "overview"} onClick={() => setView("overview")}>
-                    Dashboard
-                  </Tab>
-                  {buyer && (
-                    <>
-                      <Tab active={view === "rfqs"} onClick={() => setView("rfqs")}>
-                        RFQs
-                      </Tab>
-                      <Tab active={view === "suppliers"} onClick={() => setView("suppliers")}>
-                        Suppliers
-                      </Tab>
-                    </>
-                  )}
-                  {seller && (
-                    <>
-                      <Tab
-                        active={view === "opportunities"}
-                        onClick={() => setView("opportunities")}
-                      >
-                        Opportunities
-                      </Tab>
-                      <Tab active={view === "quotes"} onClick={() => setView("quotes")}>
-                        Quotes
-                      </Tab>
-                      <Tab active={view === "catalog"} onClick={() => setView("catalog")}>
-                        Catalog
-                      </Tab>
-                    </>
-                  )}
-                  <Tab active={view === "orders"} onClick={() => setView("orders")}>
-                    Orders
-                  </Tab>
-                  <Tab active={view === "team"} onClick={() => setView("team")}>
-                    Team
-                  </Tab>
-                </div>
                 {organization.status !== "verified" && (
-                  <div className="mt-5 flex flex-wrap items-center justify-between gap-3 border border-amber-300 bg-amber-50 p-4 text-sm">
+                  <div className="mt-5 flex flex-wrap items-center justify-between gap-3 border border-workspace-warning/30 bg-workspace-warning-soft p-4 text-sm">
                     <p>
                       Business verification: {verification?.status ?? "pending"}. RFQ publishing and
                       quote submission require approval.
@@ -931,7 +844,7 @@ export function Workspace({ expected }: { expected?: "buyer" | "seller" }) {
                       ["draft", "rejected", "resubmission_required"].includes(
                         verification.status,
                       ) && (
-                        <button
+                        <Button variant="outline"
                           disabled={busy}
                           className="button"
                           onClick={() =>
@@ -942,18 +855,19 @@ export function Workspace({ expected }: { expected?: "buyer" | "seller" }) {
                           }
                         >
                           Submit for verification
-                        </button>
+                        </Button>
                       )}
                   </div>
                 )}
                 {view === "overview" && (
                   <WorkspaceOverview
                     buyer={Boolean(buyer)}
-                    seller={Boolean(seller)}
                     rfqs={rfqs}
                     opportunities={opportunities}
                     quotes={sellerQuotes}
                     products={products}
+                    productImages={productImages}
+                    canCreate={buyer ? canManageRfqs : canManageCatalog}
                     orders={orders}
                     suppliers={suppliers}
                     setView={setView}
@@ -974,7 +888,7 @@ export function Workspace({ expected }: { expected?: "buyer" | "seller" }) {
                         <h2 className="text-xl font-black">
                           Verified supplier network ({suppliers.length})
                         </h2>
-                        <p className="mt-1 text-sm text-[#526178]">
+                        <p className="mt-1 text-sm text-muted-foreground">
                           Discover approved sellers, then publish an RFQ with your exact commercial
                           requirements.
                         </p>
@@ -984,7 +898,7 @@ export function Workspace({ expected }: { expected?: "buyer" | "seller" }) {
                           Browse catalog
                         </a>
                         {canManageRfqs && (
-                          <button
+                          <Button variant="outline"
                             className="button"
                             onClick={() => {
                               setView("rfqs");
@@ -992,7 +906,7 @@ export function Workspace({ expected }: { expected?: "buyer" | "seller" }) {
                             }}
                           >
                             Create RFQ
-                          </button>
+                          </Button>
                         )}
                       </div>
                     </div>
@@ -1002,17 +916,17 @@ export function Workspace({ expected }: { expected?: "buyer" | "seller" }) {
                       <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                         {suppliers.map((item) => (
                           <Card key={item.id}>
-                            <p className="text-xs font-black uppercase tracking-wider text-[#F87908]">
+                            <p className="text-xs font-black uppercase tracking-wider text-workspace-warning">
                               Verified supplier
                             </p>
-                            <h3 className="mt-2 text-lg font-extrabold text-[#102B52]">
+                            <h3 className="mt-2 text-lg font-extrabold text-workspace-brand">
                               {item.display_name}
                             </h3>
                             <p className="mt-1">
                               <SupplierRating rating={supplierRatings.get(item.id)} />
                             </p>
                             <a
-                              className="mt-4 inline-block text-sm font-bold text-[#D96806]"
+                              className="mt-4 inline-block text-sm font-bold text-workspace-warning"
                               href={`/suppliers/${item.id}`}
                             >
                               View approved products →
@@ -1029,7 +943,7 @@ export function Workspace({ expected }: { expected?: "buyer" | "seller" }) {
                       <h2 className="text-xl font-black">
                         Submitted quotes ({sellerQuotes.length})
                       </h2>
-                      <p className="mt-1 text-sm text-[#526178]">
+                      <p className="mt-1 text-sm text-muted-foreground">
                         Track every commercial response and continue negotiation with the buyer.
                       </p>
                     </div>
@@ -1045,7 +959,7 @@ export function Workspace({ expected }: { expected?: "buyer" | "seller" }) {
                             <Card key={quote.id}>
                               <div className="flex flex-wrap items-start justify-between gap-3">
                                 <div>
-                                  <p className="text-xs font-black uppercase tracking-wider text-[#526178]">
+                                  <p className="text-xs font-black uppercase tracking-wider text-muted-foreground">
                                     {quote.status.replaceAll("_", " ")} · version{" "}
                                     {quote.current_version}
                                   </p>
@@ -1055,7 +969,7 @@ export function Workspace({ expected }: { expected?: "buyer" | "seller" }) {
                                       ?.title ?? quote.rfq_id.slice(0, 8)}
                                   </h3>
                                   {version && (
-                                    <p className="mt-2 text-sm text-[#526178]">
+                                    <p className="mt-2 text-sm text-muted-foreground">
                                       ₹{Number(version.unit_price).toLocaleString("en-IN")} ×{" "}
                                       {version.quantity} · {version.lead_time_days} day lead time ·
                                       valid until{" "}
@@ -1063,12 +977,12 @@ export function Workspace({ expected }: { expected?: "buyer" | "seller" }) {
                                     </p>
                                   )}
                                 </div>
-                                <button
+                                <Button variant="outline"
                                   className="button-secondary"
                                   onClick={() => void openConversation("quote", quote.id)}
                                 >
                                   Message buyer
-                                </button>
+                                </Button>
                               </div>
                             </Card>
                           );
@@ -1089,11 +1003,11 @@ export function Workspace({ expected }: { expected?: "buyer" | "seller" }) {
                     {canManageRfqs && form === "rfq" && (
                       <form
                         key={rfqProduct?.id ?? "blank"}
-                        className="mt-4 grid gap-3 border bg-white p-6 sm:grid-cols-2"
+                        className="mt-4 grid gap-3 border bg-card p-6 sm:grid-cols-2"
                         onSubmit={submitRfq}
                       >
                         {rfqProduct && (
-                          <div className="flex flex-wrap items-center justify-between gap-3 border border-[#C9D3DF] bg-[#EAF2FB] p-3 text-sm sm:col-span-2">
+                          <div className="flex flex-wrap items-center justify-between gap-3 border border-input bg-workspace-info-soft p-3 text-sm sm:col-span-2">
                             <p>
                               Requesting a quote for{" "}
                               <a
@@ -1105,13 +1019,13 @@ export function Workspace({ expected }: { expected?: "buyer" | "seller" }) {
                               from {rfqProduct.supplier_name}. Minimum order{" "}
                               {rfqProduct.minimum_order_quantity} {rfqProduct.unit_of_measure}.
                             </p>
-                            <button
+                            <Button variant="outline"
                               type="button"
                               className="button-secondary"
                               onClick={() => setRfqProduct(null)}
                             >
                               Remove product
-                            </button>
+                            </Button>
                           </div>
                         )}
                         <Text
@@ -1173,14 +1087,14 @@ export function Workspace({ expected }: { expected?: "buyer" | "seller" }) {
                             <div className="flex flex-wrap justify-between gap-3">
                               <div>
                                 <h3 className="font-extrabold">{item.title}</h3>
-                                <p className="text-sm text-[#526178]">
+                                <p className="text-sm text-muted-foreground">
                                   {item.required_quantity} {item.unit_of_measure} · PIN{" "}
                                   {item.delivery_pin_code} · {item.status}
                                 </p>
                               </div>
                               <div className="flex gap-2">
                                 {canManageRfqs && item.status === "draft" && (
-                                  <button
+                                  <Button variant="outline"
                                     disabled={busy}
                                     className="button"
                                     onClick={() =>
@@ -1188,14 +1102,14 @@ export function Workspace({ expected }: { expected?: "buyer" | "seller" }) {
                                     }
                                   >
                                     Publish
-                                  </button>
+                                  </Button>
                                 )}
-                                <button
+                                <Button variant="outline"
                                   className="button-secondary"
                                   onClick={() => void openQuotes(item.id)}
                                 >
                                   Compare quotes
-                                </button>
+                                </Button>
                               </div>
                             </div>
                             {selectedRfq === item.id && (
@@ -1225,13 +1139,13 @@ export function Workspace({ expected }: { expected?: "buyer" | "seller" }) {
                                     return (
                                       <div
                                         key={quote.id}
-                                        className="mt-3 grid gap-3 border bg-[#F7F8FA] p-4 text-sm lg:grid-cols-[1.2fr_1fr_auto] lg:items-center"
+                                        className="mt-3 grid gap-3 border bg-workspace-canvas p-4 text-sm lg:grid-cols-[1.2fr_1fr_auto] lg:items-center"
                                       >
                                         <div>
-                                          <p className="font-extrabold text-[#102B52]">
+                                          <p className="font-extrabold text-workspace-brand">
                                             {supplierName}
                                           </p>
-                                          <p className="mt-1 text-xs font-bold uppercase text-[#526178]">
+                                          <p className="mt-1 text-xs font-bold uppercase text-muted-foreground">
                                             Version {quote.current_version} ·{" "}
                                             {quote.status.replaceAll("_", " ")}
                                           </p>
@@ -1269,7 +1183,7 @@ export function Workspace({ expected }: { expected?: "buyer" | "seller" }) {
                                         <div className="flex flex-wrap gap-2 lg:justify-end">
                                           {canApproveQuotes &&
                                             ["submitted", "revised"].includes(quote.status) && (
-                                              <button
+                                              <Button variant="outline"
                                                 disabled={busy}
                                                 className="button"
                                                 onClick={() =>
@@ -1280,14 +1194,14 @@ export function Workspace({ expected }: { expected?: "buyer" | "seller" }) {
                                                 }
                                               >
                                                 Accept quote
-                                              </button>
+                                              </Button>
                                             )}
-                                          <button
+                                          <Button variant="outline"
                                             className="button-secondary"
                                             onClick={() => void openConversation("quote", quote.id)}
                                           >
                                             Message seller
-                                          </button>
+                                          </Button>
                                         </div>
                                       </div>
                                     );
@@ -1313,7 +1227,7 @@ export function Workspace({ expected }: { expected?: "buyer" | "seller" }) {
                             <div className="flex flex-wrap justify-between gap-3">
                               <div>
                                 <h3 className="font-extrabold">{item.title}</h3>
-                                <p className="text-sm text-[#526178]">
+                                <p className="text-sm text-muted-foreground">
                                   {item.required_quantity} {item.unit_of_measure} · PIN{" "}
                                   {item.delivery_pin_code} · closes{" "}
                                   {item.quote_deadline
@@ -1322,7 +1236,7 @@ export function Workspace({ expected }: { expected?: "buyer" | "seller" }) {
                                 </p>
                               </div>
                               {canSubmitQuotes && (
-                                <button
+                                <Button variant="outline"
                                   className="button"
                                   onClick={() => {
                                     setQuoteRfq(item);
@@ -1330,7 +1244,7 @@ export function Workspace({ expected }: { expected?: "buyer" | "seller" }) {
                                   }}
                                 >
                                   Prepare quote
-                                </button>
+                                </Button>
                               )}
                             </div>
                           </Card>
@@ -1339,7 +1253,7 @@ export function Workspace({ expected }: { expected?: "buyer" | "seller" }) {
                     )}
                     {canSubmitQuotes && form === "quote" && quoteRfq && (
                       <form
-                        className="mt-4 grid gap-3 border bg-white p-6 sm:grid-cols-2"
+                        className="mt-4 grid gap-3 border bg-card p-6 sm:grid-cols-2"
                         onSubmit={submitSellerQuote}
                       >
                         <h3 className="text-lg font-bold sm:col-span-2">Quote: {quoteRfq.title}</h3>
@@ -1396,12 +1310,12 @@ export function Workspace({ expected }: { expected?: "buyer" | "seller" }) {
                                     quote.rfq_id.slice(0, 8)}{" "}
                                   · version {quote.current_version} · {quote.status}
                                 </span>
-                                <button
+                                <Button variant="outline"
                                   className="button-secondary"
                                   onClick={() => void openConversation("quote", quote.id)}
                                 >
                                   Message buyer
-                                </button>
+                                </Button>
                               </div>
                             </Card>
                           ))}
@@ -1423,7 +1337,7 @@ export function Workspace({ expected }: { expected?: "buyer" | "seller" }) {
                     />
                     {canManageCatalog && form === "product" && (
                       <form
-                        className="mt-4 grid gap-3 border bg-white p-6 sm:grid-cols-2"
+                        className="mt-4 grid gap-3 border bg-card p-6 sm:grid-cols-2"
                         onSubmit={submitProduct}
                       >
                         <Text name="name" label="Product name" minLength={3} />
@@ -1468,19 +1382,19 @@ export function Workspace({ expected }: { expected?: "buyer" | "seller" }) {
                       <div className="mt-4 grid gap-3">
                         {products.map((item) => (
                           <Card key={item.id}>
-                            <h3 className="font-extrabold">{item.name}</h3>
-                            <p className="text-sm text-[#526178]">
-                              SKU {item.seller_sku} · MOQ {item.minimum_order_quantity} · Stock{" "}
-                              {item.available_quantity} · {item.listing_status} /{" "}
-                              {item.moderation_status}
-                            </p>
+                            <div className="flex items-center gap-4">
+                              {productImages.get(item.id)?.[0] && <img src={productImages.get(item.id)?.[0]?.url} alt={productImages.get(item.id)?.[0]?.alt_text ?? item.name} className="size-20 shrink-0 rounded border bg-muted object-contain" />}
+                              <div className="min-w-0"><h3 className="font-extrabold text-workspace-brand">{item.name}</h3>
+                              <p className="mt-1 text-sm text-muted-foreground">SKU {item.seller_sku} · MOQ {item.minimum_order_quantity} · Stock {item.available_quantity}</p>
+                              <p className="mt-1 text-xs capitalize text-muted-foreground">{item.listing_status} · {item.moderation_status}</p></div>
+                            </div>
                             {item.moderation_notes && (
-                              <p className="mt-2 border-l-2 border-[#F87908] pl-3 text-sm">
+                              <p className="mt-2 border-l-2 border-workspace-action pl-3 text-sm">
                                 Review: {item.moderation_notes}
                               </p>
                             )}
                             {canManageCatalog && item.moderation_status === "rejected" && (
-                              <button
+                              <Button variant="outline"
                                 disabled={busy}
                                 className="button mt-3"
                                 onClick={() =>
@@ -1491,20 +1405,20 @@ export function Workspace({ expected }: { expected?: "buyer" | "seller" }) {
                                 }
                               >
                                 Reopen rejected listing
-                              </button>
+                              </Button>
                             )}
                             {canManageCatalog &&
                               item.listing_status === "draft" &&
                               item.moderation_status === "pending" &&
                               !item.submitted_for_review_at && (
-                                <button
+                                <Button variant="outline"
                                   className="button-secondary mt-3"
                                   onClick={() =>
                                     setEditingProductId(editingProductId === item.id ? "" : item.id)
                                   }
                                 >
                                   Edit draft
-                                </button>
+                                </Button>
                               )}
                             {canManageCatalog && editingProductId === item.id && (
                               <form
@@ -1589,7 +1503,7 @@ export function Workspace({ expected }: { expected?: "buyer" | "seller" }) {
                                 {item.product_price_tiers.map((tier) => (
                                   <div
                                     key={tier.id}
-                                    className="flex items-center justify-between gap-3 bg-[#F7F8FA] p-2"
+                                    className="flex items-center justify-between gap-3 bg-workspace-canvas p-2"
                                   >
                                     <span>
                                       {tier.minimum_quantity}–{tier.maximum_quantity} units · ₹
@@ -1598,9 +1512,9 @@ export function Workspace({ expected }: { expected?: "buyer" | "seller" }) {
                                     {canManageCatalog &&
                                       item.listing_status === "draft" &&
                                       !item.submitted_for_review_at && (
-                                        <button
+                                        <Button variant="outline"
                                           disabled={busy}
-                                          className="text-red-700 underline"
+                                          className="text-destructive underline"
                                           onClick={() =>
                                             void run(
                                               () => deletePriceTier(tier.id),
@@ -1609,7 +1523,7 @@ export function Workspace({ expected }: { expected?: "buyer" | "seller" }) {
                                           }
                                         >
                                           Delete tier
-                                        </button>
+                                        </Button>
                                       )}
                                   </div>
                                 ))}
@@ -1654,9 +1568,9 @@ export function Workspace({ expected }: { expected?: "buyer" | "seller" }) {
                                     min={0.01}
                                     step="0.01"
                                   />
-                                  <button disabled={busy} className="button">
+                                  <Button variant="outline" disabled={busy} className="button" type="submit">
                                     Add price tier
-                                  </button>
+                                  </Button>
                                 </form>
                               )}
                             {(productImages.get(item.id) ?? []).length > 0 && (
@@ -1671,9 +1585,9 @@ export function Workspace({ expected }: { expected?: "buyer" | "seller" }) {
                                     {canManageCatalog &&
                                       item.listing_status === "draft" &&
                                       !item.submitted_for_review_at && (
-                                        <button
+                                        <Button variant="outline"
                                           disabled={busy}
-                                          className="mt-1 text-red-700 underline"
+                                          className="mt-1 text-destructive underline"
                                           onClick={() =>
                                             void run(
                                               () => deleteProductImage(image),
@@ -1682,7 +1596,7 @@ export function Workspace({ expected }: { expected?: "buyer" | "seller" }) {
                                           }
                                         >
                                           Remove image
-                                        </button>
+                                        </Button>
                                       )}
                                   </figure>
                                 ))}
@@ -1725,16 +1639,16 @@ export function Workspace({ expected }: { expected?: "buyer" | "seller" }) {
                                     required={false}
                                     maxLength={200}
                                   />
-                                  <button disabled={busy} className="button">
+                                  <Button variant="outline" disabled={busy} className="button" type="submit">
                                     Upload image
-                                  </button>
+                                  </Button>
                                 </form>
                               )}
                             {canManageCatalog &&
                               item.listing_status === "draft" &&
                               item.moderation_status === "pending" &&
                               !item.submitted_for_review_at && (
-                                <button
+                                <Button variant="outline"
                                   disabled={busy}
                                   className="button mt-3"
                                   onClick={() =>
@@ -1745,7 +1659,7 @@ export function Workspace({ expected }: { expected?: "buyer" | "seller" }) {
                                   }
                                 >
                                   Submit for review
-                                </button>
+                                </Button>
                               )}
                             {canAdjustInventory && (
                               <form
@@ -1772,9 +1686,9 @@ export function Workspace({ expected }: { expected?: "buyer" | "seller" }) {
                                   step={1}
                                 />
                                 <Text name="reason" label="Reason" minLength={5} />
-                                <button disabled={busy} className="button">
+                                <Button variant="outline" disabled={busy} className="button" type="submit">
                                   Update inventory
-                                </button>
+                                </Button>
                               </form>
                             )}
                           </Card>
@@ -1826,10 +1740,10 @@ export function Workspace({ expected }: { expected?: "buyer" | "seller" }) {
                           <div className="flex flex-wrap items-center justify-between gap-3">
                             <div>
                               <p className="font-bold">{member.email}</p>
-                              <p className="text-sm text-[#526178]">{teamRoleLabel(member.role)}</p>
+                              <p className="text-sm text-muted-foreground">{teamRoleLabel(member.role)}</p>
                             </div>
                             {currentRole === "owner" && member.user_id !== userId && (
-                              <button
+                              <Button variant="outline"
                                 disabled={busy}
                                 className="button-secondary"
                                 onClick={() =>
@@ -1840,7 +1754,7 @@ export function Workspace({ expected }: { expected?: "buyer" | "seller" }) {
                                 }
                               >
                                 Remove
-                              </button>
+                              </Button>
                             )}
                           </div>
                         </Card>
@@ -1850,11 +1764,11 @@ export function Workspace({ expected }: { expected?: "buyer" | "seller" }) {
                       <>
                         <form
                           onSubmit={submitInvitation}
-                          className="mt-6 grid gap-3 border bg-white p-5 sm:grid-cols-2"
+                          className="mt-6 grid gap-3 border bg-card p-5 sm:grid-cols-2"
                         >
                           <div className="sm:col-span-2">
                             <h3 className="text-lg font-black">Invite a teammate</h3>
-                            <p className="mt-1 text-sm text-[#526178]">
+                            <p className="mt-1 text-sm text-muted-foreground">
                               Invite people to this business workspace. FEA operations access is
                               managed separately.
                             </p>
@@ -1900,10 +1814,10 @@ export function Workspace({ expected }: { expected?: "buyer" | "seller" }) {
                   </section>
                 )}
                 {conversation && (
-                  <section className="mt-8 border border-[#C9D3DF] bg-white p-5">
+                  <section className="mt-8 border border-input bg-card p-5">
                     <div className="flex items-center justify-between">
                       <h2 className="text-lg font-black">Trade messages</h2>
-                      <button
+                      <Button variant="outline"
                         className="button-secondary"
                         onClick={() => {
                           setConversation(null);
@@ -1911,15 +1825,15 @@ export function Workspace({ expected }: { expected?: "buyer" | "seller" }) {
                         }}
                       >
                         Close
-                      </button>
+                      </Button>
                     </div>
                     <div ref={messageListRef} className="mt-4 max-h-80 space-y-3 overflow-y-auto">
                       {messages.length === 0 ? (
-                        <p className="text-sm text-[#526178]">No messages yet.</p>
+                        <p className="text-sm text-muted-foreground">No messages yet.</p>
                       ) : (
                         messages.map((item) => (
-                          <article key={item.id} className="border bg-[#F7F8FA] p-3">
-                            <p className="text-xs font-bold text-[#526178]">
+                          <article key={item.id} className="border bg-workspace-canvas p-3">
+                            <p className="text-xs font-bold text-muted-foreground">
                               {item.sender_organization_id === organization.id
                                 ? "Your team"
                                 : "Other business"}{" "}
@@ -1939,12 +1853,12 @@ export function Workspace({ expected }: { expected?: "buyer" | "seller" }) {
                         name="body"
                         required
                         maxLength={8000}
-                        className="min-w-64 flex-1 border border-[#C9D3DF] p-3"
+                        className="min-w-64 flex-1 border border-input p-3"
                         placeholder="Write a message"
                       />
-                      <button disabled={busy} className="button">
+                      <Button variant="outline" disabled={busy} className="button" type="submit">
                         Send message
-                      </button>
+                      </Button>
                     </form>
                   </section>
                 )}
@@ -1952,7 +1866,7 @@ export function Workspace({ expected }: { expected?: "buyer" | "seller" }) {
             )}
             {ops && (
               <a
-                className="mt-8 inline-block border border-[#102B52] px-4 py-2 text-sm font-bold text-[#102B52]"
+                className="mt-8 inline-block border border-border px-4 py-2 text-sm font-bold text-workspace-brand"
                 href="/admin"
               >
                 Open FEA operations
@@ -1960,155 +1874,7 @@ export function Workspace({ expected }: { expected?: "buyer" | "seller" }) {
             )}
           </>
         )}
-      </div>
-    </main>
-  );
-}
-
-type WorkspaceOverviewProps = {
-  buyer: boolean;
-  seller: boolean;
-  rfqs: Rfq[];
-  opportunities: Rfq[];
-  quotes: Quote[];
-  products: Product[];
-  orders: Order[];
-  suppliers: Supplier[];
-  setView: (view: View) => void;
-  openRfq: () => void;
-  openProduct: () => void;
-};
-function WorkspaceOverview({
-  buyer,
-  seller,
-  rfqs,
-  opportunities,
-  quotes,
-  products,
-  orders,
-  suppliers,
-  setView,
-  openRfq,
-  openProduct,
-}: WorkspaceOverviewProps) {
-  const activeOrders = orders.filter(
-    (item) => !["completed", "cancelled", "returned"].includes(item.status),
-  ).length;
-  const awaitingPayment = orders.filter((item) => item.status === "awaiting_payment").length;
-  const lowStock = products.filter(
-    (item) => item.available_quantity <= item.minimum_order_quantity,
-  ).length;
-  const openRfqs = rfqs.filter((item) =>
-    ["published", "receiving_quotes"].includes(item.status),
-  ).length;
-  return (
-    <section className="mt-6">
-      <div className="border bg-[#102B52] p-6 text-white">
-        <p className="text-xs font-black uppercase tracking-wider text-[#F9A453]">
-          {buyer && seller
-            ? "Buyer and seller dashboard"
-            : buyer
-              ? "Buyer procurement"
-              : "Seller commerce"}
-        </p>
-        <h2 className="mt-2 text-2xl font-black">Your live business pipeline</h2>
-        <p className="mt-2 max-w-2xl text-sm leading-6 text-[#C5D4E8]">
-          Every number below comes from your organization records and opens the workflow that owns
-          it.
-        </p>
-        <div className="mt-5 flex flex-wrap gap-2">
-          {buyer && (
-            <button className="bg-[#F87908] px-4 py-2 text-sm font-bold" onClick={openRfq}>
-              Create RFQ
-            </button>
-          )}
-          {seller && (
-            <button className="bg-[#F87908] px-4 py-2 text-sm font-bold" onClick={openProduct}>
-              Add product
-            </button>
-          )}
-          <button
-            className="border border-white/40 px-4 py-2 text-sm font-bold"
-            onClick={() => setView("orders")}
-          >
-            View orders
-          </button>
-        </div>
-      </div>
-      {buyer && (
-        <>
-          <h3 className="mt-6 text-lg font-black">Buyer activity</h3>
-          <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-            <DashboardMetric label="Open RFQs" value={openRfqs} onClick={() => setView("rfqs")} />
-            <DashboardMetric
-              label="Active orders"
-              value={activeOrders}
-              onClick={() => setView("orders")}
-            />
-            <DashboardMetric
-              label="Awaiting payment"
-              value={awaitingPayment}
-              urgent={awaitingPayment > 0}
-              onClick={() => setView("orders")}
-            />
-            <DashboardMetric
-              label="Verified suppliers"
-              value={suppliers.length}
-              onClick={() => setView("suppliers")}
-            />
-          </div>
-        </>
-      )}
-      {seller && (
-        <>
-          <h3 className="mt-6 text-lg font-black">Seller activity</h3>
-          <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-            <DashboardMetric
-              label="Open opportunities"
-              value={opportunities.length}
-              onClick={() => setView("opportunities")}
-            />
-            <DashboardMetric
-              label="Submitted quotes"
-              value={quotes.length}
-              onClick={() => setView("quotes")}
-            />
-            <DashboardMetric
-              label="Catalog products"
-              value={products.length}
-              onClick={() => setView("catalog")}
-            />
-            <DashboardMetric
-              label="Low stock items"
-              value={lowStock}
-              urgent={lowStock > 0}
-              onClick={() => setView("catalog")}
-            />
-          </div>
-        </>
-      )}
-    </section>
-  );
-}
-function DashboardMetric({
-  label,
-  value,
-  urgent = false,
-  onClick,
-}: {
-  label: string;
-  value: number;
-  urgent?: boolean;
-  onClick: () => void;
-}) {
-  return (
-    <button
-      className={`border bg-white p-5 text-left ${urgent ? "border-orange-400" : "border-[#DDE5EE]"}`}
-      onClick={onClick}
-    >
-      <p className="text-2xl font-black text-[#102B52]">{value}</p>
-      <p className="mt-1 text-xs font-bold uppercase tracking-wider text-[#526178]">{label}</p>
-    </button>
+    </WorkspaceLayout>
   );
 }
 
@@ -2196,12 +1962,12 @@ function OrderCard(props: OrderCardProps) {
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h3 className="font-extrabold">{order.order_number}</h3>
-          <p className="text-sm text-[#526178]">
+          <p className="text-sm text-muted-foreground">
             {order.status.replaceAll("_", " ")} · ₹
             {Number(order.grand_total).toLocaleString("en-IN")}
           </p>
           {order.order_lines.map((line) => (
-            <p key={line.id} className="mt-1 text-xs text-[#526178]">
+            <p key={line.id} className="mt-1 text-xs text-muted-foreground">
               {line.description}: {line.quantity} {line.unit_of_measure} × ₹
               {Number(line.unit_price).toLocaleString("en-IN")}
             </p>
@@ -2209,7 +1975,7 @@ function OrderCard(props: OrderCardProps) {
         </div>
         <div className="flex flex-wrap gap-2">
           {canManageSellerOrder && order.status === "awaiting_seller_confirmation" && (
-            <button
+            <Button variant="outline"
               disabled={busy}
               className="button"
               onClick={() =>
@@ -2220,12 +1986,12 @@ function OrderCard(props: OrderCardProps) {
               }
             >
               Confirm order
-            </button>
+            </Button>
           )}
           {canCancelBuyerOrder &&
             !paymentInProgress &&
             ["awaiting_seller_confirmation", "awaiting_payment"].includes(order.status) && (
-              <button
+              <Button variant="outline"
                 disabled={busy}
                 className="button-secondary"
                 onClick={() =>
@@ -2233,19 +1999,19 @@ function OrderCard(props: OrderCardProps) {
                 }
               >
                 Cancel order
-              </button>
+              </Button>
             )}
           {paymentAvailable && canPayBuyerOrder && order.status === "awaiting_payment" && (
-            <button
+            <Button variant="outline"
               disabled={busy}
               className="button"
               onClick={() => void run(() => props.payOrder(order), "Payment verified securely.")}
             >
               Pay securely
-            </button>
+            </Button>
           )}
           {canManageSellerOrder && order.status === "payment_secured" && (
-            <button
+            <Button variant="outline"
               disabled={busy}
               className="button"
               onClick={() =>
@@ -2256,10 +2022,10 @@ function OrderCard(props: OrderCardProps) {
               }
             >
               Start processing
-            </button>
+            </Button>
           )}
           {canManageSellerOrder && order.status === "processing" && (
-            <button
+            <Button variant="outline"
               disabled={busy}
               className="button"
               onClick={() =>
@@ -2270,21 +2036,21 @@ function OrderCard(props: OrderCardProps) {
               }
             >
               Ready to ship
-            </button>
+            </Button>
           )}
           {canManageSellerOrder &&
             ["ready_to_ship", "partially_fulfilled"].includes(order.status) && (
-              <button
+              <Button variant="outline"
                 className="button"
                 onClick={() =>
                   setActiveAction(activeAction === `ship-${order.id}` ? "" : `ship-${order.id}`)
                 }
               >
                 Create shipment
-              </button>
+              </Button>
             )}
           {canManageBuyerOrder && order.status === "delivered" && (
-            <button
+            <Button variant="outline"
               disabled={busy}
               className="button"
               onClick={() =>
@@ -2292,13 +2058,13 @@ function OrderCard(props: OrderCardProps) {
               }
             >
               Start inspection
-            </button>
+            </Button>
           )}
           {canManageBuyerOrder &&
             order.status === "inspection" &&
             order.inspection_ends_at &&
             new Date(order.inspection_ends_at) <= new Date() && (
-              <button
+              <Button variant="outline"
                 disabled={busy}
                 className="button"
                 onClick={() =>
@@ -2306,11 +2072,11 @@ function OrderCard(props: OrderCardProps) {
                 }
               >
                 Complete order
-              </button>
+              </Button>
             )}
           {(isBuyer || isSeller) &&
             ["shipped", "delivered", "inspection"].includes(order.status) && (
-              <button
+              <Button variant="outline"
                 className="button-secondary"
                 onClick={() =>
                   setActiveAction(
@@ -2319,40 +2085,40 @@ function OrderCard(props: OrderCardProps) {
                 }
               >
                 Open dispute
-              </button>
+              </Button>
             )}
           {isBuyer && order.status === "completed" && !review && (
-            <button
+            <Button variant="outline"
               className="button-secondary"
               onClick={() =>
                 setActiveAction(activeAction === `review-${order.id}` ? "" : `review-${order.id}`)
               }
             >
               Review seller
-            </button>
+            </Button>
           )}
           {canManageTax &&
             !hasTaxInvoice &&
             !["completed", "cancelled", "returned"].includes(order.status) && (
-              <button
+              <Button variant="outline"
                 className="button-secondary"
                 onClick={() =>
                   setActiveAction(activeAction === `tax-${order.id}` ? "" : `tax-${order.id}`)
                 }
               >
                 Tax details
-              </button>
+              </Button>
             )}
-          <button
+          <Button variant="outline"
             className="button-secondary"
             onClick={() => void props.openConversation("order", order.id)}
           >
             Messages
-          </button>
+          </Button>
         </div>
       </div>
       {latestPayment && (
-        <p className="mt-3 text-xs font-bold text-[#526178]">
+        <p className="mt-3 text-xs font-bold text-muted-foreground">
           Payment: {latestPayment.status.replaceAll("_", " ")} · ₹
           {Number(latestPayment.amount).toLocaleString("en-IN")} · Reconciliation{" "}
           {latestPayment.reconciliation_status}
@@ -2382,64 +2148,64 @@ function OrderCard(props: OrderCardProps) {
         </summary>
         <div className="mt-3 flex flex-wrap gap-2">
           {canGeneratePurchaseOrder && !["draft", "cancelled"].includes(order.status) && (
-            <button
+            <Button variant="outline"
               disabled={busy}
               className="button-secondary"
               onClick={() => props.generateDocument(order, "purchase_order")}
             >
               Generate purchase order
-            </button>
+            </Button>
           )}
           {canGenerateSellerInvoice && !["draft", "cancelled"].includes(order.status) && (
-            <button
+            <Button variant="outline"
               disabled={busy}
               className="button-secondary"
               onClick={() => props.generateDocument(order, "proforma_invoice")}
             >
               Generate proforma invoice
-            </button>
+            </Button>
           )}
           {canGenerateSellerInvoice && taxInvoiceStates.includes(order.status) && (
-            <button
+            <Button variant="outline"
               disabled={busy}
               className="button-secondary"
               onClick={() => props.generateDocument(order, "tax_invoice")}
             >
               Generate tax invoice
-            </button>
+            </Button>
           )}
           {canGenerateFulfilmentDocument && fulfilmentDocumentStates.includes(order.status) && (
             <>
-              <button
+              <Button variant="outline"
                 disabled={busy}
                 className="button-secondary"
                 onClick={() => props.generateDocument(order, "delivery_challan")}
               >
                 Generate delivery challan
-              </button>
-              <button
+              </Button>
+              <Button variant="outline"
                 disabled={busy}
                 className="button-secondary"
                 onClick={() => props.generateDocument(order, "packing_list")}
               >
                 Generate packing list
-              </button>
+              </Button>
             </>
           )}
         </div>
         {order.commercial_documents.length > 0 && (
           <div className="mt-3 grid gap-2">
             {order.commercial_documents.map((item) => (
-              <button
+              <Button variant="outline"
                 key={item.id}
-                className="flex items-center justify-between border bg-[#F7F8FA] p-3 text-left text-sm"
+                className="flex items-center justify-between border bg-workspace-canvas p-3 text-left text-sm"
                 onClick={() => props.downloadDocument(item.storage_path)}
               >
                 <span>
                   {item.type.replaceAll("_", " ")} · {item.document_number} · v{item.version}
                 </span>
-                <span className="font-bold text-[#102B52]">Open</span>
-              </button>
+                <span className="font-bold text-workspace-brand">Open</span>
+              </Button>
             ))}
           </div>
         )}
@@ -2450,14 +2216,14 @@ function OrderCard(props: OrderCardProps) {
           {order.shipments.map((shipment) => (
             <div
               key={shipment.id}
-              className="mt-2 flex flex-wrap items-center justify-between gap-2 bg-[#F7F8FA] p-3 text-sm"
+              className="mt-2 flex flex-wrap items-center justify-between gap-2 bg-workspace-canvas p-3 text-sm"
             >
               <span>
                 {shipment.carrier} · {shipment.tracking_number} ·{" "}
                 {shipment.status.replaceAll("_", " ")}
               </span>
               {canManageSellerOrder && shipment.status === "ready" && (
-                <button
+                <Button variant="outline"
                   disabled={busy}
                   className="button"
                   onClick={() =>
@@ -2465,10 +2231,10 @@ function OrderCard(props: OrderCardProps) {
                   }
                 >
                   Dispatch
-                </button>
+                </Button>
               )}
               {canManageBuyerOrder && ["dispatched", "in_transit"].includes(shipment.status) && (
-                <button
+                <Button variant="outline"
                   disabled={busy}
                   className="button"
                   onClick={() =>
@@ -2476,14 +2242,14 @@ function OrderCard(props: OrderCardProps) {
                   }
                 >
                   Confirm delivery
-                </button>
+                </Button>
               )}
             </div>
           ))}
         </div>
       )}
       {order.disputes.length > 0 && (
-        <div className="mt-3 border-l-2 border-red-500 pl-3 text-sm">
+        <div className="mt-3 border-l-2 border-destructive pl-3 text-sm">
           <strong>Dispute:</strong> {order.disputes[0]?.type.replaceAll("_", " ")} ·{" "}
           {order.disputes[0]?.status.replaceAll("_", " ")}
         </div>
@@ -2588,7 +2354,7 @@ function OrderCard(props: OrderCardProps) {
 
 function Field({ label, children }: { label: string; children: ReactNode }) {
   return (
-    <label className="grid gap-1 text-sm font-semibold text-[#405069]">
+    <label className="grid gap-1 text-sm font-semibold text-muted-foreground">
       {label}
       {children}
     </label>
@@ -2612,27 +2378,9 @@ function Text({
 }
 function Action({ busy, children }: { busy: boolean; children: ReactNode }) {
   return (
-    <button disabled={busy} className="button sm:col-span-2">
+    <Button type="submit" variant="workspace" disabled={busy} className="sm:col-span-2">
       {children}
-    </button>
-  );
-}
-function Tab({
-  active,
-  onClick,
-  children,
-}: {
-  active: boolean;
-  onClick: () => void;
-  children: ReactNode;
-}) {
-  return (
-    <button
-      className={`px-4 py-2 text-sm font-bold ${active ? "bg-[#102B52] text-white" : "bg-white text-[#102B52]"}`}
-      onClick={onClick}
-    >
-      {children}
-    </button>
+    </Button>
   );
 }
 function Heading({
@@ -2648,16 +2396,16 @@ function Heading({
     <div className="flex items-center justify-between gap-3">
       <h2 className="text-xl font-black">{title}</h2>
       {action && onClick && (
-        <button className="button" onClick={onClick}>
+        <Button variant="outline" className="button" onClick={onClick}>
           {action}
-        </button>
+        </Button>
       )}
     </div>
   );
 }
 function Empty({ children }: { children: ReactNode }) {
-  return <p className="mt-4 border bg-white p-6 text-sm text-[#526178]">{children}</p>;
+  return <p className="mt-4 border-y py-10 text-center text-sm text-muted-foreground">{children}</p>;
 }
 function Card({ children }: { children: ReactNode }) {
-  return <article className="border border-[#DDE5EE] bg-white p-5">{children}</article>;
+  return <article className="rounded-md border border-border bg-card p-5 sm:p-6">{children}</article>;
 }
