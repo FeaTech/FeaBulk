@@ -21,6 +21,10 @@ function WorkspaceRedirect() {
   const router = useRouter();
   useEffect(() => {
     void (async () => {
+      // Keep a product the buyer picked on the marketplace so the buyer screen
+      // can open a quote request for it after the redirect.
+      const product = new URLSearchParams(window.location.search).get("product");
+      if (product) window.sessionStorage.setItem("feabulk:rfq-product", product);
       const user = await getIdentity();
       if (!user) return router.navigate({ to: "/auth", replace: true });
       if (await getOperationsAccess(user.id)) return router.navigate({ to: "/admin", replace: true });
