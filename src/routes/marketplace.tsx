@@ -38,6 +38,7 @@ function Marketplace() {
     const initialTerm = new URLSearchParams(window.location.search).get("q") ?? "";
     setTerm(initialTerm);
     void search(initialTerm, "");
+    void getIdentity().then(user => setSignedIn(Boolean(user))).catch(() => undefined);
     // Supporting sidebar reads must not hold up the product grid.
     void getCategories().then(setCategories).catch(() => undefined);
     void getSupplierDirectory().then(nextSuppliers => {
@@ -48,7 +49,7 @@ function Marketplace() {
   }, []);
   function submit(event: FormEvent) { event.preventDefault(); void search(term, categoryId); }
   return <main className="min-h-screen bg-[#F7F8FA] text-[#17233A]">
-    <header className="border-b bg-white"><div className="mx-auto flex max-w-6xl items-center justify-between px-5 py-4"><Link to="/" className="text-xl font-black text-[#102B52]">FEA<span className="text-[#F87908]">Bulk</span></Link><div className="flex gap-4 text-sm font-bold"><Link to="/app">Workspace</Link><Link to="/auth">Sign in</Link></div></div></header>
+    <header className="border-b bg-white"><div className="mx-auto flex max-w-6xl items-center justify-between px-5 py-4"><Link to="/" className="text-xl font-black text-[#102B52]">FEA<span className="text-[#F87908]">Bulk</span></Link><div className="flex gap-4 text-sm font-bold"><Link to="/app">Workspace</Link>{!signedIn && <Link to="/auth">Sign in</Link>}</div></div></header>
     <div className="mx-auto max-w-6xl px-5 py-10"><p className="text-xs font-black uppercase tracking-wider text-[#F87908]">Verified marketplace</p><h1 className="mt-2 text-3xl font-black text-[#102B52]">Find wholesale products and suppliers</h1>
       <form className="mt-6 flex flex-wrap gap-3" onSubmit={submit}><input aria-label="Search products" className="min-w-60 flex-1 border border-[#C9D3DF] bg-white px-4 py-3" value={term} onChange={event => setTerm(event.target.value)} placeholder="Search products or SKU" /><select aria-label="Category" className="border border-[#C9D3DF] bg-white px-4 py-3" value={categoryId} onChange={event => setCategoryId(event.target.value)}><option value="">All categories</option>{categories.map(item => <option key={item.id} value={item.id}>{item.name}</option>)}</select><button className="button">Search</button></form>
       {error && <p role="alert" className="mt-4 border border-red-300 bg-red-50 p-3 text-sm text-red-800">{error}</p>}
