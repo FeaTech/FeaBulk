@@ -162,154 +162,138 @@ function Operations() {
     }
   }
 
+  const titles: Record<OperationsView, [string, string]> = {
+    overview: ["Overview", "Everything waiting on FeaBulk, at a glance."],
+    verification: ["Business verification", "Approve or reject businesses applying to trade."],
+    catalog: ["Listing review", "Check new products before buyers can see them."],
+    disputes: ["Disputes", "Settle problems between buyers and sellers."],
+    health: ["Platform health", "Issues detected automatically across orders and payments."],
+    orders: ["Orders", "Every order on the marketplace."],
+    payments: ["Payments", "Every payment attempt and its status."],
+    categories: ["Categories", "Organise how products are grouped."],
+    accounts: ["Users & businesses", "Everyone with an account and the businesses they run."],
+  };
+  const attention =
+    (canVerify ? cases.length : 0) +
+    (canModerate ? products.length : 0) +
+    (canResolveDisputes ? disputes.length : 0) +
+    (canViewHealth ? health.summary.open : 0);
+
   return (
-    <main className="min-h-screen bg-[#F7F8FA] text-[#17233A]">
-      <header className="border-b border-[#DDE5EE] bg-white">
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-5 py-4">
-          <a href="/" className="text-xl font-black text-[#102B52]">
-            FEA<span className="text-[#F87908]">Bulk</span>
-          </a>
-          <a href="/marketplace" className="text-sm font-bold text-[#102B52]">
-            Marketplace
-          </a>
+    <div className="flex min-h-screen bg-[#F4F6F9] text-[#17233A]">
+      <aside className="sticky top-0 hidden h-screen w-64 shrink-0 flex-col bg-[#0B1F3D] text-[#C9D3DF] md:flex">
+        <a href="/" className="px-6 py-6 text-xl font-black text-white">
+          FEA<span className="text-[#F87908]">Bulk</span>
+          <span className="ml-2 rounded bg-[#F87908]/15 px-2 py-0.5 align-middle text-[10px] font-black uppercase tracking-wider text-[#F87908]">
+            Admin
+          </span>
+        </a>
+        {access && (
+          <nav className="flex-1 overflow-y-auto px-3" aria-label="Admin sections">
+            <NavGroup label="Monitor">
+              <OpsTab active={view === "overview"} onClick={() => setView("overview")}>Overview</OpsTab>
+              {canViewHealth && (
+                <OpsTab active={view === "health"} count={health.summary.open} urgent={health.summary.critical > 0} onClick={() => setView("health")}>Platform health</OpsTab>
+              )}
+            </NavGroup>
+            <NavGroup label="Review queues">
+              {canVerify && (
+                <OpsTab active={view === "verification"} count={cases.length} onClick={() => setView("verification")}>Verification</OpsTab>
+              )}
+              {canModerate && (
+                <OpsTab active={view === "catalog"} count={products.length} onClick={() => setView("catalog")}>Listing review</OpsTab>
+              )}
+              {canResolveDisputes && (
+                <OpsTab active={view === "disputes"} count={disputes.length} urgent={disputes.length > 0} onClick={() => setView("disputes")}>Disputes</OpsTab>
+              )}
+            </NavGroup>
+            <NavGroup label="Marketplace">
+              {canViewOrders && <OpsTab active={view === "orders"} onClick={() => setView("orders")}>Orders</OpsTab>}
+              {canViewPayments && <OpsTab active={view === "payments"} onClick={() => setView("payments")}>Payments</OpsTab>}
+              {canModerate && <OpsTab active={view === "categories"} onClick={() => setView("categories")}>Categories</OpsTab>}
+              {platformAdmin && <OpsTab active={view === "accounts"} onClick={() => setView("accounts")}>Users & businesses</OpsTab>}
+            </NavGroup>
+          </nav>
+        )}
+        <div className="border-t border-white/10 px-6 py-5 text-xs">
+          <a href="/marketplace" className="font-bold text-white hover:text-[#F87908]">View marketplace →</a>
+          {platformAdmin && <p className="mt-2 text-[#8A9BB4]">Signed in as FeaBulk Admin</p>}
         </div>
-      </header>
-      <div className="mx-auto max-w-7xl px-5 py-8">
-        <p className="text-xs font-black uppercase tracking-wider text-[#F87908]">FEA operations</p>
-        <div className="mt-2 flex flex-wrap items-end justify-between gap-3">
-          <div>
-            <h1 className="text-3xl font-black text-[#102B52]">Platform control centre</h1>
-            <p className="mt-2 text-sm text-[#526178]">
-              Review businesses, listings, disputes and operational health from live platform
-              records.
-            </p>
+      </aside>
+
+      <main className="min-w-0 flex-1">
+        <header className="sticky top-0 z-10 border-b border-[#DDE5EE] bg-white/90 backdrop-blur">
+          <div className="flex flex-wrap items-center justify-between gap-3 px-6 py-4 lg:px-10">
+            <div>
+              <h1 className="text-2xl font-black text-[#102B52]">{titles[view][0]}</h1>
+              <p className="text-sm text-[#526178]">{titles[view][1]}</p>
+            </div>
+            {access && (
+              <select
+                aria-label="Admin section"
+                className="rounded-md border border-[#C9D3DF] bg-white px-3 py-2 text-sm font-semibold md:hidden"
+                value={view}
+                onChange={(event) => setView(event.target.value as OperationsView)}
+              >
+                {(Object.keys(titles) as OperationsView[]).map((key) => (
+                  <option key={key} value={key}>{titles[key][0]}</option>
+                ))}
+              </select>
+            )}
           </div>
-          {roles.length > 0 && (
-            <p className="text-xs font-bold uppercase tracking-wider text-[#526178]">
-              {roles.map((role) => role.replaceAll("_", " ")).join(" · ")}
-            </p>
-          )}
-        </div>
+        </header>
+        <div className="px-6 py-8 lg:px-10">
         {error && (
-          <p role="alert" className="mt-5 border border-red-300 bg-red-50 p-3 text-sm text-red-800">
+          <p role="alert" className="mb-5 rounded-md border border-red-300 bg-red-50 p-3 text-sm text-red-800">
             {error}
           </p>
         )}
         {notice && (
-          <p
-            role="status"
-            className="mt-5 border border-green-300 bg-green-50 p-3 text-sm text-green-800"
-          >
+          <p role="status" className="mb-5 rounded-md border border-green-300 bg-green-50 p-3 text-sm text-green-800">
             {notice}
           </p>
         )}
         {access === null ? (
-          <p className="mt-8">Checking access…</p>
+          <p>Checking access…</p>
         ) : !access ? (
-          <p className="mt-8 border bg-white p-6">FEA operations access is required.</p>
+          <div className="mx-auto mt-10 max-w-md rounded-xl border bg-white p-8 text-center">
+            <h2 className="text-xl font-black text-[#102B52]">Admin access required</h2>
+            <p className="mt-2 text-sm text-[#526178]">Sign in with a FeaBulk Admin account to open this page.</p>
+            <a href="/auth" className="button mt-5 inline-block">Sign in</a>
+          </div>
         ) : (
           <>
-            <nav
-              className="mt-7 flex flex-wrap gap-2 border-b pb-3"
-              aria-label="Operations sections"
-            >
-              <OpsTab active={view === "overview"} onClick={() => setView("overview")}>
-                Overview
-              </OpsTab>
-              {canVerify && (
-                <OpsTab active={view === "verification"} onClick={() => setView("verification")}>
-                  Verification ({cases.length})
-                </OpsTab>
-              )}
-              {canModerate && (
-                <OpsTab active={view === "catalog"} onClick={() => setView("catalog")}>
-                  Catalog review ({products.length})
-                </OpsTab>
-              )}
-              {canResolveDisputes && (
-                <OpsTab active={view === "disputes"} onClick={() => setView("disputes")}>
-                  Disputes ({disputes.length})
-                </OpsTab>
-              )}
-              {canViewHealth && (
-                <OpsTab active={view === "health"} onClick={() => setView("health")}>
-                  Platform health
-                </OpsTab>
-              )}
-              {canViewOrders && (
-                <OpsTab active={view === "orders"} onClick={() => setView("orders")}>
-                  Orders
-                </OpsTab>
-              )}
-              {canViewPayments && (
-                <OpsTab active={view === "payments"} onClick={() => setView("payments")}>
-                  Payments
-                </OpsTab>
-              )}
-              {canModerate && (
-                <OpsTab active={view === "categories"} onClick={() => setView("categories")}>
-                  Categories
-                </OpsTab>
-              )}
-              {platformAdmin && (
-                <OpsTab active={view === "accounts"} onClick={() => setView("accounts")}>
-                  Accounts
-                </OpsTab>
-              )}
-            </nav>
             {view === "orders" && canViewOrders && <OrdersPanel />}
             {view === "payments" && canViewPayments && <PaymentsPanel />}
             {view === "categories" && canModerate && <CategoriesPanel canEdit={platformAdmin} />}
 
             {view === "overview" && (
-              <section className="mt-6">
-                <h2 className="text-xl font-black">Operations overview</h2>
-                <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-                  {canVerify && (
-                    <Metric
-                      label="Verification queue"
-                      value={cases.length}
-                      onClick={() => setView("verification")}
-                    />
-                  )}
-                  {canModerate && (
-                    <Metric
-                      label="Catalog queue"
-                      value={products.length}
-                      onClick={() => setView("catalog")}
-                    />
-                  )}
-                  {canResolveDisputes && (
-                    <Metric
-                      label="Open disputes"
-                      value={disputes.length}
-                      urgent={disputes.length > 0}
-                      onClick={() => setView("disputes")}
-                    />
-                  )}
-                  {canViewHealth && (
-                    <Metric
-                      label="Open incidents"
-                      value={health.summary.open}
-                      urgent={health.summary.critical > 0}
-                      onClick={() => setView("health")}
-                    />
-                  )}
-                  {platformAdmin && (
-                    <Metric
-                      label="User accounts"
-                      value={accounts.length}
-                      onClick={() => setView("accounts")}
-                    />
-                  )}
-                  {platformAdmin && (
-                    <Metric
-                      label="Organizations"
-                      value={organizations.length}
-                      onClick={() => setView("accounts")}
-                    />
-                  )}
+              <section>
+                <div className="rounded-xl bg-gradient-to-r from-[#102B52] to-[#1D4479] p-6 text-white">
+                  <p className="text-xs font-black uppercase tracking-wider text-[#F87908]">Today</p>
+                  <p className="mt-2 text-3xl font-black">
+                    {attention === 0 ? "All caught up" : `${attention} item${attention === 1 ? "" : "s"} need attention`}
+                  </p>
+                  <p className="mt-1 text-sm text-[#C9D3DF]">Pick a card below to start working through the queue.</p>
                 </div>
+                <h2 className="mt-8 text-xs font-black uppercase tracking-wider text-[#526178]">Review queues</h2>
+                <div className="mt-3 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+                  {canVerify && <Metric label="Businesses to verify" value={cases.length} onClick={() => setView("verification")} />}
+                  {canModerate && <Metric label="Listings to review" value={products.length} onClick={() => setView("catalog")} />}
+                  {canResolveDisputes && <Metric label="Open disputes" value={disputes.length} urgent={disputes.length > 0} onClick={() => setView("disputes")} />}
+                  {canViewHealth && <Metric label="Open incidents" value={health.summary.open} urgent={health.summary.critical > 0} onClick={() => setView("health")} />}
+                </div>
+                {platformAdmin && (
+                  <>
+                    <h2 className="mt-8 text-xs font-black uppercase tracking-wider text-[#526178]">Community</h2>
+                    <div className="mt-3 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+                      <Metric label="User accounts" value={accounts.length} onClick={() => setView("accounts")} />
+                      <Metric label="Businesses" value={organizations.length} onClick={() => setView("accounts")} />
+                      <Metric label="Buyers" value={organizations.filter((o) => o.kind === "buyer").length} onClick={() => setView("accounts")} />
+                      <Metric label="Sellers" value={organizations.filter((o) => o.kind === "seller").length} onClick={() => setView("accounts")} />
+                    </div>
+                  </>
+                )}
               </section>
             )}
 
