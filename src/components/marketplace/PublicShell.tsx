@@ -65,6 +65,7 @@ export function ProductPicture({
       src={image.url}
       alt={image.alt_text ?? product.name}
       loading="lazy"
+      decoding="async"
       className={`${className} bg-[#EAF2FB] object-cover`}
     />
   ) : (

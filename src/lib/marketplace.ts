@@ -1,6 +1,9 @@
 import { supabase } from "@/integrations/supabase/client";
 import type { Database, Json } from "@/integrations/supabase/types";
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { createPublicReadCache } from "./public-read-cache";
+
+const publicCatalogCache = createPublicReadCache();
 
 const db = supabase;
 // product_images and its commands are missing from the generated types until they are regenerated.
@@ -317,6 +320,9 @@ export async function markNotificationRead(id: string) {
   return unwrap(await db.rpc("mark_notification_read_command", { notification_id_input: id }));
 }
 export async function searchPublishedProducts(term: string, categoryId: string, limit = 50, supplierId = ""): Promise<MarketplaceProduct[]> {
+  return publicCatalogCache.read(JSON.stringify(["products", term.trim(), categoryId, limit, supplierId]), () => fetchPublishedProducts(term, categoryId, limit, supplierId));
+}
+async function fetchPublishedProducts(term: string, categoryId: string, limit: number, supplierId: string): Promise<MarketplaceProduct[]> {
   let query = db.from("products").select(
     "id,name,slug,seller_sku,description,category_id,organization_id,minimum_order_quantity,available_quantity,listing_status,moderation_status,submitted_for_review_at,created_at,product_price_tiers(minimum_quantity,maximum_quantity,unit_price)",
   ).eq("listing_status", "active").eq("moderation_status", "approved").limit(limit);
@@ -326,11 +332,14 @@ export async function searchPublishedProducts(term: string, categoryId: string, 
   const products = unwrap((await query.order("created_at", { ascending: false })) as { data: MarketplaceProduct[] | null; error: { message: string } | null });
   if (products.length === 0) return [];
   const ids = [...new Set(products.map(item => item.organization_id))];
-  const suppliers = unwrap((await db.from("supplier_directory").select("id,display_name").in("id", ids)) as {
+  const [supplierResult, images] = await Promise.all([
+    db.from("supplier_directory").select("id,display_name").in("id", ids),
+    getProductImages(products.map(item => item.id)),
+  ]);
+  const suppliers = unwrap(supplierResult as {
     data: Array<{ id: string; display_name: string }> | null; error: { message: string } | null;
   });
   const names = new Map(suppliers.map(item => [item.id, item.display_name]));
-  const images = await getProductImages(products.map(item => item.id));
   return products.map(item => ({ ...item, supplier_name: names.get(item.organization_id) ?? "Verified supplier", images: images.get(item.id) ?? [] }));
 }
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
