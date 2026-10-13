@@ -613,3 +613,13 @@ export async function saveCategory(input: { id: string | null; name: string; slu
     id_input: input.id, name_input: input.name, slug_input: input.slug, parent_id_input: input.parent_id, is_active_input: input.is_active,
   }));
 }
+
+// Buyers order listed products directly at the tier price; the seller then confirms.
+export async function placeDirectOrder(input: { productId: string; buyerOrganizationId: string; quantity: number; addressLine: string; pinCode: string }): Promise<Order> {
+  return unwrap((await db.rpc("place_direct_order_command" as never, {
+    product_id_input: input.productId,
+    buyer_organization_id_input: input.buyerOrganizationId,
+    quantity_input: input.quantity,
+    delivery_address_input: { address_line: input.addressLine, pin_code: input.pinCode },
+  } as never)) as unknown as { data: Order | null; error: { message: string } | null });
+}
