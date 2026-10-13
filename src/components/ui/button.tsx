@@ -9,6 +9,8 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
+        workspace: "bg-workspace-action text-workspace-action-foreground hover:bg-workspace-action-hover font-bold",
+        workspaceNav: "justify-start text-workspace-nav-muted hover:bg-workspace-nav-foreground/10 hover:text-workspace-nav-foreground data-[active=true]:bg-workspace-nav-foreground/10 data-[active=true]:text-workspace-nav-foreground",
         default: "bg-primary text-primary-foreground shadow hover:bg-primary/90",
         destructive: "bg-destructive text-destructive-foreground shadow-sm hover:bg-destructive/90",
         outline:
