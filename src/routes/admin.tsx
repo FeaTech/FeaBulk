@@ -598,8 +598,9 @@ function Operations() {
             )}
           </>
         )}
-      </div>
-    </main>
+        </div>
+      </main>
+    </div>
   );
 }
 
