@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState, type ReactNode } from "react";
 import { ProductPicture } from "@/components/marketplace/PublicShell";
-import { searchPublishedProducts, type MarketplaceProduct } from "@/lib/marketplace";
+import { getIdentity, searchPublishedProducts, type MarketplaceProduct } from "@/lib/marketplace";
 
 type IconProps = { size?: number; className?: string };
 function Icon({ size = 20, className, children }: IconProps & { children: ReactNode }) {
@@ -32,6 +32,15 @@ function Index() {
   const [products, setProducts] = useState<MarketplaceProduct[]>([]);
   const [productsLoading, setProductsLoading] = useState(true);
   const [productsError, setProductsError] = useState(false);
+  // null until the session check finishes, so neither header variant flashes.
+  const [signedIn, setSignedIn] = useState<boolean | null>(null);
+  useEffect(() => {
+    let active = true;
+    void getIdentity()
+      .then((user) => { if (active) setSignedIn(Boolean(user)); })
+      .catch(() => { if (active) setSignedIn(false); });
+    return () => { active = false; };
+  }, []);
 
   useEffect(() => {
     let active = true;
@@ -54,8 +63,11 @@ function Index() {
             <a className="hover:text-[#F87908]" href="#marketplace">Marketplace</a>
           </nav>
           <div className="hidden items-center gap-4 lg:flex">
-            <Link className="text-sm font-bold text-[#102B52] hover:text-[#F87908]" to="/auth">Sign in</Link>
-            <Link className="bg-[#F87908] px-5 py-3 text-sm font-bold text-white transition hover:bg-[#d96806]" to="/auth">Create business account</Link>
+            {signedIn === true && <Link className="bg-[#F87908] px-5 py-3 text-sm font-bold text-white transition hover:bg-[#d96806]" to="/app">Go to my workspace</Link>}
+            {signedIn === false && <>
+              <Link className="text-sm font-bold text-[#102B52] hover:text-[#F87908]" to="/auth">Sign in</Link>
+              <Link className="bg-[#F87908] px-5 py-3 text-sm font-bold text-white transition hover:bg-[#d96806]" to="/auth">Create business account</Link>
+            </>}
           </div>
           <button className="grid h-10 w-10 place-items-center border border-[#DDE5EE] text-[#102B52] lg:hidden" onClick={() => setMenuOpen(!menuOpen)} aria-expanded={menuOpen} aria-label="Toggle navigation">
             {menuOpen ? <X size={20} /> : <Menu size={20} />}
@@ -64,6 +76,8 @@ function Index() {
         {menuOpen && <nav className="border-t border-[#DDE5EE] bg-white px-5 py-4 lg:hidden" aria-label="Mobile navigation">
           <div className="mx-auto grid max-w-[1240px] gap-1 text-sm font-bold text-[#102B52]">
             <a className="py-3" href="#marketplace" onClick={() => setMenuOpen(false)}>Marketplace</a>
+            {signedIn === true && <Link className="py-3" to="/app">Go to my workspace</Link>}
+            {signedIn === false && <Link className="py-3" to="/auth">Sign in</Link>}
           </div>
         </nav>}
       </header>

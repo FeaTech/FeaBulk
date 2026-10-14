@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
 import {
   acknowledgeOperationalIncident,
@@ -226,12 +226,12 @@ function Operations() {
   return (
     <div className="flex min-h-screen bg-[#F4F6F9] text-[#17233A]">
       <aside className="sticky top-0 hidden h-screen w-64 shrink-0 flex-col bg-[#0B1F3D] text-[#C9D3DF] md:flex">
-        <a href="/" className="px-6 py-6 text-xl font-black text-white">
+        <Link to="/" aria-label="FEA Bulk home" className="px-6 py-6 text-xl font-black text-white">
           FEA<span className="text-[#F87908]">Bulk</span>
           <span className="ml-2 rounded bg-[#F87908]/15 px-2 py-0.5 align-middle text-[10px] font-black uppercase tracking-wider text-[#F87908]">
             Admin
           </span>
-        </a>
+        </Link>
         {access && (
           <nav className="flex-1 overflow-y-auto px-3" aria-label="Admin sections">
             <NavGroup label="Monitor">

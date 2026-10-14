@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { Link } from "@tanstack/react-router";
 import { ArrowUpRight, Bell, Building2, FileText, LayoutDashboard, LogOut, Package, Plus, ShoppingBag, Store, Truck, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -18,7 +19,7 @@ export function WorkspaceLayout({ role, view, setView, signedIn, hasOrganization
   const label = role === "buyer" ? "Buyer" : "Seller";
   return <div className="business-workspace flex min-h-screen bg-workspace-canvas text-foreground">
     <aside className="sticky top-0 hidden h-screen w-60 shrink-0 flex-col bg-workspace-nav text-workspace-nav-foreground lg:flex">
-      <a href="/" className="px-6 py-7 text-2xl font-black">FEA<span className="text-workspace-action">Bulk</span></a>
+      <Link to="/" aria-label="FEA Bulk home" className="px-6 py-7 text-2xl font-black">FEA<span className="text-workspace-action">Bulk</span></Link>
       <div className="mx-5 mb-7 border-b border-workspace-nav-foreground/15 pb-5">
         <p className="text-xs font-bold uppercase tracking-wider text-workspace-action">{label} workspace</p>
         <p className="mt-2 text-sm font-semibold">{organizationName ?? (role === "buyer" ? "Purchasing" : "Sales & fulfilment")}</p>
