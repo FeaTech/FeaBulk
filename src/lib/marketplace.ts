@@ -321,7 +321,10 @@ export async function submitProductForReview(productId: string) {
 export async function getVerificationQueue(): Promise<VerificationCase[]> {
   return unwrap((await db.from("verification_cases")
     .select("id,organization_id,status,business_type,registered_address,submitted_at")
-    .in("status", ["submitted", "under_review"]).order("submitted_at")) as { data: VerificationCase[] | null; error: { message: string } | null });
+    // Businesses that have not pressed "Submit for verification" are included so the admin
+    // can still approve or reject them; submitted cases come first.
+    .in("status", ["submitted", "under_review", "resubmission_required", "draft"])
+    .order("submitted_at", { ascending: true, nullsFirst: false })) as { data: VerificationCase[] | null; error: { message: string } | null });
 }
 export async function reviewVerification(id: string, approve: boolean, notes: string) {
   return unwrap(await db.rpc("review_verification_case_command", {

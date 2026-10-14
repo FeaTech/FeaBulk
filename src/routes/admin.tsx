@@ -106,6 +106,17 @@ function Operations() {
     () => new Map(organizations.map((item) => [item.organization_id, item.display_name])),
     [organizations],
   );
+  const organizationKinds = useMemo(
+    () => new Map(organizations.map((item) => [item.organization_id, item.kind])),
+    [organizations],
+  );
+  const verifiedOrganizations = useMemo(
+    () =>
+      new Set(
+        organizations.filter((item) => item.status === "verified").map((item) => item.organization_id),
+      ),
+    [organizations],
+  );
 
   const load = useCallback(async () => {
     const user = await getIdentity();
@@ -208,7 +219,7 @@ function Operations() {
   };
   const attention =
     (canVerify ? cases.length : 0) +
-    (canModerate ? products.length : 0) +
+    (canModerate ? products.length + drafts.length : 0) +
     (canResolveDisputes ? disputes.length : 0) +
     (canViewHealth ? health.summary.open : 0);
 
@@ -234,7 +245,7 @@ function Operations() {
                 <OpsTab active={view === "verification"} count={cases.length} onClick={() => setView("verification")}>Verification</OpsTab>
               )}
               {canModerate && (
-                <OpsTab active={view === "catalog"} count={products.length} onClick={() => setView("catalog")}>Listing review</OpsTab>
+                <OpsTab active={view === "catalog"} count={products.length + drafts.length} onClick={() => setView("catalog")}>Listing review</OpsTab>
               )}
               {canResolveDisputes && (
                 <OpsTab active={view === "disputes"} count={disputes.length} urgent={disputes.length > 0} onClick={() => setView("disputes")}>Disputes</OpsTab>
@@ -328,7 +339,7 @@ function Operations() {
                 <h2 className="mt-8 text-xs font-black uppercase tracking-wider text-[#526178]">Review queues</h2>
                 <div className="mt-3 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
                   {canVerify && <Metric label="Businesses to verify" value={cases.length} onClick={() => setView("verification")} />}
-                  {canModerate && <Metric label="Listings to review" value={products.length} onClick={() => setView("catalog")} />}
+                  {canModerate && <Metric label="Listings to review" value={products.length + drafts.length} onClick={() => setView("catalog")} />}
                   {canResolveDisputes && <Metric label="Open disputes" value={disputes.length} urgent={disputes.length > 0} onClick={() => setView("disputes")} />}
                   {canViewHealth && <Metric label="Open incidents" value={health.summary.open} urgent={health.summary.critical > 0} onClick={() => setView("health")} />}
                 </div>
@@ -432,11 +443,22 @@ function Operations() {
                           `Organization ${item.organization_id}`}
                       </h3>
                       <p className="mt-1 text-sm text-[#526178]">
-                        {item.business_type ?? "Business type unavailable"} · submitted{" "}
+                        {organizationKinds.get(item.organization_id) === "seller"
+                          ? "Seller"
+                          : organizationKinds.get(item.organization_id) === "buyer"
+                            ? "Buyer"
+                            : "Business"}{" "}
+                        · {item.business_type ?? "Business type unavailable"} ·{" "}
                         {item.submitted_at
-                          ? new Date(item.submitted_at).toLocaleString()
-                          : "unknown"}
+                          ? `submitted ${new Date(item.submitted_at).toLocaleString()}`
+                          : "not submitted by the business yet"}
                       </p>
+                      {item.status === "draft" && (
+                        <p className="mt-2 border-l-2 border-[#F87908] pl-3 text-sm">
+                          The owner has not pressed Submit for verification. You can still approve
+                          or reject this business now.
+                        </p>
+                      )}
                       <pre className="mt-3 overflow-auto bg-[#F7F8FA] p-3 text-xs">
                         {JSON.stringify(item.registered_address, null, 2)}
                       </pre>
@@ -474,7 +496,13 @@ function Operations() {
             {view === "catalog" && canModerate && (
               <section>
                 <h2 className="sr-only">Product moderation ({products.length})</h2>
-                {products.length === 0 && <Empty>No listings awaiting moderation.</Empty>}
+                {products.length === 0 && (
+                  <Empty>
+                    {drafts.length > 0
+                      ? "No submitted listings. Drafts sellers have not submitted are listed below."
+                      : "No listings awaiting moderation."}
+                  </Empty>
+                )}
                 <div className="mt-3 grid gap-3">
                   {products.map((item) => (
                     <article key={item.id} className="rounded-xl border border-[#DDE5EE] bg-white p-5 shadow-sm">
@@ -517,15 +545,22 @@ function Operations() {
                       Saved by sellers, not submitted yet ({drafts.length})
                     </h2>
                     <p className="mt-1 text-sm text-[#526178]">
-                      These drafts are still with the seller. They appear above for approval once
-                      the seller presses Submit for review.
+                      The seller has not pressed Submit for review. You can still approve or
+                      reject these now; approving one publishes it straight away.
                     </p>
                     <div className="mt-3 grid gap-3">
                       {drafts.map((item) => {
-                        const blockers = submissionBlockers(item, true);
+                        const sellerVerified = verifiedOrganizations.has(item.organization_id ?? "");
+                        const blockers = submissionBlockers(item, sellerVerified).map((blocker) =>
+                          blocker.replace(
+                            "Your business must be verified by FeaBulk before products can be submitted.",
+                            "The seller's business is not verified yet. Approve the business under Verification first.",
+                          ),
+                        );
                         return (
                           <details
                             key={item.id}
+                            open
                             className="rounded-xl border border-[#DDE5EE] bg-white p-5 shadow-sm"
                           >
                             <summary className="cursor-pointer font-bold">
@@ -537,8 +572,8 @@ function Operations() {
                             </summary>
                             <p className="mt-3 border-l-2 border-[#F87908] pl-3 text-sm">
                               {blockers.length > 0
-                                ? `Waiting on the seller: ${blockers.join(" ")}`
-                                : "Ready to submit. Waiting for the seller to press Submit for review."}
+                                ? `Cannot be approved yet: ${blockers.join(" ")} You can still reject it with a note telling the seller what to fix.`
+                                : "Ready to approve. It meets every rule a seller submission would."}
                             </p>
                             <div className="mt-3">
                               <ProductReviewDetails
@@ -552,6 +587,28 @@ function Operations() {
                                     ?.name ?? "Not set"
                                 }
                               />
+                            </div>
+                            <DecisionInput id={item.id} notes={notes} setNotes={setNotes} />
+                            <div className="mt-3 flex gap-2">
+                              <button
+                                disabled={busy || blockers.length > 0}
+                                title={blockers.length > 0 ? blockers.join(" ") : undefined}
+                                className="button"
+                                onClick={() =>
+                                  void decide(() => moderateProduct(item.id, true, notes[item.id] ?? ""))
+                                }
+                              >
+                                Approve listing
+                              </button>
+                              <button
+                                disabled={busy}
+                                className="button-secondary"
+                                onClick={() =>
+                                  void decide(() => moderateProduct(item.id, false, notes[item.id] ?? ""))
+                                }
+                              >
+                                Reject listing
+                              </button>
                             </div>
                           </details>
                         );
