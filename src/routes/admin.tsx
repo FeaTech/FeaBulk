@@ -16,6 +16,7 @@ import {
   getVerificationQueue,
   moderateProduct,
   resolveDispute,
+  signOut,
   reviewVerification,
   type Category,
   type Dispute,
@@ -260,6 +261,7 @@ function Operations() {
               <h1 className="text-2xl font-black text-[#102B52]">{titles[view][0]}</h1>
               <p className="text-sm text-[#526178]">{titles[view][1]}</p>
             </div>
+            <div className="flex items-center gap-2">
             {access && (
               <select
                 aria-label="Admin section"
@@ -272,6 +274,21 @@ function Operations() {
                 ))}
               </select>
             )}
+            {access && (
+              // The admin console had no way to sign out, unlike the buyer and seller screens.
+              <button
+                type="button"
+                className="rounded-md border border-[#C9D3DF] bg-white px-3 py-2 text-sm font-semibold text-[#102B52] hover:border-[#102B52]"
+                onClick={() =>
+                  void signOut()
+                    .then(() => window.location.assign("/auth"))
+                    .catch((err) => setError(message(err)))
+                }
+              >
+                Sign out
+              </button>
+            )}
+            </div>
           </div>
         </header>
         <div className="px-6 py-8 lg:px-10">
