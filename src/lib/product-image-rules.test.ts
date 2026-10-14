@@ -4,6 +4,7 @@ import {
   productImageErrorMessage,
   productImageFileProblem,
   productImageSelectionProblems,
+  resolveProductImageUrl,
 } from "./product-image-rules.ts";
 
 const photo = (name: string, type = "image/jpeg", size = 200_000) => ({ name, type, size });
@@ -53,4 +54,19 @@ test("turns storage and database errors into plain explanations", () => {
     productImageErrorMessage("Something odd"),
     "The photo could not be uploaded: Something odd",
   );
+});
+
+test("builds a loadable address for each kind of stored image path", () => {
+  const publicUrl = (key: string) => `https://cdn.example/product-images/${key}`;
+  assert.equal(
+    resolveProductImageUrl("4b03/abc.png", publicUrl),
+    "https://cdn.example/product-images/4b03/abc.png",
+  );
+  assert.equal(
+    resolveProductImageUrl("https://images.example/a.jpg", publicUrl),
+    "https://images.example/a.jpg",
+  );
+  assert.equal(resolveProductImageUrl("/__l5e/assets-v1/x/paper.jpg", publicUrl), null);
+  assert.equal(resolveProductImageUrl("//cdn.example/a.jpg", publicUrl), null);
+  assert.equal(resolveProductImageUrl("   ", publicUrl), null);
 });

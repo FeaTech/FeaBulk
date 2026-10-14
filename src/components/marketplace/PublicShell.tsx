@@ -1,5 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import { useEffect, useState, type ReactNode } from "react";
+import { ProductThumb } from "@/components/ProductThumb";
 import { getIdentity, startingUnitPrice, type MarketplaceProduct } from "@/lib/marketplace";
 
 export function PublicShell({ children }: { children: ReactNode }) {
@@ -69,21 +70,14 @@ export function ProductPicture({
   className: string;
 }) {
   const image = product.images?.[0];
-  return image ? (
-    <img
-      src={image.url}
-      alt={image.alt_text ?? product.name}
-      loading="lazy"
-      decoding="async"
-      className={`${className} bg-[#EAF2FB] object-cover`}
+  // Falls back to the product's letter when there is no photo or the file cannot be loaded.
+  return (
+    <ProductThumb
+      src={image?.url}
+      alt={image?.alt_text ?? product.name}
+      name={product.name}
+      className={className}
     />
-  ) : (
-    <div
-      className={`${className} flex items-center justify-center bg-[#EAF2FB] font-black text-[#102B52]`}
-      aria-hidden="true"
-    >
-      {product.name.charAt(0).toUpperCase()}
-    </div>
   );
 }
 

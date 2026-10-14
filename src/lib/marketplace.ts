@@ -4,7 +4,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { slugCandidate } from "@/lib/slug";
 import {
   PRODUCT_IMAGE_LIMIT as IMAGE_LIMIT, PRODUCT_IMAGE_MAX_BYTES as IMAGE_MAX_BYTES, PRODUCT_IMAGE_TYPES,
-  productImageErrorMessage, productImageFileProblem,
+  productImageErrorMessage, productImageFileProblem, resolveProductImageUrl,
 } from "@/lib/product-image-rules";
 import { createPublicReadCache } from "./public-read-cache";
 
@@ -50,7 +50,7 @@ export type Order = {
   id: string; order_number: string; status: string; grand_total: number;
   buyer_organization_id: string; seller_organization_id: string; created_at: string;
   inspection_ends_at: string | null;
-  order_lines: Array<{ id: string; description: string; hsn_code: string | null; quantity: number; unit_of_measure: string; unit_price: number; gst_rate: number }>;
+  order_lines: Array<{ id: string; product_id?: string | null; description: string; hsn_code: string | null; quantity: number; unit_of_measure: string; unit_price: number; gst_rate: number }>;
   shipments: Array<{ id: string; status: string; carrier: string | null; tracking_number: string | null; estimated_delivery_at: string | null }>;
   disputes: Array<{ id: string; status: string; type: string; description: string; opened_at: string }>;
   reviews: Array<{ id: string; rating: number; body: string | null }>;
@@ -180,7 +180,16 @@ export async function getProducts(organizationId: string): Promise<Product[]> {
   return unwrap((await db.from("products").select("id,name,slug,seller_sku,description,category_id,hsn_code,unit_of_measure,gst_rate,lead_time_days,minimum_order_quantity,available_quantity,listing_status,moderation_status,moderation_notes,submitted_for_review_at,created_at,product_price_tiers(id,minimum_quantity,maximum_quantity,unit_price)").eq("organization_id", organizationId).order("created_at", { ascending: false }).limit(50)) as { data: Product[] | null; error: { message: string } | null });
 }
 export async function getOrders(organizationId: string): Promise<Order[]> {
-  return unwrap((await db.from("orders").select("id,order_number,status,grand_total,buyer_organization_id,seller_organization_id,inspection_ends_at,created_at,order_lines(id,description,hsn_code,quantity,unit_of_measure,unit_price,gst_rate),shipments(id,status,carrier,tracking_number,estimated_delivery_at),disputes(id,status,type,description,opened_at),reviews(id,rating,body),commercial_documents(id,order_id,type,document_number,version,storage_path,content_sha256,generated_at),payment_transactions(id,status,amount,currency,provider,provider_reference,provider_payment_reference,amount_refunded,reconciliation_status,created_at)").or(`buyer_organization_id.eq.${organizationId},seller_organization_id.eq.${organizationId}`).order("created_at", { ascending: false }).limit(50)) as { data: Order[] | null; error: { message: string } | null });
+  const orders = unwrap((await db.from("orders").select("id,order_number,status,grand_total,buyer_organization_id,seller_organization_id,inspection_ends_at,created_at,order_lines(id,product_id,description,hsn_code,quantity,unit_of_measure,unit_price,gst_rate),shipments(id,status,carrier,tracking_number,estimated_delivery_at),disputes(id,status,type,description,opened_at),reviews(id,rating,body),commercial_documents(id,order_id,type,document_number,version,storage_path,content_sha256,generated_at),payment_transactions(id,status,amount,currency,provider,provider_reference,provider_payment_reference,amount_refunded,reconciliation_status,created_at)").or(`buyer_organization_id.eq.${organizationId},seller_organization_id.eq.${organizationId}`).order("created_at", { ascending: false }).limit(50)) as { data: Order[] | null; error: { message: string } | null });
+  // reviews.order_id is unique, so PostgREST returns a single review object (or null) rather
+  // than a list. Normalise every nested relation to a list so screens can index them safely.
+  const list = <T,>(value: T[] | T | null | undefined): T[] => Array.isArray(value) ? value : value ? [value] : [];
+  return orders.map(order => ({
+    ...order,
+    order_lines: list(order.order_lines), shipments: list(order.shipments), disputes: list(order.disputes),
+    reviews: list(order.reviews), commercial_documents: list(order.commercial_documents),
+    payment_transactions: list(order.payment_transactions),
+  }));
 }
 
 export type PaymentCheckout = {
@@ -413,7 +422,9 @@ export async function getProductImages(productIds: string[], options: { strict?:
   if (error && options.strict) throw new Error(error.message);
   if (error || !data) return images;
   for (const row of data as Array<Omit<ProductImage, "url">>) {
-    const url = /^(https?:)?\//.test(row.storage_path) ? row.storage_path : db.storage.from(PRODUCT_IMAGE_BUCKET).getPublicUrl(row.storage_path).data.publicUrl;
+    const url = resolveProductImageUrl(row.storage_path, (key) => db.storage.from(PRODUCT_IMAGE_BUCKET).getPublicUrl(key).data.publicUrl);
+    // A record whose path cannot load anywhere is skipped so the placeholder shows instead.
+    if (!url) continue;
     images.set(row.product_id, [...(images.get(row.product_id) ?? []), { ...row, url }]);
   }
   return images;

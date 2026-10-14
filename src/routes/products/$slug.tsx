@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { BuyNow } from "@/components/marketplace/BuyNow";
 import { PriceCalculator } from "@/components/marketplace/PriceCalculator";
+import { ProductThumb } from "@/components/ProductThumb";
 import {
   Breadcrumbs,
   PageMessage,
@@ -138,7 +139,7 @@ function ProductPage() {
                   className={`border-2 ${image.id === shownImage?.id ? "border-[#F87908]" : "border-transparent"}`}
                   onClick={() => setSelectedImage(index)}
                 >
-                  <img src={image.url} alt="" className="h-16 w-16 object-cover" />
+                  <ProductThumb src={image.url} alt="" name={product.name} className="h-16 w-16" />
                 </button>
               ))}
             </div>

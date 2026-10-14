@@ -198,6 +198,8 @@ export function Workspace({ expected }: { expected?: "buyer" | "seller" }) {
   const [productSlugEdited, setProductSlugEdited] = useState(false);
   // Problems with the photos chosen in each form, keyed by "new" or the product ID.
   const [photoProblems, setPhotoProblems] = useState<Record<string, string[]>>({});
+  // Photos of the products in this business's orders, for the order cards.
+  const [orderProductImages, setOrderProductImages] = useState<Map<string, ProductImage[]>>(new Map());
   const [orderActionId, setOrderActionId] = useState("");
   const [orders, setOrders] = useState<Order[]>([]);
   const [team, setTeam] = useState<TeamMember[]>([]);
@@ -339,6 +341,10 @@ export function Workspace({ expected }: { expected?: "buyer" | "seller" }) {
       .then(setProductImages)
       .catch((err) => setError(`Product photos could not be loaded: ${errorText(err)}`));
     setOrders(nextOrders);
+    const orderedProductIds = [
+      ...new Set(nextOrders.flatMap((order) => order.order_lines.map((line) => line.product_id ?? "")).filter(Boolean)),
+    ];
+    void getProductImages(orderedProductIds).then(setOrderProductImages).catch(() => undefined);
     setVerification(nextVerification);
     setTeam(nextTeam);
     setInvitations(nextInvitations);
@@ -2007,6 +2013,7 @@ export function Workspace({ expected }: { expected?: "buyer" | "seller" }) {
                           <OrderCard
                             key={item.id}
                             order={item}
+                            productImages={orderProductImages}
                             organization={organization}
                             buyer={Boolean(buyer)}
                             seller={Boolean(seller)}
@@ -2185,6 +2192,7 @@ export function Workspace({ expected }: { expected?: "buyer" | "seller" }) {
 
 type OrderCardProps = {
   order: Order;
+  productImages: Map<string, ProductImage[]>;
   organization: Organization;
   buyer: boolean;
   seller: boolean;
@@ -2271,12 +2279,23 @@ function OrderCard(props: OrderCardProps) {
             {order.status.replaceAll("_", " ")} · ₹
             {Number(order.grand_total).toLocaleString("en-IN")}
           </p>
-          {order.order_lines.map((line) => (
-            <p key={line.id} className="mt-1 text-xs text-muted-foreground">
-              {line.description}: {line.quantity} {line.unit_of_measure} × ₹
-              {Number(line.unit_price).toLocaleString("en-IN")}
-            </p>
-          ))}
+          {order.order_lines.map((line) => {
+            const photo = props.productImages.get(line.product_id ?? "")?.[0];
+            return (
+              <p key={line.id} className="mt-1 flex items-center gap-2 text-xs text-muted-foreground">
+                <ProductThumb
+                  src={photo?.url}
+                  alt={photo?.alt_text ?? line.description}
+                  name={line.description}
+                  className="size-9 shrink-0 rounded border text-sm"
+                />
+                <span>
+                  {line.description}: {line.quantity} {line.unit_of_measure} × ₹
+                  {Number(line.unit_price).toLocaleString("en-IN")}
+                </span>
+              </p>
+            );
+          })}
         </div>
         <div className="flex flex-wrap gap-2">
           {canManageSellerOrder && order.status === "awaiting_seller_confirmation" && (

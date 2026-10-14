@@ -47,3 +47,20 @@ export function productImageErrorMessage(raw: string): string {
     return "The upload stopped because the connection dropped. Check your internet connection and try again.";
   return `The photo could not be uploaded: ${raw}`;
 }
+
+/**
+ * The address a browser should load for a stored image path, or null when the path cannot
+ * work anywhere. Storage keys ("<product id>/<file>") become public bucket URLs and full
+ * URLs are kept. Paths starting with "/" point at the site itself (for example editor-only
+ * "/__l5e/..." asset links) and 404 on every real host, so they are treated as no image.
+ */
+export function resolveProductImageUrl(
+  storagePath: string,
+  publicUrlFor: (key: string) => string,
+): string | null {
+  const path = storagePath.trim();
+  if (!path) return null;
+  if (/^https?:\/\//i.test(path)) return path;
+  if (path.startsWith("/")) return null;
+  return publicUrlFor(path);
+}
