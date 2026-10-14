@@ -55,7 +55,7 @@ import {
   subscribeToMessages,
   transitionOrder,
   updateProductDraft,
-  uploadProductImage,
+  uploadProductImages,
   PRODUCT_IMAGE_ACCEPT,
   PRODUCT_IMAGE_LIMIT,
   type Category,
@@ -80,7 +80,9 @@ import { SupplierRating } from "@/components/marketplace/SupplierRating";
 import { FieldLabel } from "@/components/InfoTip";
 import { supabase } from "@/integrations/supabase/client";
 import { LISTING_STAGE_LABELS, listingStage, submissionBlockers, tierCoversMinimumOrder } from "@/lib/listing";
+import { productImageSelectionProblems } from "@/lib/product-image-rules";
 import { slugCandidate, slugify } from "@/lib/slug";
+import { ProductThumb } from "@/components/ProductThumb";
 import { Button } from "@/components/ui/button";
 import { WorkspaceLayout, BusinessIdentity, AddBusinessButton } from "./WorkspaceLayout";
 import { WorkspaceOverview } from "./WorkspaceOverview";
@@ -194,6 +196,8 @@ export function Workspace({ expected }: { expected?: "buyer" | "seller" }) {
   // The new product's slug follows its name until the seller types a slug of their own.
   const [productSlug, setProductSlug] = useState("");
   const [productSlugEdited, setProductSlugEdited] = useState(false);
+  // Problems with the photos chosen in each form, keyed by "new" or the product ID.
+  const [photoProblems, setPhotoProblems] = useState<Record<string, string[]>>({});
   const [orderActionId, setOrderActionId] = useState("");
   const [orders, setOrders] = useState<Order[]>([]);
   const [team, setTeam] = useState<TeamMember[]>([]);
@@ -331,7 +335,9 @@ export function Workspace({ expected }: { expected?: "buyer" | "seller" }) {
     setSellerQuotes(nextSellerQuotes);
     setProducts(nextProducts);
     // Images must not delay orders, team permissions, or verification status.
-    void getProductImages(nextProducts.map(item => item.id)).then(setProductImages).catch(() => undefined);
+    void getProductImages(nextProducts.map(item => item.id), { strict: true })
+      .then(setProductImages)
+      .catch((err) => setError(`Product photos could not be loaded: ${errorText(err)}`));
     setOrders(nextOrders);
     setVerification(nextVerification);
     setTeam(nextTeam);
@@ -650,12 +656,68 @@ export function Workspace({ expected }: { expected?: "buyer" | "seller" }) {
       setForm(null);
     }, "RFQ draft saved.");
   }
+  // Photos chosen in a form's "images" input. An empty file input still submits one nameless entry.
+  const chosenPhotos = (formElement: HTMLFormElement) =>
+    new FormData(formElement)
+      .getAll("images")
+      .filter((value): value is File => value instanceof File && value.name !== "");
+  const photoCount = (count: number) => `${count} photo${count === 1 ? "" : "s"}`;
+  // Saving the product and uploading its photos are separate steps, so a failed photo
+  // never loses the product; the seller is told exactly which file failed and why.
+  function reportPhotoFailures(failures: string[]) {
+    if (failures.length === 0) return;
+    setError(
+      `The product was saved, but ${photoCount(failures.length)} could not be uploaded. ${failures.join(" ")} You can add ${failures.length === 1 ? "it" : "them"} again from the product below.`,
+    );
+  }
+  function photoPicker(formKey: string, existingCount: number) {
+    const problems = photoProblems[formKey] ?? [];
+    return (
+      <div className="grid gap-1 sm:col-span-2">
+        <Field
+          label={existingCount > 0 ? "Add more photos (optional)" : "Product photos (optional)"}
+          hint={`JPEG, PNG or WebP, up to 5 MB each and ${PRODUCT_IMAGE_LIMIT} per product. You can choose several at once.`}
+        >
+          <input
+            name="images"
+            type="file"
+            multiple
+            accept={PRODUCT_IMAGE_ACCEPT}
+            className={input}
+            onChange={(event) => {
+              const files = [...(event.currentTarget.files ?? [])];
+              setPhotoProblems((current) => ({
+                ...current,
+                [formKey]: productImageSelectionProblems(files, existingCount),
+              }));
+            }}
+          />
+        </Field>
+        {problems.length > 0 && (
+          <ul role="alert" className="list-disc pl-5 text-sm text-destructive">
+            {problems.map((problem) => (
+              <li key={problem}>{problem}</li>
+            ))}
+          </ul>
+        )}
+      </div>
+    );
+  }
   function submitProduct(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!organization) return;
+    const formElement = event.currentTarget;
     const f = formValues(event);
+    const photos = chosenPhotos(formElement);
+    const problems = productImageSelectionProblems(photos, 0);
+    if (problems.length > 0) {
+      setError(`Please fix the photos before saving. ${problems.join(" ")}`);
+      return;
+    }
     const requestedSlug = slugCandidate(String(f["slug"]) || String(f["name"]), 1);
     let savedSlug = requestedSlug;
+    let saved = false;
+    let photoResult = { uploaded: 0, failures: [] as string[] };
     void run(async () => {
       const created = await createProductWithUniqueSlug(organization.id, {
         name: String(f["name"]),
@@ -670,23 +732,41 @@ export function Workspace({ expected }: { expected?: "buyer" | "seller" }) {
         gst_rate: Number(f["gst"]),
         lead_time_days: Number(f["lead"]),
       });
+      saved = true;
       savedSlug = created.slug;
+      if (photos.length > 0) photoResult = await uploadProductImages(created.id, photos);
       setProductSlug("");
       setProductSlugEdited(false);
+      setPhotoProblems((current) => ({ ...current, new: [] }));
       setForm(null);
-    }, "Product draft saved. Next: on the product below, add a price tier and photos, then press Submit for review so the FeaBulk admin can approve it.").then(() => {
-      if (savedSlug !== requestedSlug)
-        setNotice(
-          `Product draft saved. Another product already uses "${requestedSlug}", so this one's web address is /products/${savedSlug}.`,
-        );
+    }, "Product draft saved.").then(() => {
+      if (!saved) return;
+      const address =
+        savedSlug !== requestedSlug
+          ? ` Another product already uses "${requestedSlug}", so this one's web address is /products/${savedSlug}.`
+          : "";
+      const added = photoResult.uploaded > 0 ? ` ${photoCount(photoResult.uploaded)} added.` : "";
+      setNotice(
+        `Product draft saved.${added}${address} Next: add a price tier on the product below, then press Submit for review so the FeaBulk admin can approve it.`,
+      );
+      reportPhotoFailures(photoResult.failures);
     });
   }
   function submitEditProduct(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!editingProductId) return;
+    const productId = editingProductId;
     const f = formValues(event);
+    const photos = chosenPhotos(event.currentTarget);
+    const problems = productImageSelectionProblems(photos, (productImages.get(productId) ?? []).length);
+    if (problems.length > 0) {
+      setError(`Please fix the photos before saving. ${problems.join(" ")}`);
+      return;
+    }
+    let saved = false;
+    let photoResult = { uploaded: 0, failures: [] as string[] };
     void run(async () => {
-      await updateProductDraft(editingProductId, {
+      await updateProductDraft(productId, {
         name: String(f["name"]),
         slug: String(f["slug"]),
         category_id: String(f["category"]),
@@ -698,8 +778,16 @@ export function Workspace({ expected }: { expected?: "buyer" | "seller" }) {
         gst_rate: Number(f["gst"]),
         lead_time_days: Number(f["lead"]),
       });
+      saved = true;
+      if (photos.length > 0) photoResult = await uploadProductImages(productId, photos);
+      setPhotoProblems((current) => ({ ...current, [productId]: [] }));
       setEditingProductId("");
-    }, "Product draft updated.");
+    }, "Product draft updated.").then(() => {
+      if (!saved) return;
+      if (photoResult.uploaded > 0)
+        setNotice(`Product draft updated. ${photoCount(photoResult.uploaded)} added.`);
+      reportPhotoFailures(photoResult.failures);
+    });
   }
   function submitSellerQuote(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -1483,6 +1571,7 @@ export function Workspace({ expected }: { expected?: "buyer" | "seller" }) {
                           name="lead" label="Lead time (days)" type="number" min={0}
                           hint="Days you need from order confirmation until the goods are dispatched."
                         />
+                        {photoPicker("new", 0)}
                         <Action busy={busy}>Save product draft</Action>
                       </form>
                     )}
@@ -1493,7 +1582,7 @@ export function Workspace({ expected }: { expected?: "buyer" | "seller" }) {
                         {products.map((item) => (
                           <Card key={item.id}>
                             <div className="flex items-center gap-4">
-                              {productImages.get(item.id)?.[0] && <img src={productImages.get(item.id)?.[0]?.url} alt={productImages.get(item.id)?.[0]?.alt_text ?? item.name} className="size-20 shrink-0 rounded border bg-muted object-contain" />}
+                              <ProductThumb src={productImages.get(item.id)?.[0]?.url} alt={productImages.get(item.id)?.[0]?.alt_text ?? item.name} name={item.name} className="size-20 shrink-0 rounded border" />
                               <div className="min-w-0"><h3 className="font-extrabold text-workspace-brand">{item.name}</h3>
                               <p className="mt-1 text-sm text-muted-foreground">SKU {item.seller_sku} · MOQ {item.minimum_order_quantity} · Stock {item.available_quantity}</p>
                               <p className="mt-1 text-xs font-semibold text-muted-foreground">{LISTING_STAGE_LABELS[listingStage(item)]}</p></div>
@@ -1621,6 +1710,7 @@ export function Workspace({ expected }: { expected?: "buyer" | "seller" }) {
                                   min={0}
                                   defaultValue={item.lead_time_days ?? 0}
                                 />
+                                {photoPicker(item.id, (productImages.get(item.id) ?? []).length)}
                                 <Action busy={busy}>Save changes</Action>
                               </form>
                             )}
@@ -1711,10 +1801,11 @@ export function Workspace({ expected }: { expected?: "buyer" | "seller" }) {
                               <div className="mt-4 flex flex-wrap gap-3 border-t pt-4">
                                 {(productImages.get(item.id) ?? []).map((image) => (
                                   <figure key={image.id} className="w-24 text-xs">
-                                    <img
+                                    <ProductThumb
                                       src={image.url}
                                       alt={image.alt_text ?? item.name}
-                                      className="h-24 w-24 border object-cover"
+                                      name={item.name}
+                                      className="h-24 w-24 border"
                                     />
                                     {canManageCatalog &&
                                       item.listing_status === "draft" &&
@@ -1746,28 +1837,61 @@ export function Workspace({ expected }: { expected?: "buyer" | "seller" }) {
                                     event.preventDefault();
                                     const formElement = event.currentTarget;
                                     const f = formValues(event);
-                                    const file = f["image"];
-                                    if (!(file instanceof File)) return;
+                                    const photos = chosenPhotos(formElement);
+                                    const problems = productImageSelectionProblems(
+                                      photos,
+                                      (productImages.get(item.id) ?? []).length,
+                                    );
+                                    if (photos.length === 0 || problems.length > 0) {
+                                      setNotice("");
+                                      setError(
+                                        photos.length === 0
+                                          ? "Choose at least one photo to upload."
+                                          : problems.join(" "),
+                                      );
+                                      return;
+                                    }
+                                    let result = { uploaded: 0, failures: [] as string[] };
                                     void run(async () => {
-                                      await uploadProductImage(
+                                      result = await uploadProductImages(
                                         item.id,
-                                        file,
+                                        photos,
                                         String(f["alt"] ?? ""),
                                       );
                                       formElement.reset();
-                                    }, "Product image added.");
+                                      setPhotoProblems((current) => ({ ...current, [`card-${item.id}`]: [] }));
+                                    }, "Product photos added.").then(() => {
+                                      if (result.uploaded > 0)
+                                        setNotice(`${photoCount(result.uploaded)} added to ${item.name}.`);
+                                      else setNotice("");
+                                      if (result.failures.length > 0)
+                                        setError(
+                                          `${photoCount(result.failures.length)} could not be uploaded. ${result.failures.join(" ")}`,
+                                        );
+                                    });
                                   }}
                                 >
                                   <Field
-                                    label="Product image (JPEG, PNG or WebP, up to 5 MB)"
+                                    label="Product photos (JPEG, PNG or WebP, up to 5 MB each)"
                                     hint="A clear photo of the product. JPEG, PNG or WebP, up to 5 MB each, and up to 6 images per listing."
                                   >
                                     <input
-                                      name="image"
+                                      name="images"
                                       type="file"
+                                      multiple
                                       accept={PRODUCT_IMAGE_ACCEPT}
                                       required
                                       className={input}
+                                      onChange={(event) => {
+                                        const files = [...(event.currentTarget.files ?? [])];
+                                        setPhotoProblems((current) => ({
+                                          ...current,
+                                          [`card-${item.id}`]: productImageSelectionProblems(
+                                            files,
+                                            (productImages.get(item.id) ?? []).length,
+                                          ),
+                                        }));
+                                      }}
                                     />
                                   </Field>
                                   <Text
@@ -1778,8 +1902,15 @@ export function Workspace({ expected }: { expected?: "buyer" | "seller" }) {
                                     maxLength={200}
                                   />
                                   <Button variant="outline" disabled={busy} className="button" type="submit">
-                                    Upload image
+                                    Upload photos
                                   </Button>
+                                  {(photoProblems[`card-${item.id}`] ?? []).length > 0 && (
+                                    <ul role="alert" className="basis-full list-disc pl-5 text-sm text-destructive">
+                                      {(photoProblems[`card-${item.id}`] ?? []).map((problem) => (
+                                        <li key={problem}>{problem}</li>
+                                      ))}
+                                    </ul>
+                                  )}
                                 </form>
                               )}
                             {canManageCatalog &&

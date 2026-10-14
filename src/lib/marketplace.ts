@@ -2,6 +2,10 @@ import { supabase } from "@/integrations/supabase/client";
 import type { Database, Json } from "@/integrations/supabase/types";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { slugCandidate } from "@/lib/slug";
+import {
+  PRODUCT_IMAGE_LIMIT as IMAGE_LIMIT, PRODUCT_IMAGE_MAX_BYTES as IMAGE_MAX_BYTES, PRODUCT_IMAGE_TYPES,
+  productImageErrorMessage, productImageFileProblem,
+} from "@/lib/product-image-rules";
 import { createPublicReadCache } from "./public-read-cache";
 
 const publicCatalogCache = createPublicReadCache();
@@ -396,16 +400,17 @@ export async function getPublishedProductBySlug(slug: string): Promise<ProductDe
 }
 const PRODUCT_IMAGE_BUCKET = "product-images";
 const PRODUCT_IMAGE_EXTENSIONS: Record<string, string> = { "image/jpeg": "jpg", "image/png": "png", "image/webp": "webp" };
-export const PRODUCT_IMAGE_ACCEPT = Object.keys(PRODUCT_IMAGE_EXTENSIONS).join(",");
-export const PRODUCT_IMAGE_MAX_BYTES = 5 * 1024 * 1024;
-export const PRODUCT_IMAGE_LIMIT = 6;
-// Images are optional, so a failed read (for example before the product_images
-// migration is applied) falls back to the placeholder instead of breaking the page.
-export async function getProductImages(productIds: string[]): Promise<Map<string, ProductImage[]>> {
+export const PRODUCT_IMAGE_ACCEPT = PRODUCT_IMAGE_TYPES.join(",");
+export const PRODUCT_IMAGE_MAX_BYTES = IMAGE_MAX_BYTES;
+export const PRODUCT_IMAGE_LIMIT = IMAGE_LIMIT;
+// Public pages treat images as optional and fall back to the placeholder when the read fails.
+// The seller's own workspace passes strict so a failed read is reported instead of hidden.
+export async function getProductImages(productIds: string[], options: { strict?: boolean } = {}): Promise<Map<string, ProductImage[]>> {
   const images = new Map<string, ProductImage[]>();
   if (productIds.length === 0) return images;
   const { data, error } = await untypedDb.from("product_images").select("id,product_id,storage_path,alt_text")
     .in("product_id", productIds).order("sort_order").order("created_at");
+  if (error && options.strict) throw new Error(error.message);
   if (error || !data) return images;
   for (const row of data as Array<Omit<ProductImage, "url">>) {
     const url = /^(https?:)?\//.test(row.storage_path) ? row.storage_path : db.storage.from(PRODUCT_IMAGE_BUCKET).getPublicUrl(row.storage_path).data.publicUrl;
@@ -413,20 +418,41 @@ export async function getProductImages(productIds: string[]): Promise<Map<string
   }
   return images;
 }
+// Stores the file under "<product id>/<random name>" and then records it against the product,
+// so the photo is always tied to the product it was uploaded for.
 export async function uploadProductImage(productId: string, file: File, altText: string): Promise<void> {
+  const problem = productImageFileProblem(file);
+  if (problem) throw new Error(problem);
   const extension = PRODUCT_IMAGE_EXTENSIONS[file.type];
-  if (!extension) throw new Error("Upload a JPEG, PNG or WebP image.");
-  if (file.size > PRODUCT_IMAGE_MAX_BYTES) throw new Error("Images can be at most 5 MB.");
   const path = `${productId}/${crypto.randomUUID()}.${extension}`;
-  const upload = await db.storage.from(PRODUCT_IMAGE_BUCKET).upload(path, file, { contentType: file.type, cacheControl: "31536000" });
-  if (upload.error) throw new Error(upload.error.message);
+  try {
+    const upload = await db.storage.from(PRODUCT_IMAGE_BUCKET).upload(path, file, { contentType: file.type, cacheControl: "31536000" });
+    if (upload.error) throw new Error(upload.error.message);
+  } catch (err) {
+    throw new Error(productImageErrorMessage(err instanceof Error ? err.message : String(err)));
+  }
   const { error } = await untypedDb.rpc("add_product_image_command", {
     product_id_input: productId, storage_path_input: path, alt_text_input: altText,
   });
   if (error) {
-    await db.storage.from(PRODUCT_IMAGE_BUCKET).remove([path]);
-    throw new Error(error.message);
+    await db.storage.from(PRODUCT_IMAGE_BUCKET).remove([path]).catch(() => undefined);
+    throw new Error(productImageErrorMessage(error.message));
   }
+}
+// Uploads several photos one after another and reports each failure by file name, so one bad
+// file does not hide the others or leave the seller guessing which photo is missing.
+export async function uploadProductImages(productId: string, files: File[], altText = ""): Promise<{ uploaded: number; failures: string[] }> {
+  let uploaded = 0;
+  const failures: string[] = [];
+  for (const file of files) {
+    try {
+      await uploadProductImage(productId, file, altText);
+      uploaded++;
+    } catch (err) {
+      failures.push(`"${file.name}": ${err instanceof Error ? err.message : String(err)}`);
+    }
+  }
+  return { uploaded, failures };
 }
 export async function deleteProductImage(image: ProductImage): Promise<void> {
   const { error } = await untypedDb.rpc("delete_product_image_command", { image_id_input: image.id });
