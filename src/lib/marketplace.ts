@@ -87,6 +87,9 @@ export type ProductImage = {
 export type ProductDetail = MarketplaceProduct & {
   unit_of_measure: string; lead_time_days: number; gst_rate: number | null; hsn_code: string | null;
   brand: string | null; manufacturer: string | null; country_of_origin: string | null;
+  specifications?: unknown; warranty_terms?: string | null; sample_available?: boolean; sample_price?: number | null;
+  customization_available?: boolean; private_label_available?: boolean; shipping_origin?: unknown;
+  quantity_increment?: number; units_per_carton?: number | null;
   category: Category | null;
 };
 export type Supplier = { id: string; display_name: string; created_at: string };
@@ -405,7 +408,7 @@ export async function getPublishedProductBySlug(slug: string): Promise<ProductDe
 }
 async function fetchPublishedProductBySlug(slug: string): Promise<ProductDetail | null> {
   const { data, error } = await db.from("products").select(
-    "id,name,slug,seller_sku,description,category_id,organization_id,unit_of_measure,hsn_code,gst_rate,lead_time_days,brand,manufacturer,country_of_origin,minimum_order_quantity,available_quantity,listing_status,moderation_status,submitted_for_review_at,created_at,product_price_tiers(minimum_quantity,maximum_quantity,unit_price)",
+    "id,name,slug,seller_sku,description,category_id,organization_id,unit_of_measure,hsn_code,gst_rate,lead_time_days,brand,manufacturer,country_of_origin,specifications,warranty_terms,sample_available,sample_price,customization_available,private_label_available,shipping_origin,quantity_increment,units_per_carton,minimum_order_quantity,available_quantity,listing_status,moderation_status,submitted_for_review_at,created_at,product_price_tiers(minimum_quantity,maximum_quantity,unit_price)",
   ).eq("slug", slug).eq("listing_status", "active").eq("moderation_status", "approved").maybeSingle();
   if (error) throw new Error(error.message);
   if (!data) return null;
