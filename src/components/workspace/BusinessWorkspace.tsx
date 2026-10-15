@@ -87,6 +87,7 @@ import { slugCandidate, slugify } from "@/lib/slug";
 import { ProductThumb } from "@/components/ProductThumb";
 import { Button } from "@/components/ui/button";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { WorkspaceLayout, BusinessIdentity, AddBusinessButton } from "./WorkspaceLayout";
 import { WorkspaceOverview } from "./WorkspaceOverview";
 
@@ -196,6 +197,7 @@ export function Workspace({ expected }: { expected?: "buyer" | "seller" }) {
   const [products, setProducts] = useState<Product[]>([]);
   const [productImages, setProductImages] = useState<Map<string, ProductImage[]>>(new Map());
   const [editingProductId, setEditingProductId] = useState("");
+  const [managingProductId, setManagingProductId] = useState("");
   // The new product's slug follows its name until the seller types a slug of their own.
   const [productSlug, setProductSlug] = useState("");
   const [productSlugEdited, setProductSlugEdited] = useState(false);
@@ -1575,25 +1577,34 @@ export function Workspace({ expected }: { expected?: "buyer" | "seller" }) {
                     ) : (
                       <div className="mt-4 grid gap-3">
                         {products.map((item) => (
-                          <Card key={item.id}>
-                            <div className="flex items-start gap-3">
-                              <ProductThumb src={productImages.get(item.id)?.[0]?.url} alt={productImages.get(item.id)?.[0]?.alt_text ?? item.name} name={item.name} className="size-16 shrink-0 rounded-md border" />
+                          <article key={item.id} className="rounded-md border border-border bg-card">
+                            <button type="button" className="flex w-full items-center gap-3 p-3 text-left transition-colors hover:bg-workspace-canvas" onClick={() => setManagingProductId(item.id)}>
+                              <ProductThumb src={productImages.get(item.id)?.[0]?.url} alt={productImages.get(item.id)?.[0]?.alt_text ?? item.name} name={item.name} className="size-12 shrink-0 rounded-md border" />
                               <div className="min-w-0 flex-1"><h3 className="truncate font-extrabold text-workspace-brand">{item.name}</h3>
-                              <p className="mt-1 text-sm text-muted-foreground">SKU {item.seller_sku} · MOQ {item.minimum_order_quantity} · Stock {item.available_quantity}</p>
-                              <p className="mt-1 text-xs font-semibold text-muted-foreground">{LISTING_STAGE_LABELS[listingStage(item)]}</p></div>
-                              {canManageCatalog && item.listing_status === "draft" && !item.submitted_for_review_at && (
-                                <div className="flex shrink-0 items-center gap-1" aria-label={`Actions for ${item.name}`}>
-                                  {item.moderation_status === "pending" && <Button type="button" variant="ghost" size="icon" className="size-8" title={editingProductId === item.id ? "Close editor" : "Edit product"} aria-label={editingProductId === item.id ? "Close product editor" : `Edit ${item.name}`} onClick={() => setEditingProductId(editingProductId === item.id ? "" : item.id)}>{editingProductId === item.id ? <X className="size-4" /> : <Pencil className="size-4" />}</Button>}
+                              <p className="mt-0.5 truncate text-xs text-muted-foreground">SKU {item.seller_sku} · Stock {item.available_quantity} · {LISTING_STAGE_LABELS[listingStage(item)]}</p></div>
+                              <span className="text-xs font-bold text-workspace-brand">Manage →</span>
+                            </button>
+                            <Dialog open={managingProductId === item.id} onOpenChange={(open) => {
+                              if (!open) { setManagingProductId(""); setEditingProductId(""); }
+                            }}>
+                              <DialogContent className="max-h-[88vh] max-w-3xl overflow-y-auto p-5 sm:p-6">
+                                <DialogHeader className="pr-8">
+                                  <DialogTitle>{item.name}</DialogTitle>
+                                  <DialogDescription>SKU {item.seller_sku} · MOQ {item.minimum_order_quantity} · Stock {item.available_quantity} · {LISTING_STAGE_LABELS[listingStage(item)]}</DialogDescription>
+                                </DialogHeader>
+                                {error && <p role="alert" className="border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive">{error}</p>}
+                                {canManageCatalog && item.listing_status === "draft" && !item.submitted_for_review_at && (
+                                  <div className="flex items-center gap-2 border-y py-3">
+                                  {item.moderation_status === "pending" && <Button type="button" variant="outline" size="sm" onClick={() => setEditingProductId(editingProductId === item.id ? "" : item.id)}><Pencil className="mr-2 size-4" />{editingProductId === item.id ? "Close editor" : "Edit details"}</Button>}
                                   <AlertDialog>
-                                    <AlertDialogTrigger asChild><Button type="button" variant="ghost" size="icon" className="size-8 text-destructive hover:text-destructive" title="Delete draft" aria-label={`Delete ${item.name}`}><Trash2 className="size-4" /></Button></AlertDialogTrigger>
+                                    <AlertDialogTrigger asChild><Button type="button" variant="outline" size="sm" className="text-destructive hover:text-destructive"><Trash2 className="mr-2 size-4" />Delete draft</Button></AlertDialogTrigger>
                                     <AlertDialogContent className="max-w-sm">
                                       <AlertDialogHeader><AlertDialogTitle>Delete this product?</AlertDialogTitle><AlertDialogDescription>“{item.name}” and its photos and price tiers will be permanently deleted. This cannot be undone.</AlertDialogDescription></AlertDialogHeader>
                                       <AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction className="bg-destructive text-destructive-foreground hover:bg-destructive/90" onClick={() => void run(() => deleteProductDraft(item.id), "Product draft deleted.")}>Delete product</AlertDialogAction></AlertDialogFooter>
                                     </AlertDialogContent>
                                   </AlertDialog>
-                                </div>
-                              )}
-                            </div>
+                                  </div>
+                                )}
                             {item.moderation_notes && (
                               <p className="mt-2 border-l-2 border-workspace-action pl-3 text-sm">
                                 Review: {item.moderation_notes}
@@ -1990,7 +2001,9 @@ export function Workspace({ expected }: { expected?: "buyer" | "seller" }) {
                               </form>
                               </details>
                             )}
-                          </Card>
+                              </DialogContent>
+                            </Dialog>
+                          </article>
                         ))}
                       </div>
                     )}
