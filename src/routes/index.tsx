@@ -1,6 +1,7 @@
 import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
 import { useEffect, useState, type FormEvent } from "react";
 import { ArrowRight, Search, ShieldCheck } from "lucide-react";
+import { MarketplaceHeader } from "@/components/marketplace/MarketplaceHeader";
 import { ProductCard, PublicShell } from "@/components/marketplace/PublicShell";
 import { Button } from "@/components/ui/button";
 import { searchPublishedProducts, type MarketplaceProduct } from "@/lib/marketplace";
@@ -32,7 +33,7 @@ function Index() {
     return () => { active = false; };
   }, []);
   function search(event: FormEvent) { event.preventDefault(); void router.navigate({ to: "/marketplace", search: { q: term } }); }
-  return <PublicShell fullWidth>
+  return <PublicShell fullWidth header={<MarketplaceHeader />}>
     <section className="relative isolate overflow-hidden bg-workspace-nav text-workspace-nav-foreground">
       <img src={warehouse.url} alt="Pallets and wholesale stock in a distribution warehouse" fetchPriority="high" className="absolute inset-0 -z-20 h-full w-full object-cover" />
       <div className="public-hero-shade absolute inset-0 -z-10" />
