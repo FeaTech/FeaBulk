@@ -3,7 +3,7 @@ import { useEffect, useState, type ReactNode } from "react";
 import { ProductThumb } from "@/components/ProductThumb";
 import { getIdentity, startingUnitPrice, type MarketplaceProduct } from "@/lib/marketplace";
 
-export function PublicShell({ children }: { children: ReactNode }) {
+export function PublicShell({ children, fullWidth = false }: { children: ReactNode; fullWidth?: boolean }) {
   const [signedIn, setSignedIn] = useState(false);
   useEffect(() => {
     let active = true;
@@ -26,7 +26,7 @@ export function PublicShell({ children }: { children: ReactNode }) {
           </div>
         </div>
       </header>
-      <div className="public-container py-8 sm:py-12">{children}</div>
+      {fullWidth ? children : <div className="public-container py-8 sm:py-12">{children}</div>}
     </main>
   );
 }

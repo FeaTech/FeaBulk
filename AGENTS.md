@@ -13,3 +13,6 @@
 
 - Buyer and seller presentation uses WorkspaceLayout and WorkspaceOverview with semantic workspace tokens; BusinessWorkspace retains actions and access checks. Why: keeps role-specific design independent of trading logic.
 - Public catalog list reads use a bounded browser-only 30-second cache and concurrent supplier/image enrichment; never cache private workspace data. Why: removes repeat network waterfalls without sharing sessions or retaining stale trading data.
+
+- Public pages share PublicShell, ProductCard and global semantic typography; reference photography uses asset pointers. Why: keeps branding consistent without duplicating layouts.
+- Approved product details share the bounded public catalog cache; router links preload on intent. Why: repeat public navigation avoids redundant reads without caching private data.
