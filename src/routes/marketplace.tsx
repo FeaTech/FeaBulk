@@ -7,7 +7,7 @@ import { SupplierRating } from "@/components/marketplace/SupplierRating";
 import { getCategories, getSupplierDirectory, getSupplierRatings, searchPublishedProducts, type Category, type MarketplaceProduct, type SupplierRating as Rating } from "@/lib/marketplace";
 
 export const Route = createFileRoute("/marketplace")({
-  validateSearch: (search: Record<string, unknown>) => ({ q: typeof search.q === "string" ? search.q : "" }),
+  validateSearch: (search: Record<string, unknown>): { q?: string } => ({ q: typeof search['q'] === "string" ? search['q'] : "" }),
   head: () => ({ meta: [
     { title: "Wholesale Marketplace | FEA Bulk" },
     { name: "description", content: "Find approved wholesale products and verified suppliers on FEA Bulk." },
@@ -18,7 +18,7 @@ export const Route = createFileRoute("/marketplace")({
   ] }), component: Marketplace,
 });
 function Marketplace() {
-  const { q } = Route.useSearch();
+  const { q = "" } = Route.useSearch();
   const requestId = useRef(0);
   const [term, setTerm] = useState(q);
   const [categoryId, setCategoryId] = useState("");
