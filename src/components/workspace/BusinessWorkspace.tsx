@@ -1,6 +1,6 @@
 import { useRouter } from "@tanstack/react-router";
 import { useCallback, useEffect, useRef, useState, type FormEvent, type ReactNode } from "react";
-import { ImagePlus, Pencil, Trash2, X } from "lucide-react";
+import { ImagePlus, Trash2, X } from "lucide-react";
 import {
   acceptOrganizationInvitation,
   acceptQuote,
@@ -1578,7 +1578,10 @@ export function Workspace({ expected }: { expected?: "buyer" | "seller" }) {
                       <div className="mt-4 grid gap-3">
                         {products.map((item) => (
                           <article key={item.id} className="rounded-md border border-border bg-card">
-                            <button type="button" className="flex w-full items-center gap-3 p-3 text-left transition-colors hover:bg-workspace-canvas" onClick={() => setManagingProductId(item.id)}>
+                            <button type="button" className="flex w-full items-center gap-3 p-3 text-left transition-colors hover:bg-workspace-canvas" onClick={() => {
+                              setManagingProductId(item.id);
+                              if (item.listing_status === "draft" && item.moderation_status === "pending" && !item.submitted_for_review_at) setEditingProductId(item.id);
+                            }}>
                               <ProductThumb src={productImages.get(item.id)?.[0]?.url} alt={productImages.get(item.id)?.[0]?.alt_text ?? item.name} name={item.name} className="size-12 shrink-0 rounded-md border" />
                               <div className="min-w-0 flex-1"><h3 className="truncate font-extrabold text-workspace-brand">{item.name}</h3>
                               <p className="mt-0.5 truncate text-xs text-muted-foreground">SKU {item.seller_sku} · Stock {item.available_quantity} · {LISTING_STAGE_LABELS[listingStage(item)]}</p></div>
@@ -1595,7 +1598,6 @@ export function Workspace({ expected }: { expected?: "buyer" | "seller" }) {
                                 {error && <p role="alert" className="border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive">{error}</p>}
                                 {canManageCatalog && item.listing_status === "draft" && !item.submitted_for_review_at && (
                                   <div className="flex items-center gap-2 border-y py-3">
-                                  {item.moderation_status === "pending" && <Button type="button" variant="outline" size="sm" onClick={() => setEditingProductId(editingProductId === item.id ? "" : item.id)}><Pencil className="mr-2 size-4" />{editingProductId === item.id ? "Close editor" : "Edit details"}</Button>}
                                   <AlertDialog>
                                     <AlertDialogTrigger asChild><Button type="button" variant="outline" size="sm" className="text-destructive hover:text-destructive"><Trash2 className="mr-2 size-4" />Delete draft</Button></AlertDialogTrigger>
                                     <AlertDialogContent className="max-w-sm">
@@ -1719,13 +1721,13 @@ export function Workspace({ expected }: { expected?: "buyer" | "seller" }) {
                                 <Action busy={busy}>Save changes</Action>
                               </form>
                             )}
-                            <details className="group mt-3 border-t pt-3">
-                              <summary className="flex cursor-pointer list-none items-center justify-between rounded px-2 py-2 text-sm font-bold hover:bg-workspace-canvas">
+                            <section className="mt-3 border-t pt-3">
+                              <div className="flex items-center justify-between px-2 py-2 text-sm font-bold">
                                 <span>Pricing</span>
                                 <span className="text-xs font-normal text-muted-foreground">
-                                  {item.product_price_tiers?.length ?? 0} tier{item.product_price_tiers?.length === 1 ? "" : "s"} · Manage
+                                  {item.product_price_tiers?.length ?? 0} tier{item.product_price_tiers?.length === 1 ? "" : "s"}
                                 </span>
-                              </summary>
+                              </div>
                               <div className="px-2 pb-2">
                             {item.product_price_tiers?.length ? (
                               <div className="mt-3 grid gap-1 text-sm">
@@ -1811,14 +1813,14 @@ export function Workspace({ expected }: { expected?: "buyer" | "seller" }) {
                                 </form>
                               )}
                               </div>
-                            </details>
-                            <details className="group border-t pt-3">
-                              <summary className="flex cursor-pointer list-none items-center justify-between rounded px-2 py-2 text-sm font-bold hover:bg-workspace-canvas">
+                            </section>
+                            <section className="border-t pt-3">
+                              <div className="flex items-center justify-between px-2 py-2 text-sm font-bold">
                                 <span>Photos</span>
                                 <span className="text-xs font-normal text-muted-foreground">
-                                  {(productImages.get(item.id) ?? []).length}/{PRODUCT_IMAGE_LIMIT} · Manage
+                                  {(productImages.get(item.id) ?? []).length}/{PRODUCT_IMAGE_LIMIT}
                                 </span>
-                              </summary>
+                              </div>
                               <div className="px-2 pb-2">
                             {(productImages.get(item.id) ?? []).length > 0 && (
                               <div className="mt-2 flex flex-wrap gap-2">
@@ -1917,7 +1919,7 @@ export function Workspace({ expected }: { expected?: "buyer" | "seller" }) {
                                 </form>
                               )}
                               </div>
-                            </details>
+                            </section>
                             {canManageCatalog &&
                               item.listing_status === "draft" &&
                               item.moderation_status === "pending" &&
@@ -1962,11 +1964,11 @@ export function Workspace({ expected }: { expected?: "buyer" | "seller" }) {
                                 </div>
                               )}
                             {canAdjustInventory && (
-                              <details className="group border-t pt-3">
-                                <summary className="flex cursor-pointer list-none items-center justify-between rounded px-2 py-2 text-sm font-bold hover:bg-workspace-canvas">
+                              <section className="border-t pt-3">
+                                <div className="flex items-center justify-between px-2 py-2 text-sm font-bold">
                                   <span>Inventory</span>
-                                  <span className="text-xs font-normal text-muted-foreground">{item.available_quantity} in stock · Adjust</span>
-                                </summary>
+                                  <span className="text-xs font-normal text-muted-foreground">{item.available_quantity} in stock</span>
+                                </div>
                               <form
                                 className="grid gap-3 px-2 pb-2 pt-3 sm:grid-cols-[minmax(10rem,1fr)_minmax(14rem,2fr)_auto] sm:items-end"
                                 onSubmit={(event) => {
@@ -1999,7 +2001,7 @@ export function Workspace({ expected }: { expected?: "buyer" | "seller" }) {
                                   Update inventory
                                 </Button>
                               </form>
-                              </details>
+                              </section>
                             )}
                               </DialogContent>
                             </Dialog>
