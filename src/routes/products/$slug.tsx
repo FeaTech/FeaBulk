@@ -74,6 +74,17 @@ function ProductPage() {
     };
   }, [slug]);
 
+  // Marketplace "Buy now" links arrive with #buy-now; the form only exists once the product
+  // has loaded, after the browser already tried to jump, so scroll to it then.
+  useEffect(() => {
+    if (!product || window.location.hash !== "#buy-now") return;
+    const timer = window.setTimeout(
+      () => document.getElementById("buy-now")?.scrollIntoView({ block: "start" }),
+      0,
+    );
+    return () => window.clearTimeout(timer);
+  }, [product]);
+
   if (loading)
     return (
       <PublicShell>
@@ -195,6 +206,8 @@ function ProductPage() {
             />
           )}
 
+          {/* Marketplace cards link here with #buy-now. */}
+          <div id="buy-now" className="scroll-mt-24" />
           {product.product_price_tiers.length > 0 ? (
             <BuyNow
               productId={product.id}

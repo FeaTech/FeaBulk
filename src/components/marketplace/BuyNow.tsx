@@ -45,7 +45,7 @@ export function BuyNow({ productId, slug, moq, available, unit, tiers }: { produ
   }
 
   if (state === "loading") return null;
-  if (state === "signed_out") return <Button asChild variant="workspace" className="mt-6 h-11"><Link to="/auth">Sign in to buy</Link></Button>;
+  if (state === "signed_out") return <Button asChild variant="workspace" className="mt-6 h-11"><Link to="/auth" search={{ redirect: `/products/${slug}#buy-now` }}>Sign in to buy</Link></Button>;
   if (state === "not_buyer") return <p className="mt-6 border bg-card p-4 text-sm">Only buyer accounts can place orders.</p>;
   if (available < moq) return <p className="mt-6 border bg-card p-4 text-sm">Out of stock right now.</p>;
 

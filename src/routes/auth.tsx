@@ -18,6 +18,14 @@ export const Route = createFileRoute("/auth")({
 
 type AccountType = "buyer" | "seller";
 
+// Only same-site paths are accepted, so a crafted link cannot send people to another site.
+function afterSignInPath(): string {
+  const requested = new URLSearchParams(window.location.search).get("redirect") ?? "";
+  return requested.startsWith("/") && !requested.startsWith("//") && !requested.startsWith("/auth")
+    ? requested
+    : "/marketplace";
+}
+
 function AuthPage() {
   const router = useRouter();
   const [mode, setMode] = useState<"sign_in" | "sign_up" | "forgot_password" | "reset_password">("sign_in");
@@ -71,7 +79,7 @@ function AuthPage() {
         if (address.trim().length < 5 || city.trim().length < 2 || state.trim().length < 2) throw new Error("Enter a complete registered business address.");
         const { data, error } = await supabase.auth.signUp({ email, password, options: { data: { full_name: fullName.trim(), phone_e164: normalizedPhone, requested_workspace: type, legal_business_name: legalBusinessName.trim(), trading_name: tradingName.trim(), business_type: businessType, gstin: gstin.trim().toUpperCase(), pan_last4: panLast4.trim().toUpperCase(), cin_or_llpin: cinOrLlpin.trim().toUpperCase(), udyam_registration: udyamRegistration.trim().toUpperCase(), registered_address: registeredAddress, operating_address: registeredAddress } } });
         if (error) throw error;
-        if (data.session) await router.navigate({ to: "/app" });
+        if (data.session) await router.navigate({ href: afterSignInPath() });
         else setMessage("Check your email to confirm your account, then sign in.");
       } else {
         const { data, error } = await supabase.auth.signInWithPassword({ email, password });
@@ -79,7 +87,7 @@ function AuthPage() {
         if (!data.session) throw new Error("The login completed without a session. Please try again.");
         const { data: identity, error: identityError } = await supabase.auth.getUser(data.session.access_token);
         if (identityError || !identity.user) throw identityError ?? new Error("The login session could not be verified.");
-        await router.navigate({ to: "/app" });
+        await router.navigate({ href: afterSignInPath() });
       }
     } catch (error) { setMessage(error instanceof Error ? error.message : "Authentication failed. Try again."); }
     finally { setBusy(false); }

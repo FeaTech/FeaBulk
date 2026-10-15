@@ -378,7 +378,7 @@ export async function searchPublishedProducts(term: string, categoryId: string, 
 }
 async function fetchPublishedProducts(term: string, categoryId: string, limit: number, supplierId: string): Promise<MarketplaceProduct[]> {
   let query = db.from("products").select(
-    "id,name,slug,seller_sku,description,category_id,organization_id,minimum_order_quantity,available_quantity,listing_status,moderation_status,submitted_for_review_at,created_at,product_price_tiers(minimum_quantity,maximum_quantity,unit_price)",
+    "id,name,slug,seller_sku,description,category_id,organization_id,unit_of_measure,minimum_order_quantity,available_quantity,listing_status,moderation_status,submitted_for_review_at,created_at,product_price_tiers(minimum_quantity,maximum_quantity,unit_price)",
   ).eq("listing_status", "active").eq("moderation_status", "approved").limit(limit);
   if (term.trim()) query = query.textSearch("search_document", term.trim(), { type: "websearch" });
   if (categoryId) query = query.eq("category_id", categoryId);
