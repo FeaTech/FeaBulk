@@ -1,5 +1,6 @@
 import { useRouter } from "@tanstack/react-router";
 import { useCallback, useEffect, useRef, useState, type FormEvent, type ReactNode } from "react";
+import { ImagePlus, Pencil, Trash2, X } from "lucide-react";
 import {
   acceptOrganizationInvitation,
   acceptQuote,
@@ -15,6 +16,7 @@ import {
   createRfq,
   createShipment,
   deletePriceTier,
+  deleteProductDraft,
   deleteProductImage,
   dispatchShipment,
   generateCommercialDocument,
@@ -84,6 +86,7 @@ import { productImageSelectionProblems } from "@/lib/product-image-rules";
 import { slugCandidate, slugify } from "@/lib/slug";
 import { ProductThumb } from "@/components/ProductThumb";
 import { Button } from "@/components/ui/button";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { WorkspaceLayout, BusinessIdentity, AddBusinessButton } from "./WorkspaceLayout";
 import { WorkspaceOverview } from "./WorkspaceOverview";
 
@@ -680,25 +683,11 @@ export function Workspace({ expected }: { expected?: "buyer" | "seller" }) {
     const problems = photoProblems[formKey] ?? [];
     return (
       <div className="grid gap-1 sm:col-span-2">
-        <Field
-          label={existingCount > 0 ? "Add more photos (optional)" : "Product photos (optional)"}
-          hint={`JPEG, PNG or WebP, up to 5 MB each and ${PRODUCT_IMAGE_LIMIT} per product. You can choose several at once.`}
-        >
-          <input
-            name="images"
-            type="file"
-            multiple
-            accept={PRODUCT_IMAGE_ACCEPT}
-            className={input}
-            onChange={(event) => {
-              const files = [...(event.currentTarget.files ?? [])];
-              setPhotoProblems((current) => ({
-                ...current,
-                [formKey]: productImageSelectionProblems(files, existingCount),
-              }));
-            }}
-          />
-        </Field>
+        <ProductPhotoPicker
+          label={existingCount > 0 ? "Add more photos" : "Product photos"}
+          existingCount={existingCount}
+          onProblems={(next) => setPhotoProblems((current) => ({ ...current, [formKey]: next }))}
+        />
         {problems.length > 0 && (
           <ul role="alert" className="list-disc pl-5 text-sm text-destructive">
             {problems.map((problem) => (
@@ -1587,11 +1576,23 @@ export function Workspace({ expected }: { expected?: "buyer" | "seller" }) {
                       <div className="mt-4 grid gap-3">
                         {products.map((item) => (
                           <Card key={item.id}>
-                            <div className="flex items-center gap-4">
-                              <ProductThumb src={productImages.get(item.id)?.[0]?.url} alt={productImages.get(item.id)?.[0]?.alt_text ?? item.name} name={item.name} className="size-20 shrink-0 rounded border" />
-                              <div className="min-w-0"><h3 className="font-extrabold text-workspace-brand">{item.name}</h3>
+                            <div className="flex items-start gap-3">
+                              <ProductThumb src={productImages.get(item.id)?.[0]?.url} alt={productImages.get(item.id)?.[0]?.alt_text ?? item.name} name={item.name} className="size-16 shrink-0 rounded-md border" />
+                              <div className="min-w-0 flex-1"><h3 className="truncate font-extrabold text-workspace-brand">{item.name}</h3>
                               <p className="mt-1 text-sm text-muted-foreground">SKU {item.seller_sku} · MOQ {item.minimum_order_quantity} · Stock {item.available_quantity}</p>
                               <p className="mt-1 text-xs font-semibold text-muted-foreground">{LISTING_STAGE_LABELS[listingStage(item)]}</p></div>
+                              {canManageCatalog && item.listing_status === "draft" && !item.submitted_for_review_at && (
+                                <div className="flex shrink-0 items-center gap-1" aria-label={`Actions for ${item.name}`}>
+                                  {item.moderation_status === "pending" && <Button type="button" variant="ghost" size="icon" className="size-8" title={editingProductId === item.id ? "Close editor" : "Edit product"} aria-label={editingProductId === item.id ? "Close product editor" : `Edit ${item.name}`} onClick={() => setEditingProductId(editingProductId === item.id ? "" : item.id)}>{editingProductId === item.id ? <X className="size-4" /> : <Pencil className="size-4" />}</Button>}
+                                  <AlertDialog>
+                                    <AlertDialogTrigger asChild><Button type="button" variant="ghost" size="icon" className="size-8 text-destructive hover:text-destructive" title="Delete draft" aria-label={`Delete ${item.name}`}><Trash2 className="size-4" /></Button></AlertDialogTrigger>
+                                    <AlertDialogContent className="max-w-sm">
+                                      <AlertDialogHeader><AlertDialogTitle>Delete this product?</AlertDialogTitle><AlertDialogDescription>“{item.name}” and its photos and price tiers will be permanently deleted. This cannot be undone.</AlertDialogDescription></AlertDialogHeader>
+                                      <AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction className="bg-destructive text-destructive-foreground hover:bg-destructive/90" onClick={() => void run(() => deleteProductDraft(item.id), "Product draft deleted.")}>Delete product</AlertDialogAction></AlertDialogFooter>
+                                    </AlertDialogContent>
+                                  </AlertDialog>
+                                </div>
+                              )}
                             </div>
                             {item.moderation_notes && (
                               <p className="mt-2 border-l-2 border-workspace-action pl-3 text-sm">
@@ -1612,19 +1613,6 @@ export function Workspace({ expected }: { expected?: "buyer" | "seller" }) {
                                 Reopen rejected listing
                               </Button>
                             )}
-                            {canManageCatalog &&
-                              item.listing_status === "draft" &&
-                              item.moderation_status === "pending" &&
-                              !item.submitted_for_review_at && (
-                                <Button variant="outline"
-                                  className="button-secondary mt-3"
-                                  onClick={() =>
-                                    setEditingProductId(editingProductId === item.id ? "" : item.id)
-                                  }
-                                >
-                                  Edit draft
-                                </Button>
-                              )}
                             {canManageCatalog && editingProductId === item.id && (
                               <form
                                 className="mt-3 grid gap-3 border-t pt-3 sm:grid-cols-2"
@@ -1804,21 +1792,23 @@ export function Workspace({ expected }: { expected?: "buyer" | "seller" }) {
                                 </form>
                               )}
                             {(productImages.get(item.id) ?? []).length > 0 && (
-                              <div className="mt-4 flex flex-wrap gap-3 border-t pt-4">
+                              <div className="mt-4 flex flex-wrap gap-2 border-t pt-4">
                                 {(productImages.get(item.id) ?? []).map((image) => (
-                                  <figure key={image.id} className="w-24 text-xs">
+                                  <figure key={image.id} className="relative size-16 text-xs">
                                     <ProductThumb
                                       src={image.url}
                                       alt={image.alt_text ?? item.name}
                                       name={item.name}
-                                      className="h-24 w-24 border"
+                                      className="size-16 rounded-md border"
                                     />
                                     {canManageCatalog &&
                                       item.listing_status === "draft" &&
                                       !item.submitted_for_review_at && (
-                                        <Button variant="outline"
+                                        <Button type="button" variant="destructive" size="icon"
                                           disabled={busy}
-                                          className="mt-1 text-destructive underline"
+                                          className="absolute -right-1 -top-1 size-6 rounded-full opacity-90 shadow-sm"
+                                          title="Remove image"
+                                          aria-label={`Remove image from ${item.name}`}
                                           onClick={() =>
                                             void run(
                                               () => deleteProductImage(image),
@@ -1826,7 +1816,7 @@ export function Workspace({ expected }: { expected?: "buyer" | "seller" }) {
                                             )
                                           }
                                         >
-                                          Remove image
+                                          <X className="size-3" />
                                         </Button>
                                       )}
                                   </figure>
@@ -1877,29 +1867,7 @@ export function Workspace({ expected }: { expected?: "buyer" | "seller" }) {
                                     });
                                   }}
                                 >
-                                  <Field
-                                    label="Product photos (JPEG, PNG or WebP, up to 5 MB each)"
-                                    hint="A clear photo of the product. JPEG, PNG or WebP, up to 5 MB each, and up to 6 images per listing."
-                                  >
-                                    <input
-                                      name="images"
-                                      type="file"
-                                      multiple
-                                      accept={PRODUCT_IMAGE_ACCEPT}
-                                      required
-                                      className={input}
-                                      onChange={(event) => {
-                                        const files = [...(event.currentTarget.files ?? [])];
-                                        setPhotoProblems((current) => ({
-                                          ...current,
-                                          [`card-${item.id}`]: productImageSelectionProblems(
-                                            files,
-                                            (productImages.get(item.id) ?? []).length,
-                                          ),
-                                        }));
-                                      }}
-                                    />
-                                  </Field>
+                                  <ProductPhotoPicker label="Add photos" existingCount={(productImages.get(item.id) ?? []).length} required compact onProblems={(next) => setPhotoProblems((current) => ({ ...current, [`card-${item.id}`]: next }))} />
                                   <Text
                                     name="alt"
                                     label="Image description"
@@ -2719,6 +2687,52 @@ function Field({
       <FieldLabel label={label} hint={hint} />
       {children}
     </label>
+  );
+}
+function ProductPhotoPicker({ label, existingCount, onProblems, required = false, compact = false }: {
+  label: string; existingCount: number; onProblems: (problems: string[]) => void; required?: boolean; compact?: boolean;
+}) {
+  const inputRef = useRef<HTMLInputElement>(null);
+  const [previews, setPreviews] = useState<Array<{ file: File; url: string }>>([]);
+  const replaceFiles = useCallback((files: File[]) => {
+    setPreviews(current => {
+      current.forEach(preview => URL.revokeObjectURL(preview.url));
+      return files.map(file => ({ file, url: URL.createObjectURL(file) }));
+    });
+    onProblems(productImageSelectionProblems(files, existingCount));
+  }, [existingCount, onProblems]);
+  useEffect(() => {
+    const formElement = inputRef.current?.form;
+    if (!formElement) return;
+    const reset = () => replaceFiles([]);
+    formElement.addEventListener("reset", reset);
+    return () => formElement.removeEventListener("reset", reset);
+  }, [replaceFiles]);
+  useEffect(() => () => previews.forEach(preview => URL.revokeObjectURL(preview.url)), [previews]);
+  function removeSelectedFile(index: number) {
+    const nextFiles = previews.filter((_, fileIndex) => fileIndex !== index).map(preview => preview.file);
+    if (inputRef.current) {
+      const transfer = new DataTransfer();
+      nextFiles.forEach(file => transfer.items.add(file));
+      inputRef.current.files = transfer.files;
+    }
+    replaceFiles(nextFiles);
+  }
+  return (
+    <div className={compact ? "min-w-52 flex-1" : "sm:col-span-2"}>
+      <span className="mb-1 block text-sm font-semibold text-muted-foreground">{label}</span>
+      <label className="flex min-h-16 cursor-pointer items-center gap-3 rounded-md border border-dashed border-input bg-workspace-canvas px-3 py-2 transition-colors hover:border-workspace-action hover:bg-workspace-info-soft/40">
+        <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-card text-workspace-brand shadow-sm"><ImagePlus className="size-4" /></span>
+        <span className="min-w-0 text-sm"><span className="block font-semibold text-foreground">Choose product images</span><span className="block text-xs text-muted-foreground">JPG, PNG or WebP · 5 MB max · {PRODUCT_IMAGE_LIMIT - existingCount} remaining</span></span>
+        <input ref={inputRef} name="images" type="file" multiple required={required} accept={PRODUCT_IMAGE_ACCEPT} className="sr-only" onChange={event => replaceFiles([...(event.currentTarget.files ?? [])])} />
+      </label>
+      {previews.length > 0 && <div className="mt-2 flex flex-wrap gap-2" aria-label="Selected images">
+        {previews.map((preview, index) => <div key={`${preview.file.name}-${preview.file.lastModified}`} className="relative size-14">
+          <img src={preview.url} alt="" className="size-14 rounded border object-cover" />
+          <button type="button" className="absolute -right-1 -top-1 flex size-5 items-center justify-center rounded-full bg-foreground text-background shadow" onClick={() => removeSelectedFile(index)} aria-label={`Remove ${preview.file.name}`}><X className="size-3" /></button>
+        </div>)}
+      </div>}
+    </div>
   );
 }
 function Text({

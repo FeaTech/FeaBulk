@@ -292,6 +292,15 @@ export async function reopenRejectedProduct(productId: string) {
 export async function updateProductDraft(productId: string, payload: Record<string, Json>) {
   return unwrap(await db.rpc("update_product_draft_command", { product_id_input: productId, payload }));
 }
+export async function deleteProductDraft(productId: string): Promise<void> {
+  const { data: images, error: imageError } = await untypedDb.from("product_images").select("storage_path").eq("product_id", productId);
+  if (imageError) throw new Error(imageError.message);
+  const { error } = await untypedDb.rpc("delete_product_draft_command", { product_id_input: productId });
+  if (error) throw new Error(error.message);
+  // The database delete is authoritative. Storage cleanup is best-effort.
+  const paths = (images as Array<{ storage_path: string }> | null)?.map(image => image.storage_path) ?? [];
+  if (paths.length > 0) await db.storage.from(PRODUCT_IMAGE_BUCKET).remove(paths);
+}
 export async function deletePriceTier(tierId: string) {
   const { error } = await db.rpc("delete_product_price_tier_command", { tier_id_input: tierId });
   if (error) throw error;
