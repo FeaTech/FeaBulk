@@ -296,7 +296,11 @@ export async function deleteProductDraft(productId: string): Promise<void> {
   const { data: images, error: imageError } = await untypedDb.from("product_images").select("storage_path").eq("product_id", productId);
   if (imageError) throw new Error(imageError.message);
   const { error } = await untypedDb.rpc("delete_product_draft_command", { product_id_input: productId });
-  if (error) throw new Error(error.message);
+  if (error) {
+    if (/schema cache|could not find the function/i.test(error.message))
+      throw new Error("Product deletion is not enabled in the database yet. A project administrator must apply the latest Supabase migration.");
+    throw new Error(error.message);
+  }
   // The database delete is authoritative. Storage cleanup is best-effort.
   const paths = (images as Array<{ storage_path: string }> | null)?.map(image => image.storage_path) ?? [];
   if (paths.length > 0) await db.storage.from(PRODUCT_IMAGE_BUCKET).remove(paths);

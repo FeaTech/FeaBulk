@@ -1708,6 +1708,14 @@ export function Workspace({ expected }: { expected?: "buyer" | "seller" }) {
                                 <Action busy={busy}>Save changes</Action>
                               </form>
                             )}
+                            <details className="group mt-3 border-t pt-3">
+                              <summary className="flex cursor-pointer list-none items-center justify-between rounded px-2 py-2 text-sm font-bold hover:bg-workspace-canvas">
+                                <span>Pricing</span>
+                                <span className="text-xs font-normal text-muted-foreground">
+                                  {item.product_price_tiers?.length ?? 0} tier{item.product_price_tiers?.length === 1 ? "" : "s"} · Manage
+                                </span>
+                              </summary>
+                              <div className="px-2 pb-2">
                             {item.product_price_tiers?.length ? (
                               <div className="mt-3 grid gap-1 text-sm">
                                 {item.product_price_tiers.map((tier) => (
@@ -1791,8 +1799,18 @@ export function Workspace({ expected }: { expected?: "buyer" | "seller" }) {
                                   </Button>
                                 </form>
                               )}
+                              </div>
+                            </details>
+                            <details className="group border-t pt-3">
+                              <summary className="flex cursor-pointer list-none items-center justify-between rounded px-2 py-2 text-sm font-bold hover:bg-workspace-canvas">
+                                <span>Photos</span>
+                                <span className="text-xs font-normal text-muted-foreground">
+                                  {(productImages.get(item.id) ?? []).length}/{PRODUCT_IMAGE_LIMIT} · Manage
+                                </span>
+                              </summary>
+                              <div className="px-2 pb-2">
                             {(productImages.get(item.id) ?? []).length > 0 && (
-                              <div className="mt-4 flex flex-wrap gap-2 border-t pt-4">
+                              <div className="mt-2 flex flex-wrap gap-2">
                                 {(productImages.get(item.id) ?? []).map((image) => (
                                   <figure key={image.id} className="relative size-16 text-xs">
                                     <ProductThumb
@@ -1828,7 +1846,7 @@ export function Workspace({ expected }: { expected?: "buyer" | "seller" }) {
                               !item.submitted_for_review_at &&
                               (productImages.get(item.id) ?? []).length < PRODUCT_IMAGE_LIMIT && (
                                 <form
-                                  className="mt-4 flex flex-wrap items-end gap-2 border-t pt-4"
+                                  className="mt-3 grid gap-3 sm:grid-cols-[minmax(13rem,1fr)_minmax(12rem,1fr)_auto] sm:items-end"
                                   onSubmit={(event) => {
                                     event.preventDefault();
                                     const formElement = event.currentTarget;
@@ -1887,6 +1905,8 @@ export function Workspace({ expected }: { expected?: "buyer" | "seller" }) {
                                   )}
                                 </form>
                               )}
+                              </div>
+                            </details>
                             {canManageCatalog &&
                               item.listing_status === "draft" &&
                               item.moderation_status === "pending" &&
@@ -1931,8 +1951,13 @@ export function Workspace({ expected }: { expected?: "buyer" | "seller" }) {
                                 </div>
                               )}
                             {canAdjustInventory && (
+                              <details className="group border-t pt-3">
+                                <summary className="flex cursor-pointer list-none items-center justify-between rounded px-2 py-2 text-sm font-bold hover:bg-workspace-canvas">
+                                  <span>Inventory</span>
+                                  <span className="text-xs font-normal text-muted-foreground">{item.available_quantity} in stock · Adjust</span>
+                                </summary>
                               <form
-                                className="mt-4 flex flex-wrap items-end gap-2 border-t pt-4"
+                                className="grid gap-3 px-2 pb-2 pt-3 sm:grid-cols-[minmax(10rem,1fr)_minmax(14rem,2fr)_auto] sm:items-end"
                                 onSubmit={(event) => {
                                   event.preventDefault();
                                   const f = formValues(event);
@@ -1963,6 +1988,7 @@ export function Workspace({ expected }: { expected?: "buyer" | "seller" }) {
                                   Update inventory
                                 </Button>
                               </form>
+                              </details>
                             )}
                           </Card>
                         ))}
