@@ -21,7 +21,7 @@ export function ProductThumb({
   if (!src || failedSrc === src)
     return (
       <div
-        className={`${className} flex items-center justify-center bg-[#EAF2FB] font-black text-[#102B52]`}
+        className={`${className} flex items-center justify-center bg-workspace-info-soft font-bold text-workspace-brand`}
         aria-hidden="true"
       >
         {name.charAt(0).toUpperCase()}
@@ -34,7 +34,7 @@ export function ProductThumb({
       loading={loading}
       decoding="async"
       onError={() => setFailedSrc(src)}
-      className={`${className} bg-[#EAF2FB] object-cover`}
+      className={`${className} bg-workspace-info-soft object-cover`}
     />
   );
 }

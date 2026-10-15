@@ -17,11 +17,11 @@ export function PriceCalculator({
   const estimate = estimatePrice(tiers, Number(value), { minimumOrderQuantity, gstRate });
 
   return (
-    <section className="mt-6 border bg-white p-5" aria-labelledby="price-calculator-heading">
-      <h2 id="price-calculator-heading" className="text-lg font-black">
+    <section className="mt-6 border bg-card p-5" aria-labelledby="price-calculator-heading">
+      <h2 id="price-calculator-heading" className="text-lg font-bold">
         Price calculator
       </h2>
-      <label className="mt-3 grid gap-1 text-sm font-semibold text-[#405069]">
+      <label className="mt-3 grid gap-1 text-sm font-semibold text-muted-foreground">
         <FieldLabel
           label="Quantity"
           hint="Type how many units you plan to buy to see the unit price and total for that quantity."
@@ -35,7 +35,7 @@ export function PriceCalculator({
           step={1}
           value={value}
           onChange={(event) => setValue(event.target.value)}
-          className="w-full border border-[#C9D3DF] bg-white px-3 py-2 text-[#17233A]"
+          className="w-full border border-border bg-card px-3 py-2 text-foreground"
         />
       </label>
       <div className="mt-4 text-sm" role="status" aria-live="polite">
@@ -48,9 +48,9 @@ export function PriceCalculator({
         {estimate.status === "quote_required" && (
           <p>
             {estimate.reason === "no_tiers"
-              ? "This supplier prices by quotation."
+              ? "This supplier has not listed a price."
               : "This quantity is outside the published price tiers."}{" "}
-            Request a quote to get a price.
+            Choose a quantity within the listed price range.
           </p>
         )}
         {estimate.status === "priced" && (
@@ -66,15 +66,15 @@ export function PriceCalculator({
                   <dd className="text-right font-bold">{formatInr(estimate.gstAmount)}</dd>
                 </>
               )}
-              <dt className="border-t pt-2 font-black text-[#102B52]">
+              <dt className="border-t pt-2 font-bold text-workspace-brand">
                 {estimate.gstRate === null ? "Total before GST" : "Estimated total"}
               </dt>
-              <dd className="border-t pt-2 text-right text-lg font-black text-[#102B52]">
+              <dd className="border-t pt-2 text-right text-lg font-bold text-workspace-brand">
                 {formatInr(estimate.total)}
               </dd>
             </dl>
             {estimate.nextTier && (
-              <p className="mt-3 border-l-2 border-[#F87908] pl-3">
+              <p className="mt-3 border-l-2 border-workspace-action pl-3">
                 Order {estimate.nextTier.minimumQuantity.toLocaleString("en-IN")} {unit} or more to
                 pay {formatInr(estimate.nextTier.unitPrice)} per unit.
               </p>
@@ -82,8 +82,8 @@ export function PriceCalculator({
           </>
         )}
       </div>
-      <p className="mt-3 text-xs text-[#526178]">
-        Indicative only. Freight is extra and the supplier&apos;s quote sets the final price.
+      <p className="mt-3 text-xs text-muted-foreground">
+        Freight is extra. Your order total is confirmed before payment.
       </p>
     </section>
   );

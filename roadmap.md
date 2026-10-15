@@ -1,3 +1,9 @@
+# Reference-site refresh
+
+- [x] Align typography, semantic colors, and public-page spacing with feabulk.com.
+- [x] Improve phone layouts and remove avoidable page-loading delays.
+- [x] Verify public browsing and mobile rendering; authenticated checks remain unavailable for the external Supabase connection.
+
 # Buyer and seller redesign
 
 - [x] Add role-specific menus and page headings without changing access or actions.

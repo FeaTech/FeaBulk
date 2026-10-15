@@ -83,7 +83,7 @@ function ProductPage() {
   if (error)
     return (
       <PublicShell>
-        <p role="alert" className="border border-red-300 bg-red-50 p-3 text-sm text-red-800">
+        <p role="alert" className="border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive">
           {error}
         </p>
       </PublicShell>
@@ -136,7 +136,7 @@ function ProductPage() {
                   type="button"
                   aria-label={`Show image ${index + 1} of ${images.length}`}
                   aria-pressed={image.id === shownImage?.id}
-                  className={`border-2 ${image.id === shownImage?.id ? "border-[#F87908]" : "border-transparent"}`}
+                  className={`border-2 ${image.id === shownImage?.id ? "border-workspace-action" : "border-transparent"}`}
                   onClick={() => setSelectedImage(index)}
                 >
                   <ProductThumb src={image.url} alt="" name={product.name} className="h-16 w-16" />
@@ -146,24 +146,24 @@ function ProductPage() {
           )}
         </div>
         <section>
-          <p className="text-xs font-black uppercase tracking-wider text-[#F87908]">
+          <p className="text-xs font-bold uppercase tracking-wider text-workspace-action">
             <a href={`/suppliers/${product.organization_id}`}>{product.supplier_name}</a>
           </p>
           <p className="mt-1">
             <SupplierRating rating={rating} />
           </p>
-          <h1 className="mt-2 text-3xl font-black text-[#102B52]">{product.name}</h1>
+          <h1 className="mt-2 text-3xl font-bold text-workspace-brand">{product.name}</h1>
           <p className="mt-4 whitespace-pre-wrap text-sm leading-6">{product.description}</p>
 
-          <h2 className="mt-8 text-lg font-black">Bulk pricing</h2>
+          <h2 className="mt-8 text-lg font-bold">Bulk pricing</h2>
           {product.product_price_tiers.length === 0 ? (
-            <p className="mt-3 border bg-white p-4 text-sm">
+            <p className="mt-3 border bg-card p-4 text-sm">
               This supplier has not listed a price yet.
             </p>
           ) : (
-            <table className="mt-3 w-full border bg-white text-left text-sm">
+            <table className="mt-3 w-full border bg-card text-left text-sm">
               <thead>
-                <tr className="border-b text-xs uppercase tracking-wide text-[#526178]">
+                <tr className="border-b text-xs uppercase tracking-wide text-muted-foreground">
                   <th className="p-3">Quantity ({unit})</th>
                   <th className="p-3">Unit price</th>
                 </tr>
@@ -183,7 +183,7 @@ function ProductPage() {
               </tbody>
             </table>
           )}
-          <p className="mt-2 text-xs text-[#526178]">
+          <p className="mt-2 text-xs text-muted-foreground">
             Prices exclude GST and freight. GST is added at checkout.
           </p>
           {product.product_price_tiers.length > 0 && (
@@ -205,17 +205,17 @@ function ProductPage() {
               tiers={product.product_price_tiers}
             />
           ) : (
-            <p className="mt-6 border bg-white p-4 text-sm">This product is not available to buy yet.</p>
+            <p className="mt-6 border bg-card p-4 text-sm">This product is not available to buy yet.</p>
           )}
         </section>
       </div>
 
       <section className="mt-10">
-        <h2 className="text-lg font-black">Product details</h2>
-        <dl className="mt-3 grid gap-px border bg-[#DDE5EE] sm:grid-cols-2 lg:grid-cols-4">
+        <h2 className="text-lg font-bold">Product details</h2>
+        <dl className="mt-3 grid gap-px border bg-border sm:grid-cols-2 lg:grid-cols-4">
           {facts.map(([label, value]) => (
-            <div key={label} className="bg-white p-4">
-              <dt className="text-xs font-bold uppercase tracking-wide text-[#526178]">{label}</dt>
+            <div key={label} className="bg-card p-4">
+              <dt className="text-xs font-bold uppercase tracking-wide text-muted-foreground">{label}</dt>
               <dd className="mt-1 text-sm font-semibold">{value}</dd>
             </div>
           ))}

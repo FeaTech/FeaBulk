@@ -388,6 +388,9 @@ export function startingUnitPrice(product: Pick<MarketplaceProduct, "product_pri
   return product.product_price_tiers.reduce<number | null>((lowest, tier) => lowest === null ? Number(tier.unit_price) : Math.min(lowest, Number(tier.unit_price)), null);
 }
 export async function getPublishedProductBySlug(slug: string): Promise<ProductDetail | null> {
+  return publicCatalogCache.read(JSON.stringify(["product-detail", slug]), () => fetchPublishedProductBySlug(slug));
+}
+async function fetchPublishedProductBySlug(slug: string): Promise<ProductDetail | null> {
   const { data, error } = await db.from("products").select(
     "id,name,slug,seller_sku,description,category_id,organization_id,unit_of_measure,hsn_code,gst_rate,lead_time_days,brand,manufacturer,country_of_origin,minimum_order_quantity,available_quantity,listing_status,moderation_status,submitted_for_review_at,created_at,product_price_tiers(minimum_quantity,maximum_quantity,unit_price)",
   ).eq("slug", slug).eq("listing_status", "active").eq("moderation_status", "approved").maybeSingle();

@@ -34,9 +34,9 @@ export function WorkspaceLayout({ role, view, setView, signedIn, hasOrganization
     </aside>
     <main className="min-w-0 flex-1">
       <header className="border-b bg-card px-5 py-4 sm:px-8">
-        <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-3">
-          <div><p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">FeaBulk · {label}</p><h1 className="mt-1 text-xl font-bold text-workspace-brand">{titles[view]}</h1></div>
-          <div className="flex items-center gap-2">
+        <div className="mx-auto grid max-w-7xl grid-cols-[minmax(0,1fr)_auto] items-center gap-3 sm:flex sm:justify-between">
+          <div className="min-w-0"><p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">FeaBulk · {label}</p><h1 className="mt-1 text-xl font-bold text-workspace-brand">{titles[view]}</h1></div>
+          <div className="flex shrink-0 items-center gap-2">
             <Button asChild variant="outline" className="hidden sm:inline-flex"><a href="/marketplace"><Store />Marketplace</a></Button>
             {signedIn && <><Button variant="outline" size="icon" title="Notifications" aria-label={`Notifications (${unread} unread)`} aria-expanded={showNotifications} onClick={onNotifications} className="relative"><Bell />{unread > 0 && <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-workspace-action px-1 text-[10px] font-bold text-workspace-action-foreground">{unread}</span>}</Button><Button variant="ghost" size="icon" title="Sign out" aria-label="Sign out" className="lg:hidden" onClick={onSignOut}><LogOut /></Button></>}
           </div>
@@ -49,7 +49,7 @@ export function WorkspaceLayout({ role, view, setView, signedIn, hasOrganization
 }
 
 export function BusinessIdentity({ name, status, children }: { name: string; status?: string | undefined; children: ReactNode }) {
-  return <div className="mb-6 flex flex-wrap items-center justify-between gap-4 border-b pb-6">
+  return <div className="mb-6 grid min-w-0 gap-4 border-b pb-6 sm:flex sm:items-center sm:justify-between">
     <div className="flex min-w-0 items-center gap-3"><div className="flex size-11 shrink-0 items-center justify-center rounded-md border bg-card text-workspace-brand"><Building2 className="size-5" /></div><div className="min-w-0"><h2 className="text-lg font-bold text-workspace-brand">{name}</h2>{status && <p className={`mt-1 inline-flex items-center gap-1.5 text-xs font-semibold ${status === "verified" ? "text-workspace-success" : "text-workspace-warning"}`}><span className="size-1.5 rounded-full bg-current" />{status === "verified" ? "Verified business" : status.replaceAll("_", " ")}</p>}</div></div>
     <div className="flex max-w-full flex-wrap items-center gap-2">{children}</div>
   </div>;
