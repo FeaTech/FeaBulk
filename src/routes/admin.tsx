@@ -175,9 +175,8 @@ function Operations() {
         ]),
       ]),
     );
-    setProductImages(
-      await getProductImages([...nextProducts, ...nextDrafts].map((item) => item.id)),
-    );
+    void getProductImages([...nextProducts, ...nextDrafts].map((item) => item.id))
+      .then(setProductImages).catch(() => undefined);
     setDisputes(nextDisputes);
     setHealth(nextHealth);
     setAccounts(nextAccounts);
@@ -224,11 +223,11 @@ function Operations() {
     (canViewHealth ? health.summary.open : 0);
 
   return (
-    <div className="flex min-h-screen bg-[#F4F6F9] text-[#17233A]">
-      <aside className="sticky top-0 hidden h-screen w-64 shrink-0 flex-col bg-[#0B1F3D] text-[#C9D3DF] md:flex">
-        <Link to="/" aria-label="FEA Bulk home" className="px-6 py-6 text-xl font-black text-white">
-          FEA<span className="text-[#F87908]">Bulk</span>
-          <span className="ml-2 rounded bg-[#F87908]/15 px-2 py-0.5 align-middle text-[10px] font-black uppercase tracking-wider text-[#F87908]">
+    <div className="flex min-h-screen bg-workspace-canvas text-foreground">
+      <aside className="sticky top-0 hidden h-screen w-64 shrink-0 flex-col bg-workspace-nav text-border md:flex">
+        <Link to="/" aria-label="FEA Bulk home" className="px-6 py-6 text-xl font-bold text-workspace-nav-foreground">
+          FEA<span className="text-workspace-action">Bulk</span>
+          <span className="ml-2 rounded bg-workspace-action/15 px-2 py-0.5 align-middle text-[10px] font-bold uppercase tracking-wider text-workspace-action">
             Admin
           </span>
         </Link>
@@ -259,24 +258,24 @@ function Operations() {
             </NavGroup>
           </nav>
         )}
-        <div className="mt-auto border-t border-white/10 px-6 py-5 text-xs">
-          <a href="/marketplace" className="font-bold text-white hover:text-[#F87908]">View marketplace →</a>
-          {platformAdmin && <p className="mt-2 text-[#8A9BB4]">Signed in as FeaBulk Admin</p>}
+        <div className="mt-auto border-t border-workspace-nav-foreground/10 px-6 py-5 text-xs">
+          <a href="/marketplace" className="font-bold text-workspace-nav-foreground hover:text-workspace-action">View marketplace →</a>
+          {platformAdmin && <p className="mt-2 text-workspace-nav-muted">Signed in as FeaBulk Admin</p>}
         </div>
       </aside>
 
       <main className="min-w-0 flex-1">
-        <header className="sticky top-0 z-10 border-b border-[#DDE5EE] bg-white/90 backdrop-blur">
-          <div className="flex flex-wrap items-center justify-between gap-3 px-6 py-4 lg:px-10">
+        <header className="sticky top-0 z-10 border-b border-border bg-card/90 backdrop-blur">
+          <div className="grid min-w-0 gap-3 px-5 py-4 sm:flex sm:items-center sm:justify-between lg:px-10">
             <div>
-              <h1 className="text-2xl font-black text-[#102B52]">{titles[view][0]}</h1>
-              <p className="text-sm text-[#526178]">{titles[view][1]}</p>
+              <h1 className="text-2xl font-bold text-workspace-brand">{titles[view][0]}</h1>
+              <p className="text-sm text-muted-foreground">{titles[view][1]}</p>
             </div>
             <div className="flex items-center gap-2">
             {access && (
               <select
                 aria-label="Admin section"
-                className="rounded-md border border-[#C9D3DF] bg-white px-3 py-2 text-sm font-semibold md:hidden"
+                className="rounded-md border border-border bg-card px-3 py-2 text-sm font-semibold md:hidden"
                 value={view}
                 onChange={(event) => setView(event.target.value as OperationsView)}
               >
@@ -289,7 +288,7 @@ function Operations() {
               // The admin console had no way to sign out, unlike the buyer and seller screens.
               <button
                 type="button"
-                className="rounded-md border border-[#C9D3DF] bg-white px-3 py-2 text-sm font-semibold text-[#102B52] hover:border-[#102B52]"
+                className="rounded-md border border-border bg-card px-3 py-2 text-sm font-semibold text-workspace-brand hover:border-workspace-brand"
                 onClick={() =>
                   void signOut()
                     .then(() => window.location.assign("/auth"))
@@ -304,21 +303,21 @@ function Operations() {
         </header>
         <div className="px-6 py-8 lg:px-10">
         {error && (
-          <p role="alert" className="mb-5 rounded-md border border-red-300 bg-red-50 p-3 text-sm text-red-800">
+          <p role="alert" className="mb-5 rounded-md border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive">
             {error}
           </p>
         )}
         {notice && (
-          <p role="status" className="mb-5 rounded-md border border-green-300 bg-green-50 p-3 text-sm text-green-800">
+          <p role="status" className="mb-5 rounded-md border border-workspace-success/30 bg-workspace-success-soft p-3 text-sm text-workspace-success">
             {notice}
           </p>
         )}
         {access === null ? (
           <p>Checking access…</p>
         ) : !access ? (
-          <div className="mx-auto mt-10 max-w-md rounded-xl border bg-white p-8 text-center">
-            <h2 className="text-xl font-black text-[#102B52]">Admin access required</h2>
-            <p className="mt-2 text-sm text-[#526178]">Sign in with a FeaBulk Admin account to open this page.</p>
+          <div className="mx-auto mt-10 max-w-md rounded-lg border bg-card p-8 text-center">
+            <h2 className="text-xl font-bold text-workspace-brand">Admin access required</h2>
+            <p className="mt-2 text-sm text-muted-foreground">Sign in with a FeaBulk Admin account to open this page.</p>
             <a href="/auth" className="button mt-5 inline-block">Sign in</a>
           </div>
         ) : (
@@ -329,14 +328,14 @@ function Operations() {
 
             {view === "overview" && (
               <section>
-                <div className="rounded-xl bg-gradient-to-r from-[#102B52] to-[#1D4479] p-6 text-white">
-                  <p className="text-xs font-black uppercase tracking-wider text-[#F87908]">Today</p>
-                  <p className="mt-2 text-3xl font-black">
+                <div className="rounded-lg bg-workspace-nav p-6 text-workspace-nav-foreground">
+                  <p className="text-xs font-bold uppercase tracking-wider text-workspace-action">Today</p>
+                  <p className="mt-2 text-3xl font-bold">
                     {attention === 0 ? "All caught up" : `${attention} item${attention === 1 ? "" : "s"} need attention`}
                   </p>
-                  <p className="mt-1 text-sm text-[#C9D3DF]">Pick a card below to start working through the queue.</p>
+                  <p className="mt-1 text-sm text-border">Pick a card below to start working through the queue.</p>
                 </div>
-                <h2 className="mt-8 text-xs font-black uppercase tracking-wider text-[#526178]">Review queues</h2>
+                <h2 className="mt-8 text-xs font-bold uppercase tracking-wider text-muted-foreground">Review queues</h2>
                 <div className="mt-3 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
                   {canVerify && <Metric label="Businesses to verify" value={cases.length} onClick={() => setView("verification")} />}
                   {canModerate && <Metric label="Listings to review" value={products.length + drafts.length} onClick={() => setView("catalog")} />}
@@ -345,7 +344,7 @@ function Operations() {
                 </div>
                 {platformAdmin && (
                   <>
-                    <h2 className="mt-8 text-xs font-black uppercase tracking-wider text-[#526178]">Community</h2>
+                    <h2 className="mt-8 text-xs font-bold uppercase tracking-wider text-muted-foreground">Community</h2>
                     <div className="mt-3 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
                       <Metric label="User accounts" value={accounts.length} onClick={() => setView("accounts")} />
                       <Metric label="Businesses" value={organizations.length} onClick={() => setView("accounts")} />
@@ -381,15 +380,15 @@ function Operations() {
                     {health.incidents.map((item) => (
                       <article
                         key={item.id}
-                        className={`border bg-white p-5 ${item.severity === "critical" ? "border-red-500" : item.severity === "high" ? "border-orange-400" : ""}`}
+                        className={`border bg-card p-5 ${item.severity === "critical" ? "border-destructive" : item.severity === "high" ? "border-workspace-warning" : ""}`}
                       >
                         <div className="flex flex-wrap items-start justify-between gap-3">
                           <div>
-                            <p className="text-xs font-black uppercase tracking-wider text-[#526178]">
+                            <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
                               {item.severity} · {item.category.replaceAll("_", " ")}
                             </p>
                             <h3 className="mt-1 font-bold">{item.summary}</h3>
-                            <p className="mt-1 text-xs text-[#526178]">
+                            <p className="mt-1 text-xs text-muted-foreground">
                               {item.entity_type} {item.entity_id} · last detected{" "}
                               {new Date(item.last_detected_at).toLocaleString()}
                             </p>
@@ -398,7 +397,7 @@ function Operations() {
                             {item.status}
                           </span>
                         </div>
-                        <pre className="mt-3 overflow-auto bg-[#F7F8FA] p-3 text-xs">
+                        <pre className="mt-3 overflow-auto bg-workspace-canvas p-3 text-xs">
                           {JSON.stringify(item.details, null, 2)}
                         </pre>
                         {item.status === "open" && (
@@ -437,12 +436,12 @@ function Operations() {
                 {cases.length === 0 && <Empty>No cases awaiting review.</Empty>}
                 <div className="mt-3 grid gap-3">
                   {cases.map((item) => (
-                    <article key={item.id} className="rounded-xl border border-[#DDE5EE] bg-white p-5 shadow-sm">
+                    <article key={item.id} className="rounded-lg border border-border bg-card p-5 shadow-sm">
                       <h3 className="font-bold">
                         {organizationNames.get(item.organization_id) ??
                           `Organization ${item.organization_id}`}
                       </h3>
-                      <p className="mt-1 text-sm text-[#526178]">
+                      <p className="mt-1 text-sm text-muted-foreground">
                         {organizationKinds.get(item.organization_id) === "seller"
                           ? "Seller"
                           : organizationKinds.get(item.organization_id) === "buyer"
@@ -454,12 +453,12 @@ function Operations() {
                           : "not submitted by the business yet"}
                       </p>
                       {item.status === "draft" && (
-                        <p className="mt-2 border-l-2 border-[#F87908] pl-3 text-sm">
+                        <p className="mt-2 border-l-2 border-workspace-action pl-3 text-sm">
                           The owner has not pressed Submit for verification. You can still approve
                           or reject this business now.
                         </p>
                       )}
-                      <pre className="mt-3 overflow-auto bg-[#F7F8FA] p-3 text-xs">
+                      <pre className="mt-3 overflow-auto bg-workspace-canvas p-3 text-xs">
                         {JSON.stringify(item.registered_address, null, 2)}
                       </pre>
                       <DecisionInput optional id={item.id} notes={notes} setNotes={setNotes} />
@@ -505,7 +504,7 @@ function Operations() {
                 )}
                 <div className="mt-3 grid gap-3">
                   {products.map((item) => (
-                    <article key={item.id} className="rounded-xl border border-[#DDE5EE] bg-white p-5 shadow-sm">
+                    <article key={item.id} className="rounded-lg border border-border bg-card p-5 shadow-sm">
                       <ProductReviewDetails
                         product={item}
                         images={productImages.get(item.id) ?? []}
@@ -541,10 +540,10 @@ function Operations() {
                 </div>
                 {drafts.length > 0 && (
                   <div className="mt-8">
-                    <h2 className="text-lg font-black">
+                    <h2 className="text-lg font-bold">
                       Saved by sellers, not submitted yet ({drafts.length})
                     </h2>
-                    <p className="mt-1 text-sm text-[#526178]">
+                    <p className="mt-1 text-sm text-muted-foreground">
                       The seller has not pressed Submit for review. You can still approve or
                       reject these now; approving one publishes it straight away.
                     </p>
@@ -561,16 +560,16 @@ function Operations() {
                           <details
                             key={item.id}
                             open
-                            className="rounded-xl border border-[#DDE5EE] bg-white p-5 shadow-sm"
+                            className="rounded-lg border border-border bg-card p-5 shadow-sm"
                           >
                             <summary className="cursor-pointer font-bold">
                               {item.name}
-                              <span className="ml-2 font-normal text-[#526178]">
+                              <span className="ml-2 font-normal text-muted-foreground">
                                 · {sellerNames.get(item.organization_id ?? "") ?? "Unknown seller"}{" "}
                                 · saved {new Date(item.created_at).toLocaleDateString("en-IN")}
                               </span>
                             </summary>
-                            <p className="mt-3 border-l-2 border-[#F87908] pl-3 text-sm">
+                            <p className="mt-3 border-l-2 border-workspace-action pl-3 text-sm">
                               {blockers.length > 0
                                 ? `Cannot be approved yet: ${blockers.join(" ")} You can still reject it with a note telling the seller what to fix.`
                                 : "Ready to approve. It meets every rule a seller submission would."}
@@ -625,7 +624,7 @@ function Operations() {
                 {disputes.length === 0 && <Empty>No open disputes.</Empty>}
                 <div className="mt-3 grid gap-3">
                   {disputes.map((item) => (
-                    <article key={item.id} className="rounded-xl border border-[#DDE5EE] bg-white p-5 shadow-sm">
+                    <article key={item.id} className="rounded-lg border border-border bg-card p-5 shadow-sm">
                       <h3 className="font-bold">
                         {item.type.replaceAll("_", " ")} · order {item.order_id}
                       </h3>
@@ -636,7 +635,7 @@ function Operations() {
                           hint="How the dispute ends: complete the order for the seller, require a return, or cancel the order."
                         />
                         <select
-                          className="border border-[#C9D3DF] p-2"
+                          className="border border-border p-2"
                           value={outcomes[item.id] ?? "seller_release"}
                           onChange={(event) =>
                             setOutcomes((current) => ({
@@ -681,14 +680,14 @@ function Operations() {
               <section>
                 <div className="grid gap-8 xl:grid-cols-2">
                   <div>
-                    <h2 className="text-xl font-black">User accounts ({accounts.length})</h2>
+                    <h2 className="text-xl font-bold">User accounts ({accounts.length})</h2>
                     <div className="mt-3 grid gap-3">
                       {accounts.map((item) => (
-                        <article key={item.user_id} className="rounded-xl border border-[#DDE5EE] bg-white p-4 shadow-sm">
+                        <article key={item.user_id} className="rounded-lg border border-border bg-card p-4 shadow-sm">
                           <div className="flex flex-wrap items-start justify-between gap-3">
                             <div>
                               <h3 className="font-bold">{item.full_name || item.email}</h3>
-                              <p className="text-sm text-[#526178]">{item.email}</p>
+                              <p className="text-sm text-muted-foreground">{item.email}</p>
                             </div>
                             <Status>
                               {item.email_confirmed ? "Email confirmed" : "Email pending"}
@@ -700,13 +699,13 @@ function Operations() {
                             {item.organization_names ? ` · ${item.organization_names}` : ""}
                           </p>
                           {item.operations_roles.length > 0 && (
-                            <p className="mt-2 text-xs font-bold uppercase text-[#F87908]">
+                            <p className="mt-2 text-xs font-bold uppercase text-workspace-action">
                               {item.operations_roles
                                 .map((role) => role.replaceAll("_", " "))
                                 .join(" · ")}
                             </p>
                           )}
-                          <p className="mt-2 text-xs text-[#697488]">
+                          <p className="mt-2 text-xs text-muted-foreground">
                             Last sign-in:{" "}
                             {item.last_sign_in_at
                               ? new Date(item.last_sign_in_at).toLocaleString()
@@ -717,14 +716,14 @@ function Operations() {
                     </div>
                   </div>
                   <div>
-                    <h2 className="text-xl font-black">Organizations ({organizations.length})</h2>
+                    <h2 className="text-xl font-bold">Organizations ({organizations.length})</h2>
                     <div className="mt-3 grid gap-3">
                       {organizations.map((item) => (
-                        <article key={item.organization_id} className="rounded-xl border border-[#DDE5EE] bg-white p-4 shadow-sm">
+                        <article key={item.organization_id} className="rounded-lg border border-border bg-card p-4 shadow-sm">
                           <div className="flex flex-wrap items-start justify-between gap-3">
                             <div>
                               <h3 className="font-bold">{item.display_name}</h3>
-                              <p className="text-sm text-[#526178]">{item.legal_name}</p>
+                              <p className="text-sm text-muted-foreground">{item.legal_name}</p>
                             </div>
                             <Status>
                               {item.kind} · {item.status.replaceAll("_", " ")}
@@ -735,7 +734,7 @@ function Operations() {
                             {item.member_count} team member{item.member_count === 1 ? "" : "s"}
                           </p>
                           {item.gstin && (
-                            <p className="mt-2 text-xs text-[#697488]">GSTIN {item.gstin}</p>
+                            <p className="mt-2 text-xs text-muted-foreground">GSTIN {item.gstin}</p>
                           )}
                         </article>
                       ))}
@@ -755,7 +754,7 @@ function Operations() {
 function NavGroup({ label, children }: { label: string; children: ReactNode }) {
   return (
     <div className="mb-5">
-      <p className="px-3 pb-2 text-[10px] font-black uppercase tracking-widest text-[#6F819C]">{label}</p>
+      <p className="px-3 pb-2 text-[10px] font-bold uppercase tracking-widest text-workspace-nav-muted">{label}</p>
       <div className="grid gap-0.5">{children}</div>
     </div>
   );
@@ -775,13 +774,13 @@ function OpsTab({
 }) {
   return (
     <button
-      className={`flex w-full items-center justify-between rounded-md px-3 py-2 text-left text-sm font-semibold transition-colors ${active ? "bg-white/10 text-white shadow-[inset_3px_0_0_#F87908]" : "hover:bg-white/5 hover:text-white"}`}
+      className={`flex w-full items-center justify-between rounded-md px-3 py-2 text-left text-sm font-semibold transition-colors ${active ? "bg-card/10 text-workspace-nav-foreground border-l-2 border-workspace-action" : "hover:bg-card/5 hover:text-workspace-nav-foreground"}`}
       onClick={onClick}
       aria-current={active ? "page" : undefined}
     >
       <span>{children}</span>
       {count !== undefined && count > 0 && (
-        <span className={`rounded-full px-2 py-0.5 text-[11px] font-black text-white ${urgent ? "bg-red-500" : "bg-[#F87908]"}`}>{count}</span>
+        <span className={`rounded-full px-2 py-0.5 text-[11px] font-bold text-workspace-nav-foreground ${urgent ? "bg-destructive/100" : "bg-workspace-action"}`}>{count}</span>
       )}
     </button>
   );
@@ -809,7 +808,7 @@ function DecisionInput({
       </FieldLabel>
       <textarea
         required={!optional}
-        className="border border-[#C9D3DF] p-2"
+        className="border border-border p-2"
         minLength={optional ? undefined : minLength}
         value={notes[id] ?? ""}
         onChange={(event) => setNotes((current) => ({ ...current, [id]: event.target.value }))}
@@ -828,12 +827,12 @@ function Metric({
   urgent?: boolean;
   onClick?: () => void;
 }) {
-  const cls = `group rounded-xl border bg-white p-5 text-left shadow-sm transition ${urgent ? "border-red-300" : "border-[#DDE5EE]"} ${onClick ? "hover:-translate-y-0.5 hover:shadow-md" : ""}`;
+  const cls = `group rounded-lg border bg-card p-5 text-left shadow-sm transition ${urgent ? "border-destructive/30" : "border-border"} ${onClick ? "hover:-translate-y-0.5 hover:shadow-md" : ""}`;
   const content = (
     <>
-      <p className="text-xs font-bold uppercase tracking-wider text-[#526178]">{label}</p>
-      <p className={`mt-3 text-3xl font-black ${urgent ? "text-red-600" : "text-[#102B52]"}`}>{value}</p>
-      {onClick && <p className="mt-3 text-xs font-bold text-[#D96806] opacity-0 transition group-hover:opacity-100">Open →</p>}
+      <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">{label}</p>
+      <p className={`mt-3 text-3xl font-bold ${urgent ? "text-destructive" : "text-workspace-brand"}`}>{value}</p>
+      {onClick && <p className="mt-3 text-xs font-bold text-workspace-warning opacity-0 transition group-hover:opacity-100">Open →</p>}
     </>
   );
   return onClick ? (
@@ -843,11 +842,11 @@ function Metric({
   );
 }
 function Empty({ children }: { children: ReactNode }) {
-  return <p className="mt-3 rounded-xl border border-dashed border-[#C9D3DF] bg-white p-8 text-center text-sm text-[#526178]">{children}</p>;
+  return <p className="mt-3 rounded-lg border border-dashed border-border bg-card p-8 text-center text-sm text-muted-foreground">{children}</p>;
 }
 function Status({ children }: { children: ReactNode }) {
   return (
-    <span className="border bg-[#F7F8FA] px-2 py-1 text-xs font-bold capitalize">{children}</span>
+    <span className="border bg-workspace-canvas px-2 py-1 text-xs font-bold capitalize">{children}</span>
   );
 }
 function message(error: unknown) {

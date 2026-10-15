@@ -19,7 +19,7 @@
  */
 
 @theme inline {
-  --font-sans: Verdana, Geneva, sans-serif;
+  --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
@@ -81,7 +81,7 @@
   --workspace-nav: oklch(0.238 0.06 258);
   --workspace-nav-foreground: oklch(0.98 0.004 250);
   --workspace-nav-muted: oklch(0.73 0.03 255);
-  --workspace-action: oklch(0.69 0.19 48);
+  --workspace-action: oklch(0.72 0.18 55);
   --workspace-action-foreground: oklch(0.19 0.03 255);
   --workspace-action-hover: oklch(0.75 0.17 53);
   --workspace-success: oklch(0.44 0.105 164);
@@ -89,19 +89,19 @@
   --workspace-warning: oklch(0.47 0.115 60);
   --workspace-warning-soft: oklch(0.96 0.05 85);
   --workspace-info-soft: oklch(0.95 0.025 250);
-  --radius: 0.625rem;
+  --radius: 0.5rem;
   --background: oklch(1 0 0);
-  --foreground: oklch(0.129 0.042 264.695);
+  --foreground: oklch(0.28 0.04 255);
   --card: oklch(1 0 0);
   --card-foreground: oklch(0.129 0.042 264.695);
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.129 0.042 264.695);
-  --primary: oklch(0.208 0.042 265.755);
-  --primary-foreground: oklch(0.984 0.003 247.858);
+  --primary: oklch(0.72 0.18 55);
+  --primary-foreground: oklch(0.22 0.05 255);
   --secondary: oklch(0.968 0.007 247.896);
   --secondary-foreground: oklch(0.208 0.042 265.755);
   --muted: oklch(0.968 0.007 247.896);
-  --muted-foreground: oklch(0.554 0.046 257.417);
+  --muted-foreground: oklch(0.48 0.025 255);
   --accent: oklch(0.968 0.007 247.896);
   --accent-foreground: oklch(0.208 0.042 265.755);
   --destructive: oklch(0.577 0.245 27.325);
@@ -180,6 +180,9 @@
   body {
     background-color: var(--color-background);
     color: var(--color-foreground);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    line-height: 1.55;
   }
 }
 
@@ -206,9 +209,22 @@
     outline-offset: 2px;
   }
   .business-workspace :is(h1, h2, h3, p, span) { overflow-wrap: anywhere; }
-  .button { background: #f87908; color: white; padding: .65rem 1rem; font-size: .875rem; font-weight: 800; cursor: pointer; }
-  .button:hover { background: #d96806; }
+  .button { background: var(--workspace-action); color: var(--workspace-action-foreground); border-radius: .375rem; padding: .75rem 1.25rem; font-size: .875rem; font-weight: 600; cursor: pointer; }
+  .button:hover { background: var(--workspace-action-hover); }
   .button:disabled { opacity: .55; cursor: not-allowed; }
-  .button-secondary { border: 1px solid #102b52; color: #102b52; padding: .65rem 1rem; font-size: .875rem; font-weight: 700; cursor: pointer; }
+  .button-secondary { border: 1px solid var(--border); border-radius: .375rem; color: var(--workspace-brand); padding: .65rem 1rem; font-size: .875rem; font-weight: 700; cursor: pointer; }
   .button-secondary:disabled { opacity: .55; cursor: not-allowed; }
 }
+
+/* Shared trade typography and responsive controls. */
+h1, h2, h3 { letter-spacing: 0; overflow-wrap: break-word; }
+h1.font-black, h2.font-black, h3.font-black { font-weight: 700; }
+.font-black { font-weight: 700; }
+.font-extrabold { font-weight: 600; }
+[class*="tracking-[-"] { letter-spacing: 0; }
+input, select, textarea { min-width: 0; max-width: 100%; border-radius: .375rem; }
+input:focus-visible, select:focus-visible, textarea:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
+.public-container { width: 100%; max-width: 1200px; margin-inline: auto; padding-inline: 1.25rem; }
+.public-hero-shade { background: linear-gradient(90deg, var(--workspace-nav), color-mix(in oklch, var(--workspace-nav) 80%, transparent)); }
+@media (min-width: 640px) { .public-container { padding-inline: 2rem; } }
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; } }
