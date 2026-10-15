@@ -16,7 +16,7 @@ import {
   createRfq,
   createShipment,
   deletePriceTier,
-  deleteProductDraft,
+  removeProduct,
   deleteProductImage,
   dispatchShipment,
   generateCommercialDocument,
@@ -1588,12 +1588,12 @@ export function Workspace({ expected }: { expected?: "buyer" | "seller" }) {
                               <p className="mt-0.5 truncate text-xs text-muted-foreground">SKU {item.seller_sku} · Stock {item.available_quantity} · {LISTING_STAGE_LABELS[listingStage(item)]}</p></div>
                               <span className="text-xs font-bold text-workspace-brand">Manage →</span>
                             </button>
-                            {canManageCatalog && item.listing_status === "draft" && !item.submitted_for_review_at && (
+                            {canManageCatalog && item.listing_status !== "archived" && (
                               <AlertDialog>
                                 <AlertDialogTrigger asChild><Button type="button" variant="ghost" size="icon" className="mr-3 size-8 shrink-0 text-destructive hover:text-destructive" title="Delete product" aria-label={`Delete ${item.name}`}><Trash2 className="size-4" /></Button></AlertDialogTrigger>
                                 <AlertDialogContent className="max-w-sm">
-                                  <AlertDialogHeader><AlertDialogTitle>Delete this product?</AlertDialogTitle><AlertDialogDescription>“{item.name}” and its photos and price tiers will be permanently deleted. This cannot be undone.</AlertDialogDescription></AlertDialogHeader>
-                                  <AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction className="bg-destructive text-destructive-foreground hover:bg-destructive/90" onClick={() => void run(() => deleteProductDraft(item.id), "Product deleted.")}>Delete product</AlertDialogAction></AlertDialogFooter>
+                                  <AlertDialogHeader><AlertDialogTitle>Remove this product?</AlertDialogTitle><AlertDialogDescription>{item.listing_status === "draft" && !item.submitted_for_review_at ? `“${item.name}” will be permanently deleted. This cannot be undone.` : `“${item.name}” will be removed from your catalog and the marketplace. Existing order records will be kept.`}</AlertDialogDescription></AlertDialogHeader>
+                                  <AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction className="bg-destructive text-destructive-foreground hover:bg-destructive/90" onClick={() => void run(() => removeProduct(item.id), "Product removed.")}>Remove product</AlertDialogAction></AlertDialogFooter>
                                 </AlertDialogContent>
                               </AlertDialog>
                             )}

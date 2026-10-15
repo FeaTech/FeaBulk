@@ -177,7 +177,7 @@ export async function getSellerQuotes(organizationId: string): Promise<Quote[]> 
   return unwrap((await db.from("rfq_quotes").select("id,rfq_id,seller_organization_id,status,current_version,quote_versions(version,unit_price,quantity,gst_rate,shipping_charge,additional_charges,discount_amount,lead_time_days,validity_ends_at)").eq("seller_organization_id", organizationId).order("created_at", { ascending: false }).limit(50)) as { data: Quote[] | null; error: { message: string } | null });
 }
 export async function getProducts(organizationId: string): Promise<Product[]> {
-  return unwrap((await db.from("products").select("id,name,slug,seller_sku,description,category_id,hsn_code,unit_of_measure,gst_rate,lead_time_days,minimum_order_quantity,available_quantity,listing_status,moderation_status,moderation_notes,submitted_for_review_at,created_at,product_price_tiers(id,minimum_quantity,maximum_quantity,unit_price)").eq("organization_id", organizationId).order("created_at", { ascending: false }).limit(50)) as { data: Product[] | null; error: { message: string } | null });
+  return unwrap((await db.from("products").select("id,name,slug,seller_sku,description,category_id,hsn_code,unit_of_measure,gst_rate,lead_time_days,minimum_order_quantity,available_quantity,listing_status,moderation_status,moderation_notes,submitted_for_review_at,created_at,product_price_tiers(id,minimum_quantity,maximum_quantity,unit_price)").eq("organization_id", organizationId).neq("listing_status", "archived").order("created_at", { ascending: false }).limit(50)) as { data: Product[] | null; error: { message: string } | null });
 }
 export async function getOrders(organizationId: string): Promise<Order[]> {
   const orders = unwrap((await db.from("orders").select("id,order_number,status,grand_total,buyer_organization_id,seller_organization_id,inspection_ends_at,created_at,order_lines(id,product_id,description,hsn_code,quantity,unit_of_measure,unit_price,gst_rate),shipments(id,status,carrier,tracking_number,estimated_delivery_at),disputes(id,status,type,description,opened_at),reviews(id,rating,body),commercial_documents(id,order_id,type,document_number,version,storage_path,content_sha256,generated_at),payment_transactions(id,status,amount,currency,provider,provider_reference,provider_payment_reference,amount_refunded,reconciliation_status,created_at)").or(`buyer_organization_id.eq.${organizationId},seller_organization_id.eq.${organizationId}`).order("created_at", { ascending: false }).limit(50)) as { data: Order[] | null; error: { message: string } | null });
@@ -292,10 +292,10 @@ export async function reopenRejectedProduct(productId: string) {
 export async function updateProductDraft(productId: string, payload: Record<string, Json>) {
   return unwrap(await db.rpc("update_product_draft_command", { product_id_input: productId, payload }));
 }
-export async function deleteProductDraft(productId: string): Promise<void> {
+export async function removeProduct(productId: string): Promise<void> {
   const { data: images, error: imageError } = await untypedDb.from("product_images").select("storage_path").eq("product_id", productId);
   if (imageError) throw new Error(imageError.message);
-  const { error } = await untypedDb.rpc("delete_product_draft_command", { product_id_input: productId });
+  const { data: result, error } = await untypedDb.rpc("remove_product_command", { product_id_input: productId });
   if (error) {
     if (/schema cache|could not find the function/i.test(error.message))
       throw new Error("Product deletion is not enabled in the database yet. A project administrator must apply the latest Supabase migration.");
@@ -303,7 +303,7 @@ export async function deleteProductDraft(productId: string): Promise<void> {
   }
   // The database delete is authoritative. Storage cleanup is best-effort.
   const paths = (images as Array<{ storage_path: string }> | null)?.map(image => image.storage_path) ?? [];
-  if (paths.length > 0) await db.storage.from(PRODUCT_IMAGE_BUCKET).remove(paths);
+  if (result === "deleted" && paths.length > 0) await db.storage.from(PRODUCT_IMAGE_BUCKET).remove(paths);
 }
 export async function deletePriceTier(tierId: string) {
   const { error } = await db.rpc("delete_product_price_tier_command", { tier_id_input: tierId });
