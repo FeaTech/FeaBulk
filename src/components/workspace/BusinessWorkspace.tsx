@@ -1578,7 +1578,8 @@ export function Workspace({ expected }: { expected?: "buyer" | "seller" }) {
                       <div className="mt-4 grid gap-3">
                         {products.map((item) => (
                           <article key={item.id} className="rounded-md border border-border bg-card">
-                            <button type="button" className="flex w-full items-center gap-3 p-3 text-left transition-colors hover:bg-workspace-canvas" onClick={() => {
+                            <div className="flex items-center">
+                            <button type="button" className="flex min-w-0 flex-1 items-center gap-3 p-3 text-left transition-colors hover:bg-workspace-canvas" onClick={() => {
                               setManagingProductId(item.id);
                               if (item.listing_status === "draft" && item.moderation_status === "pending" && !item.submitted_for_review_at) setEditingProductId(item.id);
                             }}>
@@ -1587,6 +1588,16 @@ export function Workspace({ expected }: { expected?: "buyer" | "seller" }) {
                               <p className="mt-0.5 truncate text-xs text-muted-foreground">SKU {item.seller_sku} · Stock {item.available_quantity} · {LISTING_STAGE_LABELS[listingStage(item)]}</p></div>
                               <span className="text-xs font-bold text-workspace-brand">Manage →</span>
                             </button>
+                            {canManageCatalog && item.listing_status === "draft" && !item.submitted_for_review_at && (
+                              <AlertDialog>
+                                <AlertDialogTrigger asChild><Button type="button" variant="ghost" size="icon" className="mr-3 size-8 shrink-0 text-destructive hover:text-destructive" title="Delete product" aria-label={`Delete ${item.name}`}><Trash2 className="size-4" /></Button></AlertDialogTrigger>
+                                <AlertDialogContent className="max-w-sm">
+                                  <AlertDialogHeader><AlertDialogTitle>Delete this product?</AlertDialogTitle><AlertDialogDescription>“{item.name}” and its photos and price tiers will be permanently deleted. This cannot be undone.</AlertDialogDescription></AlertDialogHeader>
+                                  <AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction className="bg-destructive text-destructive-foreground hover:bg-destructive/90" onClick={() => void run(() => deleteProductDraft(item.id), "Product deleted.")}>Delete product</AlertDialogAction></AlertDialogFooter>
+                                </AlertDialogContent>
+                              </AlertDialog>
+                            )}
+                            </div>
                             <Dialog open={managingProductId === item.id} onOpenChange={(open) => {
                               if (!open) { setManagingProductId(""); setEditingProductId(""); }
                             }}>
@@ -1596,17 +1607,6 @@ export function Workspace({ expected }: { expected?: "buyer" | "seller" }) {
                                   <DialogDescription>SKU {item.seller_sku} · MOQ {item.minimum_order_quantity} · Stock {item.available_quantity} · {LISTING_STAGE_LABELS[listingStage(item)]}</DialogDescription>
                                 </DialogHeader>
                                 {error && <p role="alert" className="border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive">{error}</p>}
-                                {canManageCatalog && item.listing_status === "draft" && !item.submitted_for_review_at && (
-                                  <div className="flex items-center gap-2 border-y py-3">
-                                  <AlertDialog>
-                                    <AlertDialogTrigger asChild><Button type="button" variant="outline" size="sm" className="text-destructive hover:text-destructive"><Trash2 className="mr-2 size-4" />Delete draft</Button></AlertDialogTrigger>
-                                    <AlertDialogContent className="max-w-sm">
-                                      <AlertDialogHeader><AlertDialogTitle>Delete this product?</AlertDialogTitle><AlertDialogDescription>“{item.name}” and its photos and price tiers will be permanently deleted. This cannot be undone.</AlertDialogDescription></AlertDialogHeader>
-                                      <AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction className="bg-destructive text-destructive-foreground hover:bg-destructive/90" onClick={() => void run(() => deleteProductDraft(item.id), "Product draft deleted.")}>Delete product</AlertDialogAction></AlertDialogFooter>
-                                    </AlertDialogContent>
-                                  </AlertDialog>
-                                  </div>
-                                )}
                             {item.moderation_notes && (
                               <p className="mt-2 border-l-2 border-workspace-action pl-3 text-sm">
                                 Review: {item.moderation_notes}
