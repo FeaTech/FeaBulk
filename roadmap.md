@@ -1,3 +1,9 @@
+# Reference-site refresh
+
+- [ ] Align typography, semantic colors, and public-page spacing with feabulk.com.
+- [ ] Improve phone layouts and remove avoidable page-loading delays.
+- [ ] Verify public browsing and mobile rendering; authenticated checks depend on unavailable external sign-in.
+
 # Buyer and seller redesign
 
 - [x] Add role-specific menus and page headings without changing access or actions.
