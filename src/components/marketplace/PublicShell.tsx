@@ -3,29 +3,44 @@ import { useEffect, useState, type ReactNode } from "react";
 import { ProductThumb } from "@/components/ProductThumb";
 import { getIdentity, startingUnitPrice, type MarketplaceProduct } from "@/lib/marketplace";
 
-export function PublicShell({ children, fullWidth = false }: { children: ReactNode; fullWidth?: boolean }) {
+/** Public page frame. Pages may pass their own `header`, such as the marketplace header. */
+export function PublicShell({
+  children,
+  fullWidth = false,
+  header,
+}: {
+  children: ReactNode;
+  fullWidth?: boolean;
+  header?: ReactNode;
+}) {
   const [signedIn, setSignedIn] = useState(false);
   useEffect(() => {
     let active = true;
     void getIdentity()
-      .then(user => { if (active) setSignedIn(Boolean(user)); })
+      .then((user) => {
+        if (active) setSignedIn(Boolean(user));
+      })
       .catch(() => undefined);
-    return () => { active = false; };
+    return () => {
+      active = false;
+    };
   }, []);
   return (
     <main className="min-h-screen bg-workspace-canvas text-foreground">
-      <header className="border-b bg-card">
-        <div className="public-container grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 py-5">
-          <Link to="/" className="text-xl font-bold text-workspace-brand">
-            FEA<span className="text-workspace-action">Bulk</span>
-          </Link>
-          <div className="flex shrink-0 gap-3 text-xs font-semibold sm:gap-6 sm:text-sm">
-            <Link to="/marketplace">Marketplace</Link>
-            <Link to="/app">Workspace</Link>
-            {!signedIn && <Link to="/auth">Sign in</Link>}
+      {header ?? (
+        <header className="border-b bg-card">
+          <div className="public-container grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 py-5">
+            <Link to="/" className="text-xl font-bold text-workspace-brand">
+              FEA<span className="text-workspace-action">Bulk</span>
+            </Link>
+            <div className="flex shrink-0 gap-3 text-xs font-semibold sm:gap-6 sm:text-sm">
+              <Link to="/marketplace">Marketplace</Link>
+              <Link to="/app">Workspace</Link>
+              {!signedIn && <Link to="/auth">Sign in</Link>}
+            </div>
           </div>
-        </div>
-      </header>
+        </header>
+      )}
       {fullWidth ? children : <div className="public-container py-8 sm:py-12">{children}</div>}
     </main>
   );
@@ -55,7 +70,10 @@ export function PageMessage({ title, children }: { title: string; children?: Rea
     <section className="border bg-card p-8">
       <h1 className="text-2xl font-bold text-workspace-brand">{title}</h1>
       {children && <p className="mt-2 text-sm text-muted-foreground">{children}</p>}
-      <Link to="/marketplace" className="mt-4 inline-block text-sm font-semibold text-workspace-warning">
+      <Link
+        to="/marketplace"
+        className="mt-4 inline-block text-sm font-semibold text-workspace-warning"
+      >
         Browse the marketplace →
       </Link>
     </section>
@@ -85,16 +103,30 @@ export function ProductCard({ product }: { product: MarketplaceProduct }) {
   const price = startingUnitPrice(product);
   return (
     <article className="flex h-full flex-col overflow-hidden rounded-lg border bg-card p-5">
-      <Link to="/products/$slug" params={{ slug: product.slug }} className="mb-4 block" aria-hidden="true" tabIndex={-1}>
+      <Link
+        to="/products/$slug"
+        params={{ slug: product.slug }}
+        className="mb-4 block"
+        aria-hidden="true"
+        tabIndex={-1}
+      >
         <ProductPicture product={product} className="aspect-[4/3] w-full rounded-md text-4xl" />
       </Link>
       <h3 className="text-lg font-semibold text-workspace-brand">
-        <Link className="hover:text-workspace-action" to="/products/$slug" params={{ slug: product.slug }}>
+        <Link
+          className="hover:text-workspace-action"
+          to="/products/$slug"
+          params={{ slug: product.slug }}
+        >
           {product.name}
         </Link>
       </h3>
       <p className="mt-1 text-sm text-muted-foreground">
-        <Link className="hover:text-workspace-action" to="/suppliers/$slug" params={{ slug: product.organization_id }}>
+        <Link
+          className="hover:text-workspace-action"
+          to="/suppliers/$slug"
+          params={{ slug: product.organization_id }}
+        >
           {product.supplier_name ?? "Verified supplier"}
         </Link>
       </p>
@@ -108,7 +140,11 @@ export function ProductCard({ product }: { product: MarketplaceProduct }) {
             ? "Price by quotation"
             : `From ₹${price.toLocaleString("en-IN")} per unit`}
         </p>
-        <Link to="/products/$slug" params={{ slug: product.slug }} className="mt-4 inline-block text-sm font-semibold text-workspace-warning">
+        <Link
+          to="/products/$slug"
+          params={{ slug: product.slug }}
+          className="mt-4 inline-block text-sm font-semibold text-workspace-warning"
+        >
           View product →
         </Link>
       </div>

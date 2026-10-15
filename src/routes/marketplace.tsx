@@ -1,15 +1,8 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useEffect, useMemo, useRef, useState, type FormEvent, type ReactNode } from "react";
-import {
-  BadgeCheck,
-  LayoutGrid,
-  LogOut,
-  Search,
-  SlidersHorizontal,
-  UserRound,
-  X,
-} from "lucide-react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { BadgeCheck, SlidersHorizontal, X } from "lucide-react";
 import { MarketplaceCard } from "@/components/marketplace/MarketplaceCard";
+import { MarketplaceHeader } from "@/components/marketplace/MarketplaceHeader";
 import { Button } from "@/components/ui/button";
 import {
   applyCatalogView,
@@ -20,10 +13,8 @@ import {
 } from "@/lib/catalog-view";
 import {
   getCategories,
-  getIdentity,
   getSupplierRatings,
   searchPublishedProducts,
-  signOut,
   type Category,
   type MarketplaceProduct,
   type SupplierRating as Rating,
@@ -69,8 +60,6 @@ function Marketplace() {
   const { q = "", category = "", sort = "newest" } = Route.useSearch();
   const navigate = useNavigate({ from: "/marketplace" });
   const requestId = useRef(0);
-  const [term, setTerm] = useState(q);
-  const [signedIn, setSignedIn] = useState<boolean | null>(null);
   const [categories, setCategories] = useState<Category[]>([]);
   const [products, setProducts] = useState<MarketplaceProduct[]>([]);
   const [ratings, setRatings] = useState<Map<string, Rating>>(new Map());
@@ -99,13 +88,6 @@ function Marketplace() {
 
   useEffect(() => {
     let active = true;
-    void getIdentity()
-      .then((user) => {
-        if (active) setSignedIn(Boolean(user));
-      })
-      .catch(() => {
-        if (active) setSignedIn(false);
-      });
     void getCategories()
       .then((items) => {
         if (active) setCategories(items);
@@ -119,7 +101,6 @@ function Marketplace() {
   // The search term is matched on the server; everything else filters the loaded results.
   useEffect(() => {
     const id = ++requestId.current;
-    setTerm(q);
     setLoading(true);
     setError("");
     void searchPublishedProducts(q, "", CATALOG_LIMIT)
@@ -192,10 +173,6 @@ function Marketplace() {
     setMaxMoq("");
     setWithPhotos(false);
     setSearch({ category: "" });
-  }
-  function submitSearch(event: FormEvent) {
-    event.preventDefault();
-    setSearch({ q: term.trim() });
   }
 
   const inputClass = "w-full rounded-md border bg-background px-3 py-2 text-sm";
@@ -309,97 +286,12 @@ function Marketplace() {
 
   return (
     <main className="min-h-screen bg-workspace-canvas text-foreground">
-      <header className="sticky top-0 z-20 border-b bg-card/95 shadow-sm backdrop-blur">
-        <div className="public-container grid grid-cols-[auto_1fr] items-center gap-x-4 gap-y-3 py-3 md:grid-cols-[auto_minmax(0,1fr)_auto]">
-          <Link
-            to="/"
-            aria-label="FEA Bulk home"
-            className="text-xl font-bold text-workspace-brand sm:text-2xl"
-          >
-            FEA<span className="text-workspace-action">Bulk</span>
-          </Link>
-          <nav aria-label="Account" className="flex items-center justify-end gap-2 md:order-3">
-            {signedIn === true && (
-              <>
-                <Button asChild variant="outline" size="sm">
-                  <Link to="/app">
-                    <UserRound />
-                    My workspace
-                  </Link>
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  aria-label="Sign out"
-                  onClick={() => void signOut().then(() => navigate({ to: "/auth" }))}
-                >
-                  <LogOut />
-                  <span className="hidden sm:inline">Sign out</span>
-                </Button>
-              </>
-            )}
-            {signedIn === false && (
-              <>
-                <Button asChild variant="ghost" size="sm">
-                  <Link to="/auth">Sign in</Link>
-                </Button>
-                <Button asChild variant="workspace" size="sm">
-                  <Link to="/auth">Join free</Link>
-                </Button>
-              </>
-            )}
-          </nav>
-          <form
-            onSubmit={submitSearch}
-            role="search"
-            className="col-span-2 flex min-w-0 overflow-hidden rounded-md border-2 border-workspace-brand md:order-2 md:col-span-1"
-          >
-            <select
-              aria-label="Category"
-              value={category}
-              onChange={(event) => setSearch({ category: event.target.value })}
-              className="hidden max-w-44 border-r bg-muted px-3 text-sm sm:block"
-            >
-              <option value="">All categories</option>
-              {categories.map((item) => (
-                <option key={item.id} value={item.slug}>
-                  {item.name}
-                </option>
-              ))}
-            </select>
-            <input
-              aria-label="Search products"
-              value={term}
-              onChange={(event) => setTerm(event.target.value)}
-              placeholder="Search products, brands or SKU"
-              className="min-w-0 flex-1 bg-background px-3 py-2.5 text-sm outline-none"
-            />
-            <button
-              type="submit"
-              className="flex items-center gap-2 bg-workspace-brand px-4 text-sm font-bold text-card hover:opacity-90"
-            >
-              <Search className="size-4" />
-              <span className="hidden sm:inline">Search</span>
-            </button>
-          </form>
-        </div>
-        <nav aria-label="Categories" className="border-t">
-          <div className="public-container flex gap-2 overflow-x-auto py-2 [scrollbar-width:none]">
-            <CategoryChip active={!category} onClick={() => setSearch({ category: "" })}>
-              <LayoutGrid className="size-3.5" /> All products
-            </CategoryChip>
-            {categories.map((item) => (
-              <CategoryChip
-                key={item.id}
-                active={item.slug === category}
-                onClick={() => setSearch({ category: item.slug })}
-              >
-                {item.name}
-              </CategoryChip>
-            ))}
-          </div>
-        </nav>
-      </header>
+      <MarketplaceHeader
+        query={q}
+        category={category}
+        categories={categories}
+        onSearch={(next) => setSearch(next)}
+      />
 
       <div className="public-container py-6">
         <div className="grid gap-6 lg:grid-cols-[250px_minmax(0,1fr)]">
@@ -623,27 +515,6 @@ function FilterOption({
     >
       <span className="min-w-0 truncate">{label}</span>
       <span className="text-xs text-muted-foreground">{count}</span>
-    </button>
-  );
-}
-
-function CategoryChip({
-  active,
-  onClick,
-  children,
-}: {
-  active: boolean;
-  onClick: () => void;
-  children: ReactNode;
-}) {
-  return (
-    <button
-      type="button"
-      aria-pressed={active}
-      onClick={onClick}
-      className={`flex shrink-0 items-center gap-1 whitespace-nowrap rounded-full border px-3 py-1.5 text-xs font-semibold transition ${active ? "border-workspace-brand bg-workspace-brand text-card" : "bg-card hover:border-workspace-brand"}`}
-    >
-      {children}
     </button>
   );
 }

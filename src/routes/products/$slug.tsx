@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { BuyNow } from "@/components/marketplace/BuyNow";
 import { MarketplaceCard } from "@/components/marketplace/MarketplaceCard";
+import { MarketplaceHeader } from "@/components/marketplace/MarketplaceHeader";
 import { PriceCalculator } from "@/components/marketplace/PriceCalculator";
 import { Breadcrumbs, PageMessage, PublicShell } from "@/components/marketplace/PublicShell";
 import { ProductThumb } from "@/components/ProductThumb";
@@ -146,9 +147,11 @@ function ProductPage() {
     return () => window.clearTimeout(timer);
   }, [product]);
 
+  const header = <MarketplaceHeader category={product?.category?.slug ?? ""} />;
+
   if (loading)
     return (
-      <PublicShell>
+      <PublicShell header={header}>
         <div className="grid animate-pulse gap-6 lg:grid-cols-[5fr_5fr_3fr]" aria-hidden="true">
           <div className="aspect-square rounded-lg bg-card" />
           <div className="h-96 rounded-lg bg-card" />
@@ -161,7 +164,7 @@ function ProductPage() {
     );
   if (error)
     return (
-      <PublicShell>
+      <PublicShell header={header}>
         <p
           role="alert"
           className="border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive"
@@ -172,7 +175,7 @@ function ProductPage() {
     );
   if (!product)
     return (
-      <PublicShell>
+      <PublicShell header={header}>
         <PageMessage title="Product not found">
           This listing does not exist or is no longer approved for sale.
         </PageMessage>
@@ -197,7 +200,7 @@ function ProductPage() {
   const goToOrder = () => document.getElementById("buy-now")?.scrollIntoView({ block: "start" });
 
   return (
-    <PublicShell>
+    <PublicShell header={header}>
       <Breadcrumbs
         items={[
           { label: "Marketplace", href: "/marketplace" },
@@ -350,7 +353,7 @@ function ProductPage() {
         </section>
 
         <aside aria-label="Seller" className="min-w-0 md:col-span-2 lg:col-span-1">
-          <div className="rounded-lg border bg-card p-5 lg:sticky lg:top-6">
+          <div className="rounded-lg border bg-card p-5 lg:sticky lg:top-[calc(var(--public-header-height,0px)+1.5rem)]">
             <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
               Sold by
             </p>
@@ -415,7 +418,7 @@ function ProductPage() {
 
       <nav
         aria-label="On this page"
-        className="sticky top-0 z-10 mt-8 -mx-1 overflow-x-auto border-b bg-workspace-canvas/95 backdrop-blur"
+        className="sticky top-[var(--public-header-height,0px)] z-10 mt-8 -mx-1 overflow-x-auto border-b bg-workspace-canvas/95 backdrop-blur"
       >
         <ul className="flex gap-1 whitespace-nowrap px-1 text-sm font-semibold">
           {[
@@ -720,7 +723,7 @@ function DetailSection({
   children: ReactNode;
 }) {
   return (
-    <section id={id} aria-label={title} className="scroll-mt-16 rounded-lg border bg-card p-5">
+    <section id={id} aria-label={title} className="scroll-mt-[calc(var(--public-header-height,0px)+4rem)] rounded-lg border bg-card p-5">
       <h2 className="mb-4 text-lg font-bold text-workspace-brand">{title}</h2>
       {children}
     </section>
