@@ -3270,6 +3270,29 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      update_seller_business_profile_command: {
+        Args: {
+          idempotency_key_input: string
+          organization_id_input: string
+          payload: Json
+        }
+        Returns: {
+          created_at: string
+          display_name: string
+          gstin: string | null
+          id: string
+          kind: Database["public"]["Enums"]["organization_kind"]
+          legal_name: string
+          status: string
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "organizations"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       upsert_category_command: {
         Args: {
           id_input: string

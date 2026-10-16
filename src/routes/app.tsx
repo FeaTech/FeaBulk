@@ -1,4 +1,4 @@
-import { createFileRoute, useRouter } from "@tanstack/react-router";
+import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
 import { useCallback, useEffect, useState, type FormEvent, type ReactNode } from "react";
 import {
   acceptOrganizationInvitation,
@@ -682,6 +682,15 @@ function Workspace() {
                       </option>
                     ))}
                   </select>
+                )}
+                {seller && organization && (
+                  <Link
+                    to="/seller/settings"
+                    search={{ organization: organization.id }}
+                    className="border border-[#102B52] px-4 py-2 text-sm font-bold"
+                  >
+                    Organization settings
+                  </Link>
                 )}
                 <button
                   className="border border-[#102B52] px-4 py-2 text-sm font-bold"

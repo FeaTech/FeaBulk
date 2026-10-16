@@ -469,3 +469,64 @@ export async function saveCategory(input: { id: string | null; name: string; slu
     id_input: input.id, name_input: input.name, slug_input: input.slug, parent_id_input: input.parent_id, is_active_input: input.is_active,
   }));
 }
+
+export type OrganizationProfile = Organization & { gstin: string | null };
+export type VerificationDetails = {
+  status: string;
+  business_type: string | null;
+  pan_last4: string | null;
+  cin_or_llpin: string | null;
+  udyam_registration: string | null;
+  registered_address: Record<string, string> | null;
+  operating_address: Record<string, string> | null;
+  submitted_at: string | null;
+  reviewed_at: string | null;
+  reviewer_notes: string | null;
+};
+const organizationProfileColumns = "id,legal_name,display_name,gstin,kind,status";
+export async function getOrganizationProfile(organizationId: string): Promise<OrganizationProfile> {
+  return unwrap((await db.from("organizations").select(organizationProfileColumns).eq("id", organizationId).maybeSingle()) as {
+    data: OrganizationProfile | null; error: { message: string } | null;
+  });
+}
+export async function getVerificationDetails(organizationId: string): Promise<VerificationDetails | null> {
+  const { data, error } = await db.from("verification_cases")
+    .select("status,business_type,pan_last4,cin_or_llpin,udyam_registration,registered_address,operating_address,submitted_at,reviewed_at,reviewer_notes")
+    .eq("organization_id", organizationId).maybeSingle();
+  if (error) throw error;
+  return data as VerificationDetails | null;
+}
+export type BusinessAddress = { address_line: string; city: string; state: string; pin_code: string; country: string };
+
+export type SellerRegistrationInput = {
+  businessType: string;
+  panLast4: string | null;
+  cinOrLlpin: string | null;
+  udyamRegistration: string | null;
+  registeredAddress: BusinessAddress;
+  operatingAddress: BusinessAddress;
+};
+
+export async function updateSellerBusinessProfile(organizationId: string, input: {
+  legalName: string; displayName: string; gstin: string | null; registration: SellerRegistrationInput | null;
+}): Promise<OrganizationProfile> {
+  const payload = {
+    legal_name: input.legalName,
+    display_name: input.displayName,
+    gstin: input.gstin ?? "",
+    ...(input.registration ? {
+      registration: {
+        business_type: input.registration.businessType,
+        pan_last4: input.registration.panLast4 ?? "",
+        cin_or_llpin: input.registration.cinOrLlpin ?? "",
+        udyam_registration: input.registration.udyamRegistration ?? "",
+        registered_address: input.registration.registeredAddress,
+        operating_address: input.registration.operatingAddress,
+      },
+    } : {}),
+  };
+  unwrap(await db.rpc("update_seller_business_profile_command", {
+    organization_id_input: organizationId, payload, idempotency_key_input: crypto.randomUUID(),
+  }));
+  return getOrganizationProfile(organizationId);
+}

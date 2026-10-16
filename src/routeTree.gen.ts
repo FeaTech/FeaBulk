@@ -14,6 +14,7 @@ import { Route as AppRouteImport } from './routes/app'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as MarketplaceRouteImport } from './routes/marketplace'
 import { Route as OperationsRouteImport } from './routes/operations'
+import { Route as SellerSettingsRouteImport } from './routes/seller.settings'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -40,6 +41,11 @@ const OperationsRoute = OperationsRouteImport.update({
   path: '/operations',
   getParentRoute: () => rootRouteImport,
 } as any)
+const SellerSettingsRoute = SellerSettingsRouteImport.update({
+  id: '/seller/settings',
+  path: '/seller/settings',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -47,6 +53,7 @@ export interface FileRoutesByFullPath {
   '/auth': typeof AuthRoute
   '/marketplace': typeof MarketplaceRoute
   '/operations': typeof OperationsRoute
+  '/seller/settings': typeof SellerSettingsRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -54,6 +61,7 @@ export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/marketplace': typeof MarketplaceRoute
   '/operations': typeof OperationsRoute
+  '/seller/settings': typeof SellerSettingsRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -62,13 +70,23 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/marketplace': typeof MarketplaceRoute
   '/operations': typeof OperationsRoute
+  '/seller/settings': typeof SellerSettingsRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/app' | '/auth' | '/marketplace' | '/operations'
+  fullPaths:
+    '/' | '/app' | '/auth' | '/marketplace' | '/operations' | '/seller/settings'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/app' | '/auth' | '/marketplace' | '/operations'
-  id: '__root__' | '/' | '/app' | '/auth' | '/marketplace' | '/operations'
+  to:
+    '/' | '/app' | '/auth' | '/marketplace' | '/operations' | '/seller/settings'
+  id:
+    | '__root__'
+    | '/'
+    | '/app'
+    | '/auth'
+    | '/marketplace'
+    | '/operations'
+    | '/seller/settings'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -77,6 +95,7 @@ export interface RootRouteChildren {
   AuthRoute: typeof AuthRoute
   MarketplaceRoute: typeof MarketplaceRoute
   OperationsRoute: typeof OperationsRoute
+  SellerSettingsRoute: typeof SellerSettingsRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -116,6 +135,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof OperationsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/seller/settings': {
+      id: '/seller/settings'
+      path: '/seller/settings'
+      fullPath: '/seller/settings'
+      preLoaderRoute: typeof SellerSettingsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -125,6 +151,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthRoute: AuthRoute,
   MarketplaceRoute: MarketplaceRoute,
   OperationsRoute: OperationsRoute,
+  SellerSettingsRoute: SellerSettingsRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
