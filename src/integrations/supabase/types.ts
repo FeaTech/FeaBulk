@@ -14,6 +14,216 @@ export type Database = {
   }
   public: {
     Tables: {
+      auction_bids: {
+        Row: {
+          amount: number
+          auction_id: string
+          buyer_organization_id: string
+          created_at: string
+          created_by: string
+          id: string
+          participant_id: string
+        }
+        Insert: {
+          amount: number
+          auction_id: string
+          buyer_organization_id: string
+          created_at?: string
+          created_by: string
+          id?: string
+          participant_id: string
+        }
+        Update: {
+          amount?: number
+          auction_id?: string
+          buyer_organization_id?: string
+          created_at?: string
+          created_by?: string
+          id?: string
+          participant_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "auction_bids_auction_id_fkey"
+            columns: ["auction_id"]
+            isOneToOne: false
+            referencedRelation: "auctions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "auction_bids_buyer_organization_id_fkey"
+            columns: ["buyer_organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "auction_bids_participant_id_fkey"
+            columns: ["participant_id"]
+            isOneToOne: false
+            referencedRelation: "auction_participants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      auction_participants: {
+        Row: {
+          auction_id: string
+          buyer_organization_id: string
+          created_at: string
+          delivery_address: Json
+          id: string
+          joined_by: string
+          paid_at: string | null
+          provider_order_id: string | null
+          provider_payment_id: string | null
+          refunded_at: string | null
+          token_amount: number
+          token_status: string
+          updated_at: string
+        }
+        Insert: {
+          auction_id: string
+          buyer_organization_id: string
+          created_at?: string
+          delivery_address: Json
+          id?: string
+          joined_by: string
+          paid_at?: string | null
+          provider_order_id?: string | null
+          provider_payment_id?: string | null
+          refunded_at?: string | null
+          token_amount: number
+          token_status?: string
+          updated_at?: string
+        }
+        Update: {
+          auction_id?: string
+          buyer_organization_id?: string
+          created_at?: string
+          delivery_address?: Json
+          id?: string
+          joined_by?: string
+          paid_at?: string | null
+          provider_order_id?: string | null
+          provider_payment_id?: string | null
+          refunded_at?: string | null
+          token_amount?: number
+          token_status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "auction_participants_auction_id_fkey"
+            columns: ["auction_id"]
+            isOneToOne: false
+            referencedRelation: "auctions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "auction_participants_buyer_organization_id_fkey"
+            columns: ["buyer_organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      auctions: {
+        Row: {
+          bid_count: number
+          bid_step: number
+          created_at: string
+          created_by: string
+          current_price: number | null
+          ends_at: string
+          id: string
+          lot_type: string
+          order_id: string | null
+          payment_due_at: string | null
+          product_id: string
+          quantity: number
+          seller_organization_id: string
+          start_price: number
+          starts_at: string
+          status: string
+          token_amount: number
+          updated_at: string
+          winner_organization_id: string | null
+        }
+        Insert: {
+          bid_count?: number
+          bid_step: number
+          created_at?: string
+          created_by: string
+          current_price?: number | null
+          ends_at: string
+          id?: string
+          lot_type?: string
+          order_id?: string | null
+          payment_due_at?: string | null
+          product_id: string
+          quantity: number
+          seller_organization_id: string
+          start_price: number
+          starts_at?: string
+          status?: string
+          token_amount: number
+          updated_at?: string
+          winner_organization_id?: string | null
+        }
+        Update: {
+          bid_count?: number
+          bid_step?: number
+          created_at?: string
+          created_by?: string
+          current_price?: number | null
+          ends_at?: string
+          id?: string
+          lot_type?: string
+          order_id?: string | null
+          payment_due_at?: string | null
+          product_id?: string
+          quantity?: number
+          seller_organization_id?: string
+          start_price?: number
+          starts_at?: string
+          status?: string
+          token_amount?: number
+          updated_at?: string
+          winner_organization_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "auctions_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "auctions_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "auctions_seller_organization_id_fkey"
+            columns: ["seller_organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "auctions_winner_organization_id_fkey"
+            columns: ["winner_organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       audit_events: {
         Row: {
           action: string
@@ -2313,6 +2523,30 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      attach_auction_token_order_internal: {
+        Args: { participant_id_input: string; provider_order_id_input: string }
+        Returns: {
+          auction_id: string
+          buyer_organization_id: string
+          created_at: string
+          delivery_address: Json
+          id: string
+          joined_by: string
+          paid_at: string | null
+          provider_order_id: string | null
+          provider_payment_id: string | null
+          refunded_at: string | null
+          token_amount: number
+          token_status: string
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "auction_participants"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       attach_payment_provider_reference_internal: {
         Args: { provider_reference_input: string; transaction_id_input: string }
         Returns: {
@@ -2336,6 +2570,36 @@ export type Database = {
         SetofOptions: {
           from: "*"
           to: "payment_transactions"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      cancel_auction_command: {
+        Args: { auction_id_input: string }
+        Returns: {
+          bid_count: number
+          bid_step: number
+          created_at: string
+          created_by: string
+          current_price: number | null
+          ends_at: string
+          id: string
+          lot_type: string
+          order_id: string | null
+          payment_due_at: string | null
+          product_id: string
+          quantity: number
+          seller_organization_id: string
+          start_price: number
+          starts_at: string
+          status: string
+          token_amount: number
+          updated_at: string
+          winner_organization_id: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "auctions"
           isOneToOne: true
           isSetofReturn: false
         }
@@ -2394,6 +2658,36 @@ export type Database = {
         SetofOptions: {
           from: "*"
           to: "shipments"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      create_auction_command: {
+        Args: { payload: Json; product_id_input: string }
+        Returns: {
+          bid_count: number
+          bid_step: number
+          created_at: string
+          created_by: string
+          current_price: number | null
+          ends_at: string
+          id: string
+          lot_type: string
+          order_id: string | null
+          payment_due_at: string | null
+          product_id: string
+          quantity: number
+          seller_organization_id: string
+          start_price: number
+          starts_at: string
+          status: string
+          token_amount: number
+          updated_at: string
+          winner_organization_id: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "auctions"
           isOneToOne: true
           isSetofReturn: false
         }
@@ -2706,6 +3000,15 @@ export type Database = {
           slug: string
         }[]
       }
+      get_auction_bids: {
+        Args: { auction_id_input: string }
+        Returns: {
+          amount: number
+          bidder_label: string
+          created_at: string
+          is_mine: boolean
+        }[]
+      }
       get_operations_health_command: { Args: never; Returns: Json }
       get_or_create_trade_conversation_command: {
         Args: {
@@ -2813,6 +3116,34 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      join_auction_command: {
+        Args: {
+          auction_id_input: string
+          buyer_organization_id_input: string
+          delivery_address_input: Json
+        }
+        Returns: {
+          auction_id: string
+          buyer_organization_id: string
+          created_at: string
+          delivery_address: Json
+          id: string
+          joined_by: string
+          paid_at: string | null
+          provider_order_id: string | null
+          provider_payment_id: string | null
+          refunded_at: string | null
+          token_amount: number
+          token_status: string
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "auction_participants"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       list_team_members_command: {
         Args: { organization_id_input: string }
         Returns: {
@@ -2821,6 +3152,58 @@ export type Database = {
           role: Database["public"]["Enums"]["organization_role"]
           user_id: string
         }[]
+      }
+      mark_auction_token_paid_internal: {
+        Args: {
+          amount_paise_input: number
+          provider_order_id_input: string
+          provider_payment_id_input: string
+        }
+        Returns: {
+          auction_id: string
+          buyer_organization_id: string
+          created_at: string
+          delivery_address: Json
+          id: string
+          joined_by: string
+          paid_at: string | null
+          provider_order_id: string | null
+          provider_payment_id: string | null
+          refunded_at: string | null
+          token_amount: number
+          token_status: string
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "auction_participants"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      mark_auction_token_refunded_internal: {
+        Args: { participant_id_input: string }
+        Returns: {
+          auction_id: string
+          buyer_organization_id: string
+          created_at: string
+          delivery_address: Json
+          id: string
+          joined_by: string
+          paid_at: string | null
+          provider_order_id: string | null
+          provider_payment_id: string | null
+          refunded_at: string | null
+          token_amount: number
+          token_status: string
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "auction_participants"
+          isOneToOne: true
+          isSetofReturn: false
+        }
       }
       mark_notification_read_command: {
         Args: { notification_id_input: string }
@@ -2925,6 +3308,40 @@ export type Database = {
         }
       }
       ops_has_role: { Args: { _roles: string[] }; Returns: boolean }
+      place_bid_command: {
+        Args: {
+          amount_input: number
+          auction_id_input: string
+          buyer_organization_id_input: string
+        }
+        Returns: {
+          bid_count: number
+          bid_step: number
+          created_at: string
+          created_by: string
+          current_price: number | null
+          ends_at: string
+          id: string
+          lot_type: string
+          order_id: string | null
+          payment_due_at: string | null
+          product_id: string
+          quantity: number
+          seller_organization_id: string
+          start_price: number
+          starts_at: string
+          status: string
+          token_amount: number
+          updated_at: string
+          winner_organization_id: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "auctions"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       place_direct_order_command: {
         Args: {
           buyer_organization_id_input: string
@@ -3185,6 +3602,37 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      settle_auction_command: {
+        Args: { auction_id_input: string }
+        Returns: {
+          bid_count: number
+          bid_step: number
+          created_at: string
+          created_by: string
+          current_price: number | null
+          ends_at: string
+          id: string
+          lot_type: string
+          order_id: string | null
+          payment_due_at: string | null
+          product_id: string
+          quantity: number
+          seller_organization_id: string
+          start_price: number
+          starts_at: string
+          status: string
+          token_amount: number
+          updated_at: string
+          winner_organization_id: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "auctions"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      settle_due_auctions: { Args: never; Returns: number }
       submit_product_for_review_command: {
         Args: { product_id_input: string }
         Returns: {
