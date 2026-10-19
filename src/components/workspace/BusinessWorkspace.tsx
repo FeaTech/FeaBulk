@@ -1,3 +1,5 @@
+import { SellerAuctionControls } from "@/components/auction/SellerAuctionControls";
+import { BuyerAuctions } from "@/components/auction/BuyerAuctions";
 import { useRouter } from "@tanstack/react-router";
 import { useCallback, useEffect, useRef, useState, type FormEvent, type ReactNode } from "react";
 import { ImagePlus, Trash2, X } from "lucide-react";
@@ -1607,6 +1609,7 @@ export function Workspace({ expected }: { expected?: "buyer" | "seller" }) {
                                   <DialogDescription>SKU {item.seller_sku} · MOQ {item.minimum_order_quantity} · Stock {item.available_quantity} · {LISTING_STAGE_LABELS[listingStage(item)]}</DialogDescription>
                                 </DialogHeader>
                                 {error && <p role="alert" className="border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive">{error}</p>}
+                            {canManageCatalog && item.listing_status !== "archived" && <SellerAuctionControls productId={item.id} unit={item.unit_of_measure} available={Number(item.available_quantity)} />}
                             {item.moderation_notes && (
                               <p className="mt-2 border-l-2 border-workspace-action pl-3 text-sm">
                                 Review: {item.moderation_notes}
@@ -2011,6 +2014,7 @@ export function Workspace({ expected }: { expected?: "buyer" | "seller" }) {
                     )}
                   </section>
                 )}
+                {view === "orders" && buyer && organization && <BuyerAuctions organizationId={organization.id} />}
                 {view === "orders" && (
                   <section className="mt-6">
                     <h2 className="text-xl font-black">Orders ({orders.length})</h2>

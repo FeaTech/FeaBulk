@@ -1,4 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { AdminAuctionsPanel } from "@/components/auction/AdminAuctionsPanel";
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
 import {
   acknowledgeOperationalIncident,
@@ -61,7 +62,8 @@ type OperationsView =
   | "accounts"
   | "orders"
   | "payments"
-  | "categories";
+  | "categories"
+  | "auctions";
 
 function Operations() {
   const [access, setAccess] = useState<boolean | null>(null);
@@ -214,6 +216,7 @@ function Operations() {
     orders: ["Orders", "Every order on the marketplace."],
     payments: ["Payments", "Every payment attempt and its status."],
     categories: ["Categories", "Organise how products are grouped."],
+    auctions: ["Auctions", "Live and ended auctions, participation tokens and refunds."],
     accounts: ["Users & businesses", "Everyone with an account and the businesses they run."],
   };
   const attention =
@@ -253,6 +256,7 @@ function Operations() {
             <NavGroup label="Marketplace">
               {canViewOrders && <OpsTab active={view === "orders"} onClick={() => setView("orders")}>Orders</OpsTab>}
               {canViewPayments && <OpsTab active={view === "payments"} onClick={() => setView("payments")}>Payments</OpsTab>}
+              {platformAdmin && <OpsTab active={view === "auctions"} onClick={() => setView("auctions")}>Auctions</OpsTab>}
               {canModerate && <OpsTab active={view === "categories"} onClick={() => setView("categories")}>Categories</OpsTab>}
               {platformAdmin && <OpsTab active={view === "accounts"} onClick={() => setView("accounts")}>Users & businesses</OpsTab>}
             </NavGroup>
@@ -325,6 +329,7 @@ function Operations() {
             {view === "orders" && canViewOrders && <OrdersPanel />}
             {view === "payments" && canViewPayments && <PaymentsPanel />}
             {view === "categories" && canModerate && <CategoriesPanel canEdit={platformAdmin} />}
+            {view === "auctions" && platformAdmin && <AdminAuctionsPanel />}
 
             {view === "overview" && (
               <section>
