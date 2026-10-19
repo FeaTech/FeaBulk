@@ -58,6 +58,58 @@ export default Deno.serve(async (request) => {
   if (!keyId || !keySecret) return json({ error: "payment_provider_not_configured" }, 503);
   const providerAuthorization = `Basic ${btoa(`${keyId}:${keySecret}`)}`;
 
+  const token = input as unknown as { action: string; participant_id?: string; provider_order_id?: string; provider_payment_id?: string; signature?: string };
+  if (token.action === "initiate_token") {
+    if (!token.participant_id || !uuid.test(token.participant_id)) return json({ error: "invalid_request" }, 400);
+    // Caller-scoped read: RLS only returns the participant row to members of the bidding business.
+    const { data: part } = await caller.from("auction_participants").select("id,token_amount,token_status,provider_order_id,auction_id").eq("id", token.participant_id).maybeSingle();
+    if (!part || part.token_status !== "pending") return json({ error: "token_not_payable", message: "This token is already paid or not payable." }, 422);
+    const amountPaise = Math.round(Number(part.token_amount) * 100);
+    if (part.provider_order_id) return json({ transaction_id: part.id, provider_order_id: part.provider_order_id, key_id: keyId, amount_paise: amountPaise, currency: "INR" });
+    const receipt = `fea_tok_${String(part.id).replaceAll("-", "").slice(0, 28)}`;
+    const res = await fetch("https://api.razorpay.com/v1/orders", {
+      method: "POST", headers: { Authorization: providerAuthorization, "Content-Type": "application/json" },
+      body: JSON.stringify({ amount: amountPaise, currency: "INR", receipt, notes: { feabulk_auction_id: part.auction_id, feabulk_participant_id: part.id } }),
+    });
+    const order = await res.json().catch(() => null) as RazorpayOrder | null;
+    if (!res.ok || !order?.id) return json({ error: "provider_order_failed", message: "Could not start the token payment." }, 503);
+    const { error: attachError } = await admin.rpc("attach_auction_token_order_internal", { participant_id_input: part.id, provider_order_id_input: order.id });
+    if (attachError) return json({ error: "payment_registration_failed" }, 500);
+    return json({ transaction_id: part.id, provider_order_id: order.id, key_id: keyId, amount_paise: amountPaise, currency: "INR" }, 201);
+  }
+
+  if (token.action === "confirm_token") {
+    if (!token.provider_order_id || !token.provider_payment_id || !token.signature) return json({ error: "invalid_request" }, 400);
+    const expected = await hmacSha256(keySecret, `${token.provider_order_id}|${token.provider_payment_id}`);
+    if (!constantTimeEqual(token.signature, expected)) return json({ error: "invalid_payment_signature" }, 401);
+    const { data: visible } = await caller.from("auction_participants").select("id").eq("provider_order_id", token.provider_order_id).maybeSingle();
+    if (!visible) return json({ error: "payment_access_denied" }, 403);
+    const payRes = await fetch(`https://api.razorpay.com/v1/payments/${encodeURIComponent(token.provider_payment_id)}`, { headers: { Authorization: providerAuthorization } });
+    const payment = await payRes.json().catch(() => null) as RazorpayPayment | null;
+    if (!payRes.ok || !payment || payment.order_id !== token.provider_order_id || !["authorized", "captured"].includes(payment.status)) return json({ error: "payment_not_captured" }, 409);
+    const { data: paid, error: paidError } = await admin.rpc("mark_auction_token_paid_internal", { provider_order_id_input: payment.order_id, provider_payment_id_input: payment.id, amount_paise_input: payment.amount });
+    if (paidError || !paid) return json({ error: "payment_reconciliation_failed", message: paidError?.message }, 500);
+    return json({ accepted: true, status: "paid" });
+  }
+
+  if (token.action === "refund_token") {
+    if (!token.participant_id || !uuid.test(token.participant_id)) return json({ error: "invalid_request" }, 400);
+    const { data: isAdmin } = await admin.from("operations_members").select("user_id").eq("user_id", identity.user.id).maybeSingle();
+    if (!isAdmin) return json({ error: "forbidden" }, 403);
+    const { data: part } = await admin.from("auction_participants").select("id,token_amount,token_status,provider_payment_id").eq("id", token.participant_id).maybeSingle();
+    if (!part || part.token_status !== "refund_due" || !part.provider_payment_id) return json({ error: "not_refundable", message: "This token is not due for a refund." }, 422);
+    const refundRes = await fetch(`https://api.razorpay.com/v1/payments/${encodeURIComponent(part.provider_payment_id)}/refund`, {
+      method: "POST", headers: { Authorization: providerAuthorization, "Content-Type": "application/json" },
+      body: JSON.stringify({ amount: Math.round(Number(part.token_amount) * 100), receipt: `fea_ref_${String(part.id).replaceAll("-", "").slice(0, 28)}` }),
+    });
+    if (!refundRes.ok) {
+      const body = await refundRes.json().catch(() => null) as { error?: { description?: string } } | null;
+      return json({ error: "refund_failed", message: body?.error?.description ?? "Refund failed" }, 502);
+    }
+    await admin.rpc("mark_auction_token_refunded_internal", { participant_id_input: part.id });
+    return json({ accepted: true, status: "refunded" });
+  }
+
   if (input.action === "initiate") {
     if (!uuid.test(input.order_id) || !uuid.test(input.request_id)) return json({ error: "invalid_request" }, 400);
     const { data: transaction, error: reserveError } = await caller.rpc("initiate_payment_attempt_command", {
