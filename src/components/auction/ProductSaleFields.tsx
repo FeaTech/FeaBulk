@@ -14,8 +14,8 @@ export function ProductSaleFields({ saleType, onSaleTypeChange }: {
     <fieldset className="min-w-0 sm:col-span-2">
       <legend className="mb-2 text-sm font-semibold">Sale type</legend>
       <RadioGroup name="sale_type" value={saleType} onValueChange={value => onSaleTypeChange(value === "auction" ? "auction" : "regular")} className="flex flex-wrap gap-5" aria-label="Sale type">
-        <label className="flex cursor-pointer items-center gap-2"><RadioGroupItem value="regular" /> Regular sale</label>
-        <label className="flex cursor-pointer items-center gap-2"><RadioGroupItem value="auction" /> Auction</label>
+        <label className="flex cursor-pointer items-center gap-2"><RadioGroupItem value="regular" aria-label="Regular sale" /> Regular sale</label>
+        <label className="flex cursor-pointer items-center gap-2"><RadioGroupItem value="auction" aria-label="Auction" /> Auction</label>
       </RadioGroup>
     </fieldset>
     {saleType === "regular" ? <>
