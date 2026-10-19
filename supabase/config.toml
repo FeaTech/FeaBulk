@@ -24,8 +24,6 @@ entrypoint = "./functions/payment-webhook/index.ts"
 [functions.payment-command]
 enabled = true
 verify_jwt = true
-import_map = "./functions/payment-command/deno.json"
-entrypoint = "./functions/payment-command/index.ts"
 
 [functions.catalog-command]
 enabled = true
