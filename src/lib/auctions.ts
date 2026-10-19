@@ -21,10 +21,10 @@ export type PublicBid = { amount: number; created_at: string; bidder_label: stri
 
 const AUCTION_COLS = "*, products(name,slug,unit_of_measure,gst_rate)";
 
-async function unwrap<T>(p: PromiseLike<{ data: T; error: { message: string } | null }>): Promise<T> {
+async function unwrap<T>(p: PromiseLike<{ data: unknown; error: { message: string } | null }>): Promise<T> {
   const { data, error } = await p;
   if (error) throw new Error(error.message);
-  return data;
+  return data as T;
 }
 
 export async function getOpenAuctionForProduct(productId: string): Promise<Auction | null> {
