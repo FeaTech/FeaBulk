@@ -14,6 +14,7 @@ import {
   Truck,
 } from "lucide-react";
 import { BuyNow } from "@/components/marketplace/BuyNow";
+import { AuctionPanel } from "@/components/auction/AuctionPanel";
 import { MarketplaceCard } from "@/components/marketplace/MarketplaceCard";
 import { MarketplaceHeader } from "@/components/marketplace/MarketplaceHeader";
 import { PriceCalculator } from "@/components/marketplace/PriceCalculator";
@@ -475,6 +476,7 @@ function ProductPage() {
               gstRate={product.gst_rate}
             />
           )}
+          <AuctionPanel productId={product.id} slug={product.slug} />
           {product.product_price_tiers.length > 0 ? (
             <BuyNow
               productId={product.id}
