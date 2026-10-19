@@ -45,6 +45,7 @@ export type Product = {
   gst_rate?: number | null; lead_time_days?: number; moderation_notes?: string | null;
   organization_id?: string;
   product_price_tiers?: Array<{ id: string; minimum_quantity: number; maximum_quantity: number; unit_price: number }>;
+  auctions?: Array<{ status: string }>;
 };
 export type Order = {
   id: string; order_number: string; status: string; grand_total: number;
@@ -180,7 +181,7 @@ export async function getSellerQuotes(organizationId: string): Promise<Quote[]> 
   return unwrap((await db.from("rfq_quotes").select("id,rfq_id,seller_organization_id,status,current_version,quote_versions(version,unit_price,quantity,gst_rate,shipping_charge,additional_charges,discount_amount,lead_time_days,validity_ends_at)").eq("seller_organization_id", organizationId).order("created_at", { ascending: false }).limit(50)) as { data: Quote[] | null; error: { message: string } | null });
 }
 export async function getProducts(organizationId: string): Promise<Product[]> {
-  return unwrap((await db.from("products").select("id,name,slug,seller_sku,description,category_id,hsn_code,unit_of_measure,gst_rate,lead_time_days,minimum_order_quantity,available_quantity,listing_status,moderation_status,moderation_notes,submitted_for_review_at,created_at,product_price_tiers(id,minimum_quantity,maximum_quantity,unit_price)").eq("organization_id", organizationId).neq("listing_status", "archived").order("created_at", { ascending: false }).limit(50)) as { data: Product[] | null; error: { message: string } | null });
+  return unwrap((await db.from("products").select("id,name,slug,seller_sku,description,category_id,hsn_code,unit_of_measure,gst_rate,lead_time_days,minimum_order_quantity,available_quantity,listing_status,moderation_status,moderation_notes,submitted_for_review_at,created_at,product_price_tiers(id,minimum_quantity,maximum_quantity,unit_price),auctions(status)").eq("organization_id", organizationId).neq("listing_status", "archived").order("created_at", { ascending: false }).limit(50)) as { data: Product[] | null; error: { message: string } | null });
 }
 export async function getOrders(organizationId: string): Promise<Order[]> {
   const orders = unwrap((await db.from("orders").select("id,order_number,status,grand_total,buyer_organization_id,seller_organization_id,inspection_ends_at,created_at,order_lines(id,product_id,description,hsn_code,quantity,unit_of_measure,unit_price,gst_rate),shipments(id,status,carrier,tracking_number,estimated_delivery_at),disputes(id,status,type,description,opened_at),reviews(id,rating,body),commercial_documents(id,order_id,type,document_number,version,storage_path,content_sha256,generated_at),payment_transactions(id,status,amount,currency,provider,provider_reference,provider_payment_reference,amount_refunded,reconciliation_status,created_at)").or(`buyer_organization_id.eq.${organizationId},seller_organization_id.eq.${organizationId}`).order("created_at", { ascending: false }).limit(50)) as { data: Order[] | null; error: { message: string } | null });
@@ -267,10 +268,15 @@ export async function createProduct(organizationId: string, payload: Record<stri
 const SLUG_ATTEMPTS = 20;
 // Slugs are unique across every seller, and a seller cannot see other sellers' drafts, so a
 // clash only shows up on save. Retry with "-2", "-3"... instead of making the seller pick again.
-export async function createProductWithUniqueSlug(organizationId: string, payload: Record<string, Json> & { slug: string }): Promise<Product> {
+export async function createProductWithUniqueSlug(organizationId: string, payload: Record<string, Json> & { slug: string }, sale?: { type: "regular" | "auction"; settings: Record<string, Json> }): Promise<Product> {
   for (let attempt = 1; ; attempt++) {
     try {
-      return await createProduct(organizationId, { ...payload, slug: slugCandidate(payload.slug, attempt) });
+      const candidate = { ...payload, slug: slugCandidate(payload.slug, attempt) };
+      if (!sale) return await createProduct(organizationId, candidate);
+      return unwrap((await db.rpc("create_product_sale_command", {
+        organization_id_input: organizationId, payload: candidate, idempotency_key_input: crypto.randomUUID(),
+        sale_type_input: sale.type, sale_settings_input: sale.settings,
+      })) as { data: Product | null; error: { message: string } | null });
     } catch (err) {
       const slugTaken = err instanceof Error && err.message.includes("products_slug_key");
       if (!slugTaken || attempt >= SLUG_ATTEMPTS) throw err;

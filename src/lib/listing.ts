@@ -3,6 +3,7 @@ type ListingFacts = {
   moderation_status: string;
   submitted_for_review_at: string | null;
   minimum_order_quantity: number;
+  auctions?: Array<{ status: string }>;
   product_price_tiers?:
     Array<{ minimum_quantity: number | string; maximum_quantity: number | string }> | undefined;
 };
@@ -41,9 +42,10 @@ export function tierCoversMinimumOrder(product: ListingFacts): boolean {
 export function submissionBlockers(product: ListingFacts, sellerVerified: boolean): string[] {
   const blockers: string[] = [];
   const minimum = Number(product.minimum_order_quantity).toLocaleString("en-IN");
-  if ((product.product_price_tiers ?? []).length === 0)
+  const auction = product.auctions?.some(item => item.status === "scheduled");
+  if (!auction && (product.product_price_tiers ?? []).length === 0)
     blockers.push(`Add a price tier that starts at the minimum order quantity (${minimum}).`);
-  else if (!tierCoversMinimumOrder(product))
+  else if (!auction && !tierCoversMinimumOrder(product))
     blockers.push(
       `No price tier includes the minimum order quantity (${minimum}). Add a tier that starts at ${minimum}.`,
     );

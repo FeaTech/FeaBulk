@@ -1,4 +1,5 @@
 import { SellerAuctionControls } from "@/components/auction/SellerAuctionControls";
+import { ProductSaleFields, type ProductSaleType } from "@/components/auction/ProductSaleFields";
 import { BuyerAuctions } from "@/components/auction/BuyerAuctions";
 import { useRouter } from "@tanstack/react-router";
 import { useCallback, useEffect, useRef, useState, type FormEvent, type ReactNode } from "react";
@@ -203,6 +204,7 @@ export function Workspace({ expected }: { expected?: "buyer" | "seller" }) {
   // The new product's slug follows its name until the seller types a slug of their own.
   const [productSlug, setProductSlug] = useState("");
   const [productSlugEdited, setProductSlugEdited] = useState(false);
+  const [productSaleType, setProductSaleType] = useState<ProductSaleType>("regular");
   // Problems with the photos chosen in each form, keyed by "new" or the product ID.
   const [photoProblems, setPhotoProblems] = useState<Record<string, string[]>>({});
   // Photos of the products in this business's orders, for the order cards.
@@ -412,6 +414,7 @@ export function Workspace({ expected }: { expected?: "buyer" | "seller" }) {
     if (form === "product") return;
     setProductSlug("");
     setProductSlugEdited(false);
+    setProductSaleType("regular");
   }, [form]);
   async function run(action: () => Promise<unknown>, success: string) {
     setBusy(true);
@@ -726,10 +729,18 @@ export function Workspace({ expected }: { expected?: "buyer" | "seller" }) {
         seller_sku: String(f["sku"]),
         unit_of_measure: String(f["unit"]),
         hsn_code: String(f["hsn"]),
-        minimum_order_quantity: Number(f["moq"]),
+        minimum_order_quantity: productSaleType === "auction" ? Number(f["auction_quantity"]) : Number(f["moq"]),
         available_quantity: Number(f["stock"]),
         gst_rate: Number(f["gst"]),
         lead_time_days: Number(f["lead"]),
+      }, {
+        type: productSaleType,
+        settings: productSaleType === "regular" ? { unit_price: Number(f["unit_price"]) } : {
+          lot_type: String(f["lot_type"]), quantity: Number(f["auction_quantity"]),
+          start_price: Number(f["start_price"]), bid_step: Number(f["bid_step"]),
+          token_amount: Number(f["token_amount"]), duration_days: Number(f["duration_days"]),
+          ...(f["starts_at"] ? { starts_at: new Date(String(f["starts_at"])).toISOString() } : {}),
+        },
       });
       saved = true;
       savedSlug = created.slug;
@@ -746,7 +757,7 @@ export function Workspace({ expected }: { expected?: "buyer" | "seller" }) {
           : "";
       const added = photoResult.uploaded > 0 ? ` ${photoCount(photoResult.uploaded)} added.` : "";
       setNotice(
-        `Product draft saved.${added}${address} Next: add a price tier on the product below, then press Submit for review so the FeaBulk admin can approve it.`,
+        `${productSaleType === "auction" ? "Auction" : "Regular-sale"} product draft saved.${added}${address} Next: press Submit for review so the FeaBulk admin can approve it.`,
       );
       reportPhotoFailures(photoResult.failures);
     });
@@ -1496,6 +1507,7 @@ export function Workspace({ expected }: { expected?: "buyer" | "seller" }) {
                         className="mt-4 grid gap-3 border bg-card p-6 sm:grid-cols-2"
                         onSubmit={submitProduct}
                       >
+                        <ProductSaleFields saleType={productSaleType} onSaleTypeChange={setProductSaleType} />
                         <Text
                           name="name"
                           label="Product name"
@@ -1548,10 +1560,6 @@ export function Workspace({ expected }: { expected?: "buyer" | "seller" }) {
                         <Text
                           name="unit" label="Unit" defaultValue="units"
                           hint="The unit you sell in, for example pieces, cartons, kg or rolls."
-                        />
-                        <Text
-                          name="moq" label="Minimum order quantity" type="number" min={1}
-                          hint="The smallest quantity a buyer can order."
                         />
                         <Text
                           name="stock" label="Available quantity" type="number" min={0}
@@ -1609,7 +1617,7 @@ export function Workspace({ expected }: { expected?: "buyer" | "seller" }) {
                                   <DialogDescription>SKU {item.seller_sku} · MOQ {item.minimum_order_quantity} · Stock {item.available_quantity} · {LISTING_STAGE_LABELS[listingStage(item)]}</DialogDescription>
                                 </DialogHeader>
                                 {error && <p role="alert" className="border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive">{error}</p>}
-                            {canManageCatalog && item.listing_status !== "archived" && <SellerAuctionControls productId={item.id} unit={item.unit_of_measure} available={Number(item.available_quantity)} />}
+                            {canManageCatalog && item.listing_status !== "archived" && <SellerAuctionControls productId={item.id} unit={item.unit_of_measure ?? "units"} available={Number(item.available_quantity)} />}
                             {item.moderation_notes && (
                               <p className="mt-2 border-l-2 border-workspace-action pl-3 text-sm">
                                 Review: {item.moderation_notes}
