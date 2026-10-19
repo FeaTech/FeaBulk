@@ -16,3 +16,4 @@
 
 - Public pages share PublicShell, ProductCard and global semantic typography; reference photography uses asset pointers. Why: keeps branding consistent without duplicating layouts.
 - Approved product details share the bounded public catalog cache; router links preload on intent. Why: repeat public navigation avoids redundant reads without caching private data.
+- Auctions live in auctions/auction_participants/auction_bids; all writes go through security-definer *_command RPCs, token payments/refunds through payment-command (initiate_token/confirm_token/refund_token), and settlement happens on view plus an hourly cron. Why: auction money and winner selection must be decided server-side.
