@@ -2,9 +2,10 @@
 
 # Product sale choice
 
-- [ ] Add Regular sale/Auction selection and conditional new-product fields.
-- [ ] Save the selected pricing or auction settings with the new product using existing actions.
-- [ ] Verify form switching and auction rule tests; authenticated saving requires external Supabase access.
+- [x] Add Regular sale/Auction selection and conditional new-product fields.
+- [x] Save the selected pricing or auction settings atomically with the new product.
+- [x] Verify isolated form switching, desktop/phone layout, and auction rule tests.
+- [ ] Verify signed-in product saving; blocked by unavailable authenticated testing for external Supabase.
 
 - [x] Align typography, semantic colors, and public-page spacing with feabulk.com.
 - [x] Improve phone layouts and remove avoidable page-loading delays.
