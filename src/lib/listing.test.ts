@@ -10,6 +10,18 @@ const draft = {
   product_price_tiers: [{ minimum_quantity: 30, maximum_quantity: 800 }],
 };
 
+test("auction drafts do not require regular-sale pricing", () => {
+  assert.deepEqual(submissionBlockers({ ...draft, product_price_tiers: [], auctions: [{ status: "scheduled" }] }, true), []);
+});
+
+test("auction drafts still require seller verification", () => {
+  assert.deepEqual(submissionBlockers({ ...draft, product_price_tiers: [], auctions: [{ status: "scheduled" }] }, false), ["Your business must be verified by FeaBulk before products can be submitted."]);
+});
+
+test("cancelled auctions cannot bypass regular pricing requirements", () => {
+  assert.equal(submissionBlockers({ ...draft, product_price_tiers: [], auctions: [{ status: "cancelled" }] }, true).length, 1);
+});
+
 test("reports each stage from draft to live", () => {
   assert.equal(listingStage(draft), "draft");
   assert.equal(
