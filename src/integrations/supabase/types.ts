@@ -2796,6 +2796,61 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      create_product_sale_command: {
+        Args: {
+          idempotency_key_input: string
+          organization_id_input: string
+          payload: Json
+          sale_settings_input: Json
+          sale_type_input: string
+        }
+        Returns: {
+          available_quantity: number
+          brand: string | null
+          category_id: string | null
+          certifications: Json
+          country_of_origin: string | null
+          created_at: string
+          custom_quote_threshold: number | null
+          customization_available: boolean
+          description: string
+          gst_rate: number | null
+          hsn_code: string | null
+          id: string
+          lead_time_days: number
+          listing_status: Database["public"]["Enums"]["listing_status"]
+          manufacturer: string | null
+          minimum_order_quantity: number
+          moderated_at: string | null
+          moderation_notes: string | null
+          moderation_status: Database["public"]["Enums"]["moderation_status"]
+          name: string
+          organization_id: string
+          private_label_available: boolean
+          production_capacity: Json | null
+          quantity_increment: number
+          return_eligible: boolean
+          sample_available: boolean
+          sample_price: number | null
+          search_document: unknown
+          seller_sku: string
+          shipping_methods: string[]
+          shipping_origin: Json
+          slug: string
+          specifications: Json
+          submitted_for_review_at: string | null
+          unit_of_measure: string
+          units_per_carton: number | null
+          updated_at: string
+          warranty_terms: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "products"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       create_review_command: {
         Args: {
           body_input: string
