@@ -1,5 +1,11 @@
 # Reference-site refresh
 
+# Product sale choice
+
+- [ ] Add Regular sale/Auction selection and conditional new-product fields.
+- [ ] Save the selected pricing or auction settings with the new product using existing actions.
+- [ ] Verify form switching and auction rule tests; authenticated saving requires external Supabase access.
+
 - [x] Align typography, semantic colors, and public-page spacing with feabulk.com.
 - [x] Improve phone layouts and remove avoidable page-loading delays.
 - [x] Verify public browsing and mobile rendering; authenticated checks remain unavailable for the external Supabase connection.
