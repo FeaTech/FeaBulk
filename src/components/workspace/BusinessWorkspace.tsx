@@ -59,7 +59,7 @@ import {
   submitVerification,
   subscribeToMessages,
   transitionOrder,
-  updateProductDraft,
+  updateProductSale,
   uploadProductImages,
   PRODUCT_IMAGE_ACCEPT,
   PRODUCT_IMAGE_LIMIT,
@@ -205,6 +205,7 @@ export function Workspace({ expected }: { expected?: "buyer" | "seller" }) {
   const [productSlug, setProductSlug] = useState("");
   const [productSlugEdited, setProductSlugEdited] = useState(false);
   const [productSaleType, setProductSaleType] = useState<ProductSaleType>("regular");
+  const [editSaleType, setEditSaleType] = useState<ProductSaleType>("regular");
   // Problems with the photos chosen in each form, keyed by "new" or the product ID.
   const [photoProblems, setPhotoProblems] = useState<Record<string, string[]>>({});
   // Photos of the products in this business's orders, for the order cards.
@@ -776,7 +777,7 @@ export function Workspace({ expected }: { expected?: "buyer" | "seller" }) {
     let saved = false;
     let photoResult = { uploaded: 0, failures: [] as string[] };
     void run(async () => {
-      await updateProductDraft(productId, {
+      await updateProductSale(productId, {
         name: String(f["name"]),
         slug: String(f["slug"]),
         category_id: String(f["category"]),
@@ -784,9 +785,14 @@ export function Workspace({ expected }: { expected?: "buyer" | "seller" }) {
         description: String(f["description"]),
         hsn_code: String(f["hsn"]),
         unit_of_measure: String(f["unit"]),
-        minimum_order_quantity: Number(f["moq"]),
+        minimum_order_quantity: Number(f[editSaleType === "auction" ? "auction_quantity" : "moq"]),
         gst_rate: Number(f["gst"]),
         lead_time_days: Number(f["lead"]),
+      }, editSaleType, editSaleType === "regular" ? { unit_price: Number(f["unit_price"]) } : {
+        lot_type: String(f["lot_type"]), quantity: Number(f["auction_quantity"]),
+        start_price: Number(f["start_price"]), bid_step: Number(f["bid_step"]),
+        token_amount: Number(f["token_amount"]), duration_days: Number(f["duration_days"]),
+        ...(f["starts_at"] ? { starts_at: new Date(String(f["starts_at"])).toISOString() } : {}),
       });
       saved = true;
       if (photos.length > 0) photoResult = await uploadProductImages(productId, photos);
@@ -1591,6 +1597,7 @@ export function Workspace({ expected }: { expected?: "buyer" | "seller" }) {
                             <div className="flex items-center">
                             <button type="button" className="flex min-w-0 flex-1 items-center gap-3 p-3 text-left transition-colors hover:bg-workspace-canvas" onClick={() => {
                               setManagingProductId(item.id);
+                              setEditSaleType(item.auctions?.some(a => a.status === "scheduled") ? "auction" : "regular");
                               if (item.listing_status === "draft" && item.moderation_status === "pending" && !item.submitted_for_review_at) setEditingProductId(item.id);
                             }}>
                               <ProductThumb src={productImages.get(item.id)?.[0]?.url} alt={productImages.get(item.id)?.[0]?.alt_text ?? item.name} name={item.name} className="size-12 shrink-0 rounded-md border" />
@@ -1702,14 +1709,16 @@ export function Workspace({ expected }: { expected?: "buyer" | "seller" }) {
                                   hint="The unit you sell in, for example pieces, cartons, kg or rolls."
                                   defaultValue={item.unit_of_measure}
                                 />
-                                <Text
-                                  name="moq"
-                                  label="MOQ"
-                                  hint="The smallest quantity a buyer can order."
-                                  type="number"
-                                  min={1}
-                                  defaultValue={item.minimum_order_quantity}
-                                />
+                                <ProductSaleFields key={item.id} saleType={editSaleType} onSaleTypeChange={setEditSaleType} defaults={{
+                                  minimumQuantity: item.minimum_order_quantity,
+                                  unitPrice: item.product_price_tiers?.[0]?.unit_price,
+                                  lotType: item.auctions?.find(a => a.status === "scheduled")?.lot_type,
+                                  quantity: item.auctions?.find(a => a.status === "scheduled")?.quantity,
+                                  startPrice: item.auctions?.find(a => a.status === "scheduled")?.start_price,
+                                  bidStep: item.auctions?.find(a => a.status === "scheduled")?.bid_step,
+                                  tokenAmount: item.auctions?.find(a => a.status === "scheduled")?.token_amount,
+                                  durationDays: (() => { const a = item.auctions?.find(a => a.status === "scheduled"); return a ? (Date.parse(a.ends_at) - Date.parse(a.starts_at)) / 86_400_000 : 7; })(),
+                                }} />
                                 <Text
                                   name="gst"
                                   label="GST rate (%)"
