@@ -5,7 +5,7 @@ import { AUCTION_MAX_DAYS, type LotType } from "@/lib/auction-rules";
 export type ProductSaleType = "regular" | "auction";
 const field = "w-full min-w-0 rounded-md border border-input bg-card px-3 py-2 font-normal text-foreground";
 
-export type SaleFieldDefaults = { minimumQuantity?: number; unitPrice?: number; lotType?: LotType; quantity?: number; startPrice?: number; bidStep?: number; tokenAmount?: number; durationDays?: number; startsAt?: string };
+export type SaleFieldDefaults = { minimumQuantity?: number | undefined; unitPrice?: number | undefined; lotType?: LotType | undefined; quantity?: number | undefined; startPrice?: number | undefined; bidStep?: number | undefined; tokenAmount?: number | undefined; durationDays?: number | undefined; startsAt?: string | undefined };
 
 export function ProductSaleFields({ saleType, onSaleTypeChange, defaults = {} }: {
   saleType: ProductSaleType;
