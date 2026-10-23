@@ -1,5 +1,13 @@
 # Reference-site refresh
 
+# Auction and payment readiness
+
+- [ ] Enforce the seven-day deadline on late bids and test the rule.
+- [ ] Add safe sale-choice editing for existing products.
+- [ ] Implement automatic losing-token refunds with verified payment callbacks.
+- [ ] Configure and test Razorpay; requires provider credentials.
+- [ ] Verify signed-in publishing, approval, ordering, and payments; external Supabase session unavailable.
+
 # Product sale choice
 
 - [x] Add Regular sale/Auction selection and conditional new-product fields.
