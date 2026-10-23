@@ -4,6 +4,16 @@ export const AUCTION_MIN_DAYS = 1;
 export const AUCTION_MAX_DAYS = 7;
 export const WINNER_PAYMENT_HOURS = 48;
 
+export function auctionBidDeadline(startsAt: string, endsAt: string, now: number): number {
+  const end = Date.parse(endsAt);
+  return Math.min(Date.parse(startsAt) + AUCTION_MAX_DAYS * 86_400_000,
+    end - now < 120_000 ? now + 120_000 : end);
+}
+
+export function canEditAuctionTerms(a: { status: string; bid_count: number }, participantCount: number): boolean {
+  return a.status === "scheduled" && a.bid_count === 0 && participantCount === 0;
+}
+
 /** The lowest bid the next bidder may place. */
 export function minimumNextBid(a: { current_price: number | string | null; start_price: number | string; bid_step: number | string }): number {
   return a.current_price === null ? Number(a.start_price) : Number(a.current_price) + Number(a.bid_step);
