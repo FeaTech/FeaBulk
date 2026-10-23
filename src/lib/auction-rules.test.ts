@@ -1,8 +1,18 @@
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
-import { auctionPhase, isValidDuration, minimumNextBid, winnerBalance } from "./auction-rules.ts";
+import { auctionPhase, auctionBidDeadline, canEditAuctionTerms, isValidDuration, minimumNextBid, winnerBalance } from "./auction-rules.ts";
 
 describe("auction rules", () => {
+  it("last-minute bids never extend beyond seven days from the start", () => {
+    assert.equal(auctionBidDeadline("2026-10-01T00:00:00Z", "2026-10-08T00:00:00Z", Date.parse("2026-10-07T23:59:30Z")), Date.parse("2026-10-08T00:00:00Z"));
+    assert.equal(auctionBidDeadline("2026-10-01T00:00:00Z", "2026-10-03T00:00:00Z", Date.parse("2026-10-02T23:59:30Z")), Date.parse("2026-10-03T00:01:30Z"));
+  });
+  it("sale terms cannot change after any buyer joins or bids", () => {
+    assert.equal(canEditAuctionTerms({ status: "scheduled", bid_count: 0 }, 0), true);
+    assert.equal(canEditAuctionTerms({ status: "scheduled", bid_count: 0 }, 1), false);
+    assert.equal(canEditAuctionTerms({ status: "scheduled", bid_count: 1 }, 0), false);
+    assert.equal(canEditAuctionTerms({ status: "awaiting_payment", bid_count: 0 }, 0), false);
+  });
   it("first bid must reach the starting price", () => {
     assert.equal(minimumNextBid({ current_price: null, start_price: 50000, bid_step: 500 }), 50000);
   });
