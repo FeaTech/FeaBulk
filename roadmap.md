@@ -2,10 +2,10 @@
 
 # Auction and payment readiness
 
-- [ ] Enforce the seven-day deadline on late bids and test the rule.
-- [ ] Add safe sale-choice editing for existing products.
-- [ ] Implement automatic losing-token refunds with verified payment callbacks.
-- [ ] Configure and test Razorpay; requires provider credentials.
+- [x] Enforce the seven-day deadline on late bids and test the rule.
+- [x] Add atomic draft sale-choice editing with buyer-commitment locks; signed-in saving remains unverified.
+- [ ] Implement automatic losing-token refunds with verified payment callbacks; blocked by skipped Razorpay credential setup.
+- [ ] Configure and test Razorpay; blocked by skipped credential form.
 - [ ] Verify signed-in publishing, approval, ordering, and payments; external Supabase session unavailable.
 
 # Product sale choice
