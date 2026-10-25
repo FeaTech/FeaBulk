@@ -1760,9 +1760,7 @@ export function Workspace({ expected }: { expected?: "buyer" | "seller" }) {
                                       {tier.minimum_quantity}–{tier.maximum_quantity} units · ₹
                                       {Number(tier.unit_price).toLocaleString("en-IN")}/unit
                                     </span>
-                                    {canManageCatalog &&
-                                      item.listing_status === "draft" &&
-                                      !item.submitted_for_review_at && (
+                                    {canManageCatalog && (
                                         <Button variant="outline"
                                           disabled={busy}
                                           className="text-destructive underline"
@@ -1780,9 +1778,7 @@ export function Workspace({ expected }: { expected?: "buyer" | "seller" }) {
                                 ))}
                               </div>
                             ) : null}
-                            {canManageCatalog &&
-                              item.listing_status === "draft" &&
-                              !item.submitted_for_review_at && (
+                            {canManageCatalog && (
                                 <form
                                   className="mt-4 flex flex-wrap items-end gap-2 border-t pt-4"
                                   onSubmit={(event) => {
