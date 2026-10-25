@@ -35,6 +35,7 @@ export function PublicShell({
             </Link>
             <div className="flex shrink-0 gap-3 text-xs font-semibold sm:gap-6 sm:text-sm">
               <Link to="/marketplace">Marketplace</Link>
+              <Link to="/about">About</Link>
               <Link to="/app">Workspace</Link>
               {!signedIn && <Link to="/auth">Sign in</Link>}
             </div>

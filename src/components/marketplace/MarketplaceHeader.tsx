@@ -92,13 +92,18 @@ export function MarketplaceHeader({
       className="sticky top-0 z-20 border-b bg-card/95 shadow-sm backdrop-blur"
     >
       <div className="public-container grid grid-cols-[auto_1fr] items-center gap-x-4 gap-y-3 py-3 md:grid-cols-[auto_minmax(0,1fr)_auto]">
-        <Link
-          to="/"
-          aria-label="FEA Bulk home"
-          className="text-xl font-bold text-workspace-brand sm:text-2xl"
-        >
-          FEA<span className="text-workspace-action">Bulk</span>
-        </Link>
+        <div className="flex items-center gap-4 sm:gap-6">
+          <Link
+            to="/"
+            aria-label="FEA Bulk home"
+            className="text-xl font-bold text-workspace-brand sm:text-2xl"
+          >
+            FEA<span className="text-workspace-action">Bulk</span>
+          </Link>
+          <Link to="/about" className="hidden text-sm font-semibold text-muted-foreground hover:text-workspace-action sm:block">
+            About us
+          </Link>
+        </div>
         <nav aria-label="Account" className="flex items-center justify-end gap-2 md:order-3">
           {signedIn === true && (
             <>
