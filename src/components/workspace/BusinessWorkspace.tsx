@@ -54,7 +54,6 @@ import {
   sendMessage,
   signOut,
   setOrderLineHsn,
-  submitProductForReview,
   submitQuote,
   submitVerification,
   subscribeToMessages,
@@ -84,9 +83,9 @@ import {
 import { SupplierRating } from "@/components/marketplace/SupplierRating";
 import { FieldLabel } from "@/components/InfoTip";
 import { supabase } from "@/integrations/supabase/client";
-import { LISTING_STAGE_LABELS, listingStage, submissionBlockers, tierCoversMinimumOrder } from "@/lib/listing";
+import { LISTING_STAGE_LABELS, listingStage, tierCoversMinimumOrder } from "@/lib/listing";
 import { productImageSelectionProblems } from "@/lib/product-image-rules";
-import { slugCandidate, slugify } from "@/lib/slug";
+import { slugCandidate } from "@/lib/slug";
 import { ProductThumb } from "@/components/ProductThumb";
 import { Button } from "@/components/ui/button";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
