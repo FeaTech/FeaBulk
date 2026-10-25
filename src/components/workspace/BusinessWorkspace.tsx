@@ -725,7 +725,7 @@ export function Workspace({ expected }: { expected?: "buyer" | "seller" }) {
         slug: requestedSlug,
         category_id: String(f["category"]),
         description: String(f["description"]),
-        seller_sku: String(f["sku"]),
+        seller_sku: `SKU-${Date.now().toString(36).toUpperCase()}${Math.random().toString(36).slice(2, 6).toUpperCase()}`,
         unit_of_measure: String(f["unit"]),
         hsn_code: String(f["hsn"]),
         minimum_order_quantity: productSaleType === "auction" ? Number(f["auction_quantity"]) : Number(f["moq"]),
@@ -744,8 +744,6 @@ export function Workspace({ expected }: { expected?: "buyer" | "seller" }) {
       saved = true;
       savedSlug = created.slug;
       if (photos.length > 0) photoResult = await uploadProductImages(created.id, photos);
-      setProductSlug("");
-      setProductSlugEdited(false);
       setPhotoProblems((current) => ({ ...current, new: [] }));
       setForm(null);
     }, "Product draft saved.").then(() => {
