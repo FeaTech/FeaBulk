@@ -20,3 +20,4 @@
 - New-product sale fields live in ProductSaleFields; create_product_sale_command saves product and chosen pricing/auction atomically, and scheduled auction drafts bypass regular price-tier review requirements. Why: sellers choose the sale type once without creating incomplete listings.
 - Draft sale edits use update_product_sale_command with shared ProductSaleFields; auction joins and edits lock the same auction row, and any participation locks sale terms. Why: edits must remain atomic and preserve buyer commitments.
 - Auction bid extensions use a database deadline helper capped at seven days from starts_at and an insert/update validation trigger. Why: late bids cannot bypass the maximum duration.
+- Price tiers can be added or deleted on live products, not just drafts; the database blocks deleting the last tier that covers the minimum order quantity on a non-draft product. Why: sellers adjust prices after launch while buyers always see a buyable price.
