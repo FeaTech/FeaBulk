@@ -24,6 +24,7 @@ export function AuctionPanel({ productId, slug }: { productId: string; slug: str
   const [pin, setPin] = useState("");
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<{ kind: "ok" | "error"; text: string } | null>(null);
+  const testPay = useRef(false);
 
   const refresh = useCallback(async () => {
     let a = await getOpenAuctionForProduct(productId);
@@ -65,7 +66,6 @@ export function AuctionPanel({ productId, slug }: { productId: string; slug: str
     catch (e) { setMessage({ kind: "error", text: e instanceof Error ? e.message : "Something went wrong." }); }
     finally { setBusy(false); }
   }
-  const testPay = useRef(false);
   const join = (e: FormEvent) => { e.preventDefault(); if (!buyer || !auction) return; const useTest = testPay.current; testPay.current = false; void act(async () => { const p = await joinAuction(auction.id, buyer.id, address, pin); setMe(p); if (useTest) await payAuctionTokenTest(p.id); else await payAuctionToken(p.id); }, useTest ? "Test token paid (no charge). You can bid now." : "Token paid. You can bid now."); };
   const submitBid = (e: FormEvent) => { e.preventDefault(); if (!buyer || !auction) return; void act(() => placeBid(auction.id, buyer.id, Number(bid)), "Bid placed."); setBid(""); };
 
