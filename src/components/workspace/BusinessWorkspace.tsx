@@ -1981,6 +1981,7 @@ export function Workspace({ expected }: { expected?: "buyer" | "seller" }) {
                             run={run}
                             openConversation={openConversation}
                             payOrder={payOrder}
+                            payOrderTest={payOrderTest}
                             submitShipment={submitShipment}
                             submitDispute={submitDispute}
                             submitReview={submitReview}
@@ -2289,6 +2290,15 @@ function OrderCard(props: OrderCardProps) {
               onClick={() => void run(() => props.payOrder(order), "Payment verified securely.")}
             >
               Pay securely
+            </Button>
+          )}
+          {!paymentAvailable && canPayBuyerOrder && order.status === "awaiting_payment" && (
+            <Button variant="outline"
+              disabled={busy}
+              className="button"
+              onClick={() => void run(() => props.payOrderTest(order), "Test payment recorded (no charge).")}
+            >
+              Test payment (no charge)
             </Button>
           )}
           {canManageSellerOrder && order.status === "payment_secured" && (
