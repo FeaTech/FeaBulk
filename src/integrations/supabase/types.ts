@@ -3529,6 +3529,10 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      remove_product_command: {
+        Args: { product_id_input: string }
+        Returns: string
+      }
       remove_team_member_command: {
         Args: { organization_id_input: string; user_id_input: string }
         Returns: undefined
