@@ -46,6 +46,7 @@ import {
   getTeamMembers,
   getVerificationCase,
   initiateOrderPayment,
+  payOrderTestPayment,
   publishRfq,
   markNotificationRead,
   openDispute,
@@ -584,6 +585,9 @@ export function Workspace({ expected }: { expected?: "buyer" | "seller" }) {
         link.click();
       })
       .catch((err) => setError(errorText(err)));
+  }
+  async function payOrderTest(order: Order) {
+    await payOrderTestPayment(order.id);
   }
   async function payOrder(order: Order) {
     const checkout = await initiateOrderPayment(order.id, crypto.randomUUID());
@@ -1977,6 +1981,7 @@ export function Workspace({ expected }: { expected?: "buyer" | "seller" }) {
                             run={run}
                             openConversation={openConversation}
                             payOrder={payOrder}
+                            payOrderTest={payOrderTest}
                             submitShipment={submitShipment}
                             submitDispute={submitDispute}
                             submitReview={submitReview}
@@ -2156,6 +2161,7 @@ type OrderCardProps = {
   run: (action: () => Promise<unknown>, success: string) => Promise<void>;
   openConversation: (context: "quote" | "order", referenceId: string) => Promise<void>;
   payOrder: (order: Order) => Promise<void>;
+  payOrderTest: (order: Order) => Promise<void>;
   submitShipment: (event: FormEvent<HTMLFormElement>, order: Order) => void;
   submitDispute: (event: FormEvent<HTMLFormElement>, order: Order) => void;
   submitReview: (event: FormEvent<HTMLFormElement>, order: Order) => void;
@@ -2284,6 +2290,15 @@ function OrderCard(props: OrderCardProps) {
               onClick={() => void run(() => props.payOrder(order), "Payment verified securely.")}
             >
               Pay securely
+            </Button>
+          )}
+          {!paymentAvailable && canPayBuyerOrder && order.status === "awaiting_payment" && (
+            <Button variant="outline"
+              disabled={busy}
+              className="button"
+              onClick={() => void run(() => props.payOrderTest(order), "Test payment recorded (no charge).")}
+            >
+              Test payment (no charge)
             </Button>
           )}
           {canManageSellerOrder && order.status === "payment_secured" && (

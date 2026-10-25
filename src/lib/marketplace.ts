@@ -220,6 +220,13 @@ export async function initiateOrderPayment(orderId: string, requestId: string): 
   return data as PaymentCheckout;
 }
 
+/** Test only: marks an order as paid without a real payment (recorded with a TEST reference). */
+export async function payOrderTestPayment(orderId: string) {
+  const { data, error } = await untypedDb.rpc("pay_order_test_command", { order_id_input: orderId });
+  if (error) throw new Error(error.message);
+  return data;
+}
+
 export async function confirmOrderPayment(input: { providerOrderId: string; providerPaymentId: string; signature: string }) {
   const { data, error } = await db.functions.invoke("payment-command", { body: {
     action: "confirm", provider_order_id: input.providerOrderId,

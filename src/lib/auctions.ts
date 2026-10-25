@@ -117,3 +117,8 @@ export async function payAuctionToken(participantId: string): Promise<void> {
   });
   await paymentCommand({ action: "confirm_token", provider_order_id: result.razorpay_order_id, provider_payment_id: result.razorpay_payment_id, signature: result.razorpay_signature });
 }
+
+/** Test only: marks the token as paid without a real payment (recorded with a TEST reference). */
+export async function payAuctionTokenTest(participantId: string): Promise<void> {
+  await unwrap(db.rpc("pay_auction_token_test_command", { participant_id_input: participantId }));
+}
