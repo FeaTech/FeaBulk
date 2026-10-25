@@ -1530,11 +1530,7 @@ export function Workspace({ expected }: { expected?: "buyer" | "seller" }) {
                           </select>
                         </Field>
                         <Text
-                          name="sku" label="Seller SKU"
-                          hint="Your own stock code for this product. It must be unique within your catalog."
-                        />
-                        <Text
-                          name="hsn" label="HSN code" pattern="[0-9]{4,8}"
+                          name="hsn" label="HSN code (optional)" pattern="[0-9]{4,8}" required={false}
                           hint="The 4 to 8 digit HSN tax code for this product. It is printed on GST invoices."
                         />
                         <Field
@@ -1565,7 +1561,7 @@ export function Workspace({ expected }: { expected?: "buyer" | "seller" }) {
                           hint="Days you need from order confirmation until the goods are dispatched."
                         />
                         {photoPicker("new", 0)}
-                        <Action busy={busy}>Save product draft</Action>
+                        <Action busy={busy}>List product</Action>
                       </form>
                     )}
                     {products.length === 0 ? (
