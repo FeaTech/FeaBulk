@@ -54,7 +54,6 @@ import {
   sendMessage,
   signOut,
   setOrderLineHsn,
-  submitProductForReview,
   submitQuote,
   submitVerification,
   subscribeToMessages,
@@ -84,9 +83,9 @@ import {
 import { SupplierRating } from "@/components/marketplace/SupplierRating";
 import { FieldLabel } from "@/components/InfoTip";
 import { supabase } from "@/integrations/supabase/client";
-import { LISTING_STAGE_LABELS, listingStage, submissionBlockers, tierCoversMinimumOrder } from "@/lib/listing";
+import { LISTING_STAGE_LABELS, listingStage, tierCoversMinimumOrder } from "@/lib/listing";
 import { productImageSelectionProblems } from "@/lib/product-image-rules";
-import { slugCandidate, slugify } from "@/lib/slug";
+import { slugCandidate } from "@/lib/slug";
 import { ProductThumb } from "@/components/ProductThumb";
 import { Button } from "@/components/ui/button";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
@@ -202,8 +201,6 @@ export function Workspace({ expected }: { expected?: "buyer" | "seller" }) {
   const [editingProductId, setEditingProductId] = useState("");
   const [managingProductId, setManagingProductId] = useState("");
   // The new product's slug follows its name until the seller types a slug of their own.
-  const [productSlug, setProductSlug] = useState("");
-  const [productSlugEdited, setProductSlugEdited] = useState(false);
   const [productSaleType, setProductSaleType] = useState<ProductSaleType>("regular");
   const [editSaleType, setEditSaleType] = useState<ProductSaleType>("regular");
   // Problems with the photos chosen in each form, keyed by "new" or the product ID.
@@ -413,8 +410,6 @@ export function Workspace({ expected }: { expected?: "buyer" | "seller" }) {
 
   useEffect(() => {
     if (form === "product") return;
-    setProductSlug("");
-    setProductSlugEdited(false);
     setProductSaleType("regular");
   }, [form]);
   async function run(action: () => Promise<unknown>, success: string) {
@@ -717,7 +712,7 @@ export function Workspace({ expected }: { expected?: "buyer" | "seller" }) {
       setError(`Please fix the photos before saving. ${problems.join(" ")}`);
       return;
     }
-    const requestedSlug = slugCandidate(String(f["slug"]) || String(f["name"]), 1);
+    const requestedSlug = slugCandidate(String(f["name"]), 1);
     let savedSlug = requestedSlug;
     let saved = false;
     let photoResult = { uploaded: 0, failures: [] as string[] };
@@ -727,7 +722,7 @@ export function Workspace({ expected }: { expected?: "buyer" | "seller" }) {
         slug: requestedSlug,
         category_id: String(f["category"]),
         description: String(f["description"]),
-        seller_sku: String(f["sku"]),
+        seller_sku: `SKU-${Date.now().toString(36).toUpperCase()}${Math.random().toString(36).slice(2, 6).toUpperCase()}`,
         unit_of_measure: String(f["unit"]),
         hsn_code: String(f["hsn"]),
         minimum_order_quantity: productSaleType === "auction" ? Number(f["auction_quantity"]) : Number(f["moq"]),
@@ -746,8 +741,6 @@ export function Workspace({ expected }: { expected?: "buyer" | "seller" }) {
       saved = true;
       savedSlug = created.slug;
       if (photos.length > 0) photoResult = await uploadProductImages(created.id, photos);
-      setProductSlug("");
-      setProductSlugEdited(false);
       setPhotoProblems((current) => ({ ...current, new: [] }));
       setForm(null);
     }, "Product draft saved.").then(() => {
@@ -758,7 +751,7 @@ export function Workspace({ expected }: { expected?: "buyer" | "seller" }) {
           : "";
       const added = photoResult.uploaded > 0 ? ` ${photoCount(photoResult.uploaded)} added.` : "";
       setNotice(
-        `${productSaleType === "auction" ? "Auction" : "Regular-sale"} product draft saved.${added}${address} Next: press Submit for review so the FeaBulk admin can approve it.`,
+        `${productSaleType === "auction" ? "Auction" : "Regular-sale"} product is live in the marketplace.${added}${address}`,
       );
       reportPhotoFailures(photoResult.failures);
     });
@@ -1519,22 +1512,6 @@ export function Workspace({ expected }: { expected?: "buyer" | "seller" }) {
                           label="Product name"
                           hint="The name buyers will see, for example Stainless steel hex bolts, M8 x 30 mm. At least 3 characters."
                           minLength={3}
-                          onChange={(event) => {
-                            if (!productSlugEdited) setProductSlug(slugify(event.target.value));
-                          }}
-                        />
-                        <Text
-                          name="slug"
-                          label="Web address slug (filled in from the name)"
-                          hint="The last part of the product's web address. It fills in from the name; change it only if you want a different address. Lowercase letters, numbers and hyphens only."
-                          pattern="[a-z0-9]+(-[a-z0-9]+)*"
-                          maxLength={80}
-                          value={productSlug}
-                          onChange={(event) => {
-                            // Clearing the box hands control back to the product name.
-                            setProductSlugEdited(event.target.value !== "");
-                            setProductSlug(event.target.value);
-                          }}
                         />
                         <Field
                           label="Category"
@@ -1550,11 +1527,7 @@ export function Workspace({ expected }: { expected?: "buyer" | "seller" }) {
                           </select>
                         </Field>
                         <Text
-                          name="sku" label="Seller SKU"
-                          hint="Your own stock code for this product. It must be unique within your catalog."
-                        />
-                        <Text
-                          name="hsn" label="HSN code" pattern="[0-9]{4,8}"
+                          name="hsn" label="HSN code (optional)" pattern="[0-9]{4,8}" required={false}
                           hint="The 4 to 8 digit HSN tax code for this product. It is printed on GST invoices."
                         />
                         <Field
@@ -1585,7 +1558,7 @@ export function Workspace({ expected }: { expected?: "buyer" | "seller" }) {
                           hint="Days you need from order confirmation until the goods are dispatched."
                         />
                         {photoPicker("new", 0)}
-                        <Action busy={busy}>Save product draft</Action>
+                        <Action busy={busy}>List product</Action>
                       </form>
                     )}
                     {products.length === 0 ? (
@@ -1598,7 +1571,7 @@ export function Workspace({ expected }: { expected?: "buyer" | "seller" }) {
                             <button type="button" className="flex min-w-0 flex-1 items-center gap-3 p-3 text-left transition-colors hover:bg-workspace-canvas" onClick={() => {
                               setManagingProductId(item.id);
                               setEditSaleType(item.auctions?.some(a => a.status === "scheduled") ? "auction" : "regular");
-                              if (item.listing_status === "draft" && item.moderation_status === "pending" && !item.submitted_for_review_at) setEditingProductId(item.id);
+                              setEditingProductId(item.id);
                             }}>
                               <ProductThumb src={productImages.get(item.id)?.[0]?.url} alt={productImages.get(item.id)?.[0]?.alt_text ?? item.name} name={item.name} className="size-12 shrink-0 rounded-md border" />
                               <div className="min-w-0 flex-1"><h3 className="truncate font-extrabold text-workspace-brand">{item.name}</h3>
@@ -1848,9 +1821,7 @@ export function Workspace({ expected }: { expected?: "buyer" | "seller" }) {
                                       name={item.name}
                                       className="size-16 rounded-md border"
                                     />
-                                    {canManageCatalog &&
-                                      item.listing_status === "draft" &&
-                                      !item.submitted_for_review_at && (
+                                    {canManageCatalog && (
                                         <Button type="button" variant="destructive" size="icon"
                                           disabled={busy}
                                           className="absolute -right-1 -top-1 size-6 rounded-full opacity-90 shadow-sm"
@@ -1871,8 +1842,6 @@ export function Workspace({ expected }: { expected?: "buyer" | "seller" }) {
                               </div>
                             )}
                             {canManageCatalog &&
-                              item.listing_status === "draft" &&
-                              !item.submitted_for_review_at &&
                               (productImages.get(item.id) ?? []).length < PRODUCT_IMAGE_LIMIT && (
                                 <form
                                   className="mt-3 grid gap-3 sm:grid-cols-[minmax(13rem,1fr)_minmax(12rem,1fr)_auto] sm:items-end"
@@ -1936,49 +1905,6 @@ export function Workspace({ expected }: { expected?: "buyer" | "seller" }) {
                               )}
                               </div>
                             </section>
-                            {canManageCatalog &&
-                              item.listing_status === "draft" &&
-                              item.moderation_status === "pending" &&
-                              !item.submitted_for_review_at && (
-                                <div className="mt-4 border-t pt-4">
-                                  <p className="text-sm font-bold">
-                                    The FeaBulk admin cannot see this product until you submit it.
-                                  </p>
-                                  {submissionBlockers(item, organization.status === "verified")
-                                    .length > 0 ? (
-                                    <ul className="mt-2 list-disc pl-5 text-sm" role="status">
-                                      {submissionBlockers(
-                                        item,
-                                        organization.status === "verified",
-                                      ).map((blocker) => (
-                                        <li key={blocker}>{blocker}</li>
-                                      ))}
-                                    </ul>
-                                  ) : (
-                                    <p className="mt-1 text-sm text-muted-foreground">
-                                      {(productImages.get(item.id) ?? []).length === 0
-                                        ? "Ready to send. Adding a photo first is recommended, because the admin and buyers will see it."
-                                        : "Ready to send. Prices and photos lock once you submit."}
-                                    </p>
-                                  )}
-                                  <Button variant="outline"
-                                    disabled={
-                                      busy ||
-                                      submissionBlockers(item, organization.status === "verified")
-                                        .length > 0
-                                    }
-                                    className="button mt-3"
-                                    onClick={() =>
-                                      void run(
-                                        () => submitProductForReview(item.id),
-                                        "Product sent to the FeaBulk admin for review.",
-                                      )
-                                    }
-                                  >
-                                    Submit for review
-                                  </Button>
-                                </div>
-                              )}
                             {canAdjustInventory && (
                               <section className="border-t pt-3">
                                 <div className="flex items-center justify-between px-2 py-2 text-sm font-bold">
