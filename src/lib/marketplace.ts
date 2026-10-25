@@ -425,7 +425,7 @@ export async function getPublishedProductBySlug(slug: string): Promise<ProductDe
 }
 async function fetchPublishedProductBySlug(slug: string): Promise<ProductDetail | null> {
   const { data, error } = await db.from("products").select(
-    "id,name,slug,seller_sku,description,category_id,organization_id,unit_of_measure,hsn_code,gst_rate,lead_time_days,brand,manufacturer,country_of_origin,specifications,warranty_terms,sample_available,sample_price,customization_available,private_label_available,shipping_origin,quantity_increment,units_per_carton,minimum_order_quantity,available_quantity,listing_status,moderation_status,submitted_for_review_at,created_at,product_price_tiers(minimum_quantity,maximum_quantity,unit_price)",
+    "id,name,slug,seller_sku,description,category_id,organization_id,unit_of_measure,hsn_code,gst_rate,lead_time_days,brand,manufacturer,country_of_origin,specifications,warranty_terms,sample_available,sample_price,customization_available,private_label_available,shipping_origin,quantity_increment,units_per_carton,minimum_order_quantity,available_quantity,listing_status,moderation_status,submitted_for_review_at,created_at,product_price_tiers(minimum_quantity,maximum_quantity,unit_price),auctions(id,status,lot_type,quantity,start_price,bid_step,token_amount,starts_at,ends_at,current_price,bid_count)",
   ).eq("slug", slug).eq("listing_status", "active").eq("moderation_status", "approved").maybeSingle();
   if (error) throw new Error(error.message);
   if (!data) return null;

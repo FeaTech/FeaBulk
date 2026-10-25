@@ -188,6 +188,9 @@ function ProductPage() {
   const shownImage = images[selectedImage] ?? images[0];
   const range = priceRange(product.product_price_tiers);
   const inStock = Number(product.available_quantity) >= Number(product.minimum_order_quantity);
+  const openAuction = product.auctions?.find(
+    (a) => a.status === "scheduled" || a.status === "awaiting_payment",
+  );
   const buyable = Boolean(range) && inStock;
   const specs = productSpecifications(product);
   const origin = shippingOrigin(product.shipping_origin);
@@ -343,7 +346,7 @@ function ProductPage() {
 
           <div className="mt-5 flex flex-wrap gap-3">
             <Button variant="workspace" className="h-11 px-6" onClick={goToOrder}>
-              {buyable ? "Buy now" : "See pricing & ordering"}
+              {buyable ? "Buy now" : openAuction ? "View auction" : "See pricing & ordering"}
             </Button>
             {range && (
               <Button variant="outline" className="h-11" onClick={goToOrder}>
@@ -443,9 +446,9 @@ function ProductPage() {
 
       <div className="mt-6 grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
         <DetailSection id="buy-now" title="Bulk pricing & order">
-          {product.product_price_tiers.length === 0 ? (
+          {product.product_price_tiers.length === 0 && !openAuction ? (
             <p className="text-sm">This supplier has not listed a price yet.</p>
-          ) : (
+          ) : product.product_price_tiers.length === 0 ? null : (
             <table className="w-full overflow-hidden rounded-lg border text-left text-sm">
               <thead className="bg-muted/60 text-xs uppercase tracking-wide text-muted-foreground">
                 <tr>
@@ -486,7 +489,7 @@ function ProductPage() {
               unit={unit}
               tiers={product.product_price_tiers}
             />
-          ) : (
+          ) : openAuction ? null : (
             <p className="mt-6 border bg-card p-4 text-sm">
               This product is not available to buy yet.
             </p>
@@ -669,7 +672,7 @@ function ProductPage() {
             {range && <span className="text-xs font-medium text-muted-foreground"> / {unit}</span>}
           </p>
           <Button variant="workspace" className="shrink-0" onClick={goToOrder}>
-            {buyable ? "Buy now" : "View pricing"}
+            {buyable ? "Buy now" : openAuction ? "View auction" : "View pricing"}
           </Button>
         </div>
       </div>
