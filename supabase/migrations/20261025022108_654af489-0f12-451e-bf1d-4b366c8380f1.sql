@@ -1,0 +1,1 @@
+revoke execute on function public.add_product_image_command(uuid, text, text) from anon, public;
