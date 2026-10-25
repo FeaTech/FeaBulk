@@ -2337,9 +2337,7 @@ function OrderCard(props: OrderCardProps) {
             </Button>
           )}
           {canManageBuyerOrder &&
-            order.status === "inspection" &&
-            order.inspection_ends_at &&
-            new Date(order.inspection_ends_at) <= new Date() && (
+             order.status === "inspection" && (
               <Button variant="outline"
                 disabled={busy}
                 className="button"
