@@ -1,0 +1,2 @@
+drop trigger submitted_product_price_tiers_locked on public.product_price_tiers;
+drop function private.lock_submitted_product_price_tiers();
