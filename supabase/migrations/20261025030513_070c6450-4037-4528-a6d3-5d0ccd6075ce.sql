@@ -1,0 +1,1 @@
+GRANT EXECUTE ON FUNCTION public.add_product_image_command(uuid, text, text) TO authenticated;
