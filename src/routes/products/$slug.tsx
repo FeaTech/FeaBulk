@@ -346,7 +346,7 @@ function ProductPage() {
 
           <div className="mt-5 flex flex-wrap gap-3">
             <Button variant="workspace" className="h-11 px-6" onClick={goToOrder}>
-              {buyable ? "Buy now" : "See pricing & ordering"}
+              {buyable ? "Buy now" : openAuction ? "View auction" : "See pricing & ordering"}
             </Button>
             {range && (
               <Button variant="outline" className="h-11" onClick={goToOrder}>
@@ -672,7 +672,7 @@ function ProductPage() {
             {range && <span className="text-xs font-medium text-muted-foreground"> / {unit}</span>}
           </p>
           <Button variant="workspace" className="shrink-0" onClick={goToOrder}>
-            {buyable ? "Buy now" : "View pricing"}
+            {buyable ? "Buy now" : openAuction ? "View auction" : "View pricing"}
           </Button>
         </div>
       </div>
