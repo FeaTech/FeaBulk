@@ -2389,7 +2389,7 @@ export type Database = {
       }
       add_product_image_command: {
         Args: {
-          alt_text_input?: string
+          alt_text_input: string
           product_id_input: string
           storage_path_input: string
         }
