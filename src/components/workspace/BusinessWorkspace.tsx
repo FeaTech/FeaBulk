@@ -410,8 +410,6 @@ export function Workspace({ expected }: { expected?: "buyer" | "seller" }) {
 
   useEffect(() => {
     if (form === "product") return;
-    setProductSlug("");
-    setProductSlugEdited(false);
     setProductSaleType("regular");
   }, [form]);
   async function run(action: () => Promise<unknown>, success: string) {
