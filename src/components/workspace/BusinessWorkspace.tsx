@@ -754,7 +754,7 @@ export function Workspace({ expected }: { expected?: "buyer" | "seller" }) {
           : "";
       const added = photoResult.uploaded > 0 ? ` ${photoCount(photoResult.uploaded)} added.` : "";
       setNotice(
-        `${productSaleType === "auction" ? "Auction" : "Regular-sale"} product draft saved.${added}${address} Next: press Submit for review so the FeaBulk admin can approve it.`,
+        `${productSaleType === "auction" ? "Auction" : "Regular-sale"} product is live in the marketplace.${added}${address}`,
       );
       reportPhotoFailures(photoResult.failures);
     });
@@ -1515,22 +1515,6 @@ export function Workspace({ expected }: { expected?: "buyer" | "seller" }) {
                           label="Product name"
                           hint="The name buyers will see, for example Stainless steel hex bolts, M8 x 30 mm. At least 3 characters."
                           minLength={3}
-                          onChange={(event) => {
-                            if (!productSlugEdited) setProductSlug(slugify(event.target.value));
-                          }}
-                        />
-                        <Text
-                          name="slug"
-                          label="Web address slug (filled in from the name)"
-                          hint="The last part of the product's web address. It fills in from the name; change it only if you want a different address. Lowercase letters, numbers and hyphens only."
-                          pattern="[a-z0-9]+(-[a-z0-9]+)*"
-                          maxLength={80}
-                          value={productSlug}
-                          onChange={(event) => {
-                            // Clearing the box hands control back to the product name.
-                            setProductSlugEdited(event.target.value !== "");
-                            setProductSlug(event.target.value);
-                          }}
                         />
                         <Field
                           label="Category"
