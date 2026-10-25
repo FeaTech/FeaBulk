@@ -1574,7 +1574,7 @@ export function Workspace({ expected }: { expected?: "buyer" | "seller" }) {
                             <button type="button" className="flex min-w-0 flex-1 items-center gap-3 p-3 text-left transition-colors hover:bg-workspace-canvas" onClick={() => {
                               setManagingProductId(item.id);
                               setEditSaleType(item.auctions?.some(a => a.status === "scheduled") ? "auction" : "regular");
-                              if (item.listing_status === "draft" && item.moderation_status === "pending" && !item.submitted_for_review_at) setEditingProductId(item.id);
+                              setEditingProductId(item.id);
                             }}>
                               <ProductThumb src={productImages.get(item.id)?.[0]?.url} alt={productImages.get(item.id)?.[0]?.alt_text ?? item.name} name={item.name} className="size-12 shrink-0 rounded-md border" />
                               <div className="min-w-0 flex-1"><h3 className="truncate font-extrabold text-workspace-brand">{item.name}</h3>
@@ -1824,9 +1824,7 @@ export function Workspace({ expected }: { expected?: "buyer" | "seller" }) {
                                       name={item.name}
                                       className="size-16 rounded-md border"
                                     />
-                                    {canManageCatalog &&
-                                      item.listing_status === "draft" &&
-                                      !item.submitted_for_review_at && (
+                                    {canManageCatalog && (
                                         <Button type="button" variant="destructive" size="icon"
                                           disabled={busy}
                                           className="absolute -right-1 -top-1 size-6 rounded-full opacity-90 shadow-sm"
