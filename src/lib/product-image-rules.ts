@@ -31,12 +31,10 @@ export function productImageSelectionProblems(files: FileFacts[], existingCount:
 
 /** A seller-readable explanation for an error raised by Storage or the image commands. */
 export function productImageErrorMessage(raw: string): string {
-  if (/locked after submission/i.test(raw))
-    return "Photos are locked once a product is submitted for review.";
   if (/at most 6 images/i.test(raw))
     return `A product can have at most ${PRODUCT_IMAGE_LIMIT} photos. Remove one first.`;
   if (/row-level security|unauthori[sz]ed|access denied|403/i.test(raw))
-    return "You can only add photos to your own business's products while they are drafts that have not been submitted.";
+    return "You can only add photos to your own business's products. Sign in again and retry.";
   if (/mime|content type|not supported/i.test(raw))
     return "Only JPEG, PNG or WebP images can be uploaded.";
   if (/maximum allowed size|too large|payload|413/i.test(raw))
