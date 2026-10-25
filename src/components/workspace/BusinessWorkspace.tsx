@@ -1718,6 +1718,7 @@ export function Workspace({ expected }: { expected?: "buyer" | "seller" }) {
                                 <Action busy={busy}>Save changes</Action>
                               </form>
                             )}
+                            {!item.auctions?.some(a => a.status === "scheduled" || a.status === "awaiting_payment") && (
                             <section className="mt-3 border-t pt-3">
                               <div className="flex items-center justify-between px-2 py-2 text-sm font-bold">
                                 <span>Pricing</span>
@@ -1807,6 +1808,7 @@ export function Workspace({ expected }: { expected?: "buyer" | "seller" }) {
                               )}
                               </div>
                             </section>
+                            )}
                             <section className="border-t pt-3">
                               <div className="flex items-center justify-between px-2 py-2 text-sm font-bold">
                                 <span>Photos</span>
