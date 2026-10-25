@@ -202,8 +202,6 @@ export function Workspace({ expected }: { expected?: "buyer" | "seller" }) {
   const [editingProductId, setEditingProductId] = useState("");
   const [managingProductId, setManagingProductId] = useState("");
   // The new product's slug follows its name until the seller types a slug of their own.
-  const [productSlug, setProductSlug] = useState("");
-  const [productSlugEdited, setProductSlugEdited] = useState(false);
   const [productSaleType, setProductSaleType] = useState<ProductSaleType>("regular");
   const [editSaleType, setEditSaleType] = useState<ProductSaleType>("regular");
   // Problems with the photos chosen in each form, keyed by "new" or the product ID.
@@ -717,7 +715,7 @@ export function Workspace({ expected }: { expected?: "buyer" | "seller" }) {
       setError(`Please fix the photos before saving. ${problems.join(" ")}`);
       return;
     }
-    const requestedSlug = slugCandidate(String(f["slug"]) || String(f["name"]), 1);
+    const requestedSlug = slugCandidate(String(f["name"]), 1);
     let savedSlug = requestedSlug;
     let saved = false;
     let photoResult = { uploaded: 0, failures: [] as string[] };
