@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { getIdentity, getOrganizations, type Organization } from "@/lib/marketplace";
 import {
-  getAuctionBids, getMyParticipation, getOpenAuctionForProduct, joinAuction, payAuctionToken, placeBid, settleAuction,
+  getAuctionBids, getMyParticipation, getOpenAuctionForProduct, joinAuction, payAuctionToken, payAuctionTokenTest, placeBid, settleAuction,
   type Auction, type Participant, type PublicBid,
 } from "@/lib/auctions";
 import { PHASE_LABELS, TOKEN_LABELS, auctionPhase, inr, minimumNextBid, timeLeft, winnerBalance } from "@/lib/auction-rules";
@@ -65,7 +65,8 @@ export function AuctionPanel({ productId, slug }: { productId: string; slug: str
     catch (e) { setMessage({ kind: "error", text: e instanceof Error ? e.message : "Something went wrong." }); }
     finally { setBusy(false); }
   }
-  const join = (e: FormEvent) => { e.preventDefault(); if (!buyer || !auction) return; void act(async () => { const p = await joinAuction(auction.id, buyer.id, address, pin); setMe(p); await payAuctionToken(p.id); }, "Token paid. You can bid now."); };
+  const testPay = useRef(false);
+  const join = (e: FormEvent) => { e.preventDefault(); if (!buyer || !auction) return; const useTest = testPay.current; testPay.current = false; void act(async () => { const p = await joinAuction(auction.id, buyer.id, address, pin); setMe(p); if (useTest) await payAuctionTokenTest(p.id); else await payAuctionToken(p.id); }, useTest ? "Test token paid (no charge). You can bid now." : "Token paid. You can bid now."); };
   const submitBid = (e: FormEvent) => { e.preventDefault(); if (!buyer || !auction) return; void act(() => placeBid(auction.id, buyer.id, Number(bid)), "Bid placed."); setBid(""); };
 
   return (
@@ -99,7 +100,8 @@ export function AuctionPanel({ productId, slug }: { productId: string; slug: str
           <form onSubmit={join} className="grid gap-2">
             <label className="grid gap-1 text-sm font-semibold">Delivery address (used if you win)<textarea required minLength={10} rows={2} value={address} onChange={(e) => setAddress(e.target.value)} className={field} /></label>
             <label className="grid gap-1 text-sm font-semibold">PIN code<input required pattern="[1-9][0-9]{5}" value={pin} onChange={(e) => setPin(e.target.value)} className={field} /></label>
-            <Button variant="workspace" className="h-11" disabled={busy}>{busy ? "Opening payment…" : `Join auction — pay ${inr(auction.token_amount)} token`}</Button>
+            <Button variant="workspace" className="h-11" disabled={busy} onClick={() => { testPay.current = false; }}>{busy ? "Opening payment…" : `Join auction — pay ${inr(auction.token_amount)} token`}</Button>
+            <Button type="submit" variant="outline" className="h-11" disabled={busy} onClick={() => { testPay.current = true; }}>Join with test payment (no charge)</Button>
           </form>
         )
       ) : (
