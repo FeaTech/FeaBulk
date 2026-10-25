@@ -46,6 +46,7 @@ import {
   getTeamMembers,
   getVerificationCase,
   initiateOrderPayment,
+  payOrderTestPayment,
   publishRfq,
   markNotificationRead,
   openDispute,
@@ -584,6 +585,9 @@ export function Workspace({ expected }: { expected?: "buyer" | "seller" }) {
         link.click();
       })
       .catch((err) => setError(errorText(err)));
+  }
+  async function payOrderTest(order: Order) {
+    await payOrderTestPayment(order.id);
   }
   async function payOrder(order: Order) {
     const checkout = await initiateOrderPayment(order.id, crypto.randomUUID());
@@ -2156,6 +2160,7 @@ type OrderCardProps = {
   run: (action: () => Promise<unknown>, success: string) => Promise<void>;
   openConversation: (context: "quote" | "order", referenceId: string) => Promise<void>;
   payOrder: (order: Order) => Promise<void>;
+  payOrderTest: (order: Order) => Promise<void>;
   submitShipment: (event: FormEvent<HTMLFormElement>, order: Order) => void;
   submitDispute: (event: FormEvent<HTMLFormElement>, order: Order) => void;
   submitReview: (event: FormEvent<HTMLFormElement>, order: Order) => void;
