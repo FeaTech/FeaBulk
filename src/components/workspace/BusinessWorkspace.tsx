@@ -1845,8 +1845,6 @@ export function Workspace({ expected }: { expected?: "buyer" | "seller" }) {
                               </div>
                             )}
                             {canManageCatalog &&
-                              item.listing_status === "draft" &&
-                              !item.submitted_for_review_at &&
                               (productImages.get(item.id) ?? []).length < PRODUCT_IMAGE_LIMIT && (
                                 <form
                                   className="mt-3 grid gap-3 sm:grid-cols-[minmax(13rem,1fr)_minmax(12rem,1fr)_auto] sm:items-end"
@@ -1910,49 +1908,6 @@ export function Workspace({ expected }: { expected?: "buyer" | "seller" }) {
                               )}
                               </div>
                             </section>
-                            {canManageCatalog &&
-                              item.listing_status === "draft" &&
-                              item.moderation_status === "pending" &&
-                              !item.submitted_for_review_at && (
-                                <div className="mt-4 border-t pt-4">
-                                  <p className="text-sm font-bold">
-                                    The FeaBulk admin cannot see this product until you submit it.
-                                  </p>
-                                  {submissionBlockers(item, organization.status === "verified")
-                                    .length > 0 ? (
-                                    <ul className="mt-2 list-disc pl-5 text-sm" role="status">
-                                      {submissionBlockers(
-                                        item,
-                                        organization.status === "verified",
-                                      ).map((blocker) => (
-                                        <li key={blocker}>{blocker}</li>
-                                      ))}
-                                    </ul>
-                                  ) : (
-                                    <p className="mt-1 text-sm text-muted-foreground">
-                                      {(productImages.get(item.id) ?? []).length === 0
-                                        ? "Ready to send. Adding a photo first is recommended, because the admin and buyers will see it."
-                                        : "Ready to send. Prices and photos lock once you submit."}
-                                    </p>
-                                  )}
-                                  <Button variant="outline"
-                                    disabled={
-                                      busy ||
-                                      submissionBlockers(item, organization.status === "verified")
-                                        .length > 0
-                                    }
-                                    className="button mt-3"
-                                    onClick={() =>
-                                      void run(
-                                        () => submitProductForReview(item.id),
-                                        "Product sent to the FeaBulk admin for review.",
-                                      )
-                                    }
-                                  >
-                                    Submit for review
-                                  </Button>
-                                </div>
-                              )}
                             {canAdjustInventory && (
                               <section className="border-t pt-3">
                                 <div className="flex items-center justify-between px-2 py-2 text-sm font-bold">
