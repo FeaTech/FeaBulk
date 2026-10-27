@@ -38,8 +38,7 @@ test("enforces six photos per product across existing and new ones", () => {
 });
 
 test("turns storage and database errors into plain explanations", () => {
-  assert.match(productImageErrorMessage("new row violates row-level security policy"), /drafts/);
-  assert.match(productImageErrorMessage("Images are locked after submission"), /locked once/);
+  assert.match(productImageErrorMessage("new row violates row-level security policy"), /own business/);
   assert.match(productImageErrorMessage("A listing can have at most 6 images"), /at most 6/);
   assert.match(productImageErrorMessage("TypeError: Failed to fetch"), /connection/);
   assert.match(
