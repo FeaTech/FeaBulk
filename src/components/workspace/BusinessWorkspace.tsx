@@ -747,7 +747,7 @@ export function Workspace({ expected }: { expected?: "buyer" | "seller" }) {
       if (photos.length > 0) photoResult = await uploadProductImages(created.id, photos);
       setPhotoProblems((current) => ({ ...current, new: [] }));
       setForm(null);
-    }, "Product draft saved.").then(() => {
+    }, "Product published.").then(() => {
       if (!saved) return;
       const address =
         savedSlug !== requestedSlug
@@ -1614,11 +1614,11 @@ export function Workspace({ expected }: { expected?: "buyer" | "seller" }) {
                                 onClick={() =>
                                   void run(
                                     () => reopenRejectedProduct(item.id),
-                                    "Rejected listing reopened for revision.",
+                                    "Listing is live in the marketplace again.",
                                   )
                                 }
                               >
-                                Reopen rejected listing
+                                Republish listing
                               </Button>
                             )}
                             {canManageCatalog && editingProductId === item.id && (

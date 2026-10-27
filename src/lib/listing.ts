@@ -20,9 +20,9 @@ export function listingStage(product: ListingFacts): ListingStage {
 }
 
 export const LISTING_STAGE_LABELS: Record<ListingStage, string> = {
-  draft: "Draft · not sent to the FeaBulk admin yet",
-  in_review: "Sent · waiting for FeaBulk admin review",
-  rejected: "Rejected · see the review note",
+  draft: "Draft · not published yet",
+  in_review: "Draft · not published yet",
+  rejected: "Unpublished by FeaBulk admin · see the note",
   live: "Live in the marketplace",
   inactive: "Not listed",
 };

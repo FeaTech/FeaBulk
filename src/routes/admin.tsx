@@ -210,7 +210,7 @@ function Operations() {
   const titles: Record<OperationsView, [string, string]> = {
     overview: ["Overview", "Everything waiting on FeaBulk, at a glance."],
     verification: ["Business verification", "Approve or reject businesses applying to trade."],
-    catalog: ["Listing review", "Check new products before buyers can see them."],
+    catalog: ["Listings", "Look over live products and unpublish any that break the rules."],
     disputes: ["Disputes", "Settle problems between buyers and sellers."],
     health: ["Platform health", "Issues detected automatically across orders and payments."],
     orders: ["Orders", "Every order on the marketplace."],
@@ -247,7 +247,7 @@ function Operations() {
                 <OpsTab active={view === "verification"} count={cases.length} onClick={() => setView("verification")}>Verification</OpsTab>
               )}
               {canModerate && (
-                <OpsTab active={view === "catalog"} count={products.length + drafts.length} onClick={() => setView("catalog")}>Listing review</OpsTab>
+                <OpsTab active={view === "catalog"} count={drafts.length} onClick={() => setView("catalog")}>Listings</OpsTab>
               )}
               {canResolveDisputes && (
                 <OpsTab active={view === "disputes"} count={disputes.length} urgent={disputes.length > 0} onClick={() => setView("disputes")}>Disputes</OpsTab>
@@ -343,7 +343,7 @@ function Operations() {
                 <h2 className="mt-8 text-xs font-bold uppercase tracking-wider text-muted-foreground">Review queues</h2>
                 <div className="mt-3 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
                   {canVerify && <Metric label="Businesses to verify" value={cases.length} onClick={() => setView("verification")} />}
-                  {canModerate && <Metric label="Listings to review" value={products.length + drafts.length} onClick={() => setView("catalog")} />}
+                  {canModerate && <Metric label="Live listings" value={products.length} onClick={() => setView("catalog")} />}
                   {canResolveDisputes && <Metric label="Open disputes" value={disputes.length} urgent={disputes.length > 0} onClick={() => setView("disputes")} />}
                   {canViewHealth && <Metric label="Open incidents" value={health.summary.open} urgent={health.summary.critical > 0} onClick={() => setView("health")} />}
                 </div>
@@ -499,14 +499,12 @@ function Operations() {
 
             {view === "catalog" && canModerate && (
               <section>
-                <h2 className="sr-only">Product moderation ({products.length})</h2>
-                {products.length === 0 && (
-                  <Empty>
-                    {drafts.length > 0
-                      ? "No submitted listings. Drafts sellers have not submitted are listed below."
-                      : "No listings awaiting moderation."}
-                  </Empty>
-                )}
+                <h2 className="text-lg font-bold">Live listings ({products.length})</h2>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  Sellers publish products directly. Unpublish a listing to take it off the
+                  marketplace; your note is shown to the seller.
+                </p>
+                {products.length === 0 && <Empty>No live listings.</Empty>}
                 <div className="mt-3 grid gap-3">
                   {products.map((item) => (
                     <article key={item.id} className="rounded-lg border border-border bg-card p-5 shadow-sm">
@@ -523,21 +521,12 @@ function Operations() {
                       <div className="mt-3 flex gap-2">
                         <button
                           disabled={busy}
-                          className="button"
-                          onClick={() =>
-                            void decide(() => moderateProduct(item.id, true, notes[item.id] ?? ""))
-                          }
-                        >
-                          Approve listing
-                        </button>
-                        <button
-                          disabled={busy}
                           className="button-secondary"
                           onClick={() =>
                             void decide(() => moderateProduct(item.id, false, notes[item.id] ?? ""))
                           }
                         >
-                          Reject listing
+                          Unpublish listing
                         </button>
                       </div>
                     </article>
@@ -546,11 +535,11 @@ function Operations() {
                 {drafts.length > 0 && (
                   <div className="mt-8">
                     <h2 className="text-lg font-bold">
-                      Saved by sellers, not submitted yet ({drafts.length})
+                      Unpublished drafts ({drafts.length})
                     </h2>
                     <p className="mt-1 text-sm text-muted-foreground">
-                      The seller has not pressed Submit for review. You can still approve or
-                      reject these now; approving one publishes it straight away.
+                      Drafts saved before products went live on save. Publishing one puts it on
+                      the marketplace straight away.
                     </p>
                     <div className="mt-3 grid gap-3">
                       {drafts.map((item) => {
@@ -576,8 +565,8 @@ function Operations() {
                             </summary>
                             <p className="mt-3 border-l-2 border-workspace-action pl-3 text-sm">
                               {blockers.length > 0
-                                ? `Cannot be approved yet: ${blockers.join(" ")} You can still reject it with a note telling the seller what to fix.`
-                                : "Ready to approve. It meets every rule a seller submission would."}
+                                ? `Cannot be published yet: ${blockers.join(" ")} You can still reject it with a note telling the seller what to fix.`
+                                : "Ready to publish."}
                             </p>
                             <div className="mt-3">
                               <ProductReviewDetails
@@ -602,7 +591,7 @@ function Operations() {
                                   void decide(() => moderateProduct(item.id, true, notes[item.id] ?? ""))
                                 }
                               >
-                                Approve listing
+                                Publish listing
                               </button>
                               <button
                                 disabled={busy}
