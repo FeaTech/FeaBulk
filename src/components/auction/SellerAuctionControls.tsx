@@ -1,4 +1,4 @@
-import { useEffect, useState, type FormEvent } from "react";
+import { useCallback, useEffect, useState, type FormEvent } from "react";
 import { Gavel } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cancelAuction, createAuction, getOpenAuctionForProduct, getAuctionBids, type Auction, type PublicBid } from "@/lib/auctions";
@@ -15,12 +15,12 @@ export function SellerAuctionControls({ productId, unit, available }: { productI
   const [error, setError] = useState("");
   const [lotType, setLotType] = useState<LotType>("lot");
 
-  const load = async () => {
+  const load = useCallback(async () => {
     const a = await getOpenAuctionForProduct(productId).catch(() => null);
     setAuction(a);
     if (a) setBids(await getAuctionBids(a.id).catch(() => []));
-  };
-  useEffect(() => { void load(); }, [productId]);
+  }, [productId]);
+  useEffect(() => { void load(); }, [load]);
 
   const active = auction && ["scheduled", "awaiting_payment"].includes(auction.status);
 

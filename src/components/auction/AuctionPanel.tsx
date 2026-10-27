@@ -41,17 +41,19 @@ export function AuctionPanel({ productId, slug }: { productId: string; slug: str
     })();
   }, []);
   useEffect(() => { if (signedIn !== null) void refresh(); }, [refresh, signedIn]);
+  // Effects below key on the auction id so a refreshed auction object does not re-run them.
+  const auctionId = auction?.id;
   useEffect(() => {
-    if (auction && buyer) void getMyParticipation(auction.id, buyer.id).then(setMe).catch(() => setMe(null));
-  }, [auction?.id, buyer]);
+    if (auctionId && buyer) void getMyParticipation(auctionId, buyer.id).then(setMe).catch(() => setMe(null));
+  }, [auctionId, buyer]);
   useEffect(() => { const t = setInterval(() => setNow(Date.now()), 1000); return () => clearInterval(t); }, []);
   useEffect(() => {
-    if (!auction) return;
-    const channel = supabase.channel(`auction-${auction.id}`)
-      .on("postgres_changes", { event: "UPDATE", schema: "public", table: "auctions", filter: `id=eq.${auction.id}` }, () => void refresh())
+    if (!auctionId) return;
+    const channel = supabase.channel(`auction-${auctionId}`)
+      .on("postgres_changes", { event: "UPDATE", schema: "public", table: "auctions", filter: `id=eq.${auctionId}` }, () => void refresh())
       .subscribe();
     return () => { void supabase.removeChannel(channel); };
-  }, [auction?.id, refresh]);
+  }, [auctionId, refresh]);
 
   if (!auction || ["cancelled"].includes(auction.status)) return null;
   const phase = auctionPhase(auction, now);
