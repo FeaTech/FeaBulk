@@ -215,6 +215,7 @@ export function Workspace({ expected }: { expected?: "buyer" | "seller" }) {
   const [conversation, setConversation] = useState<TradeConversation | null>(null);
   const [messages, setMessages] = useState<TradeMessage[]>([]);
   const messageListRef = useRef<HTMLDivElement>(null);
+  const conversationRef = useRef<HTMLElement>(null);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [showNotifications, setShowNotifications] = useState(false);
   const [verification, setVerification] = useState<VerificationCase | null>(null);
@@ -457,6 +458,10 @@ export function Workspace({ expected }: { expected?: "buyer" | "seller" }) {
     );
   }, []);
   const conversationId = conversation?.id;
+  // The chat panel sits below the page's lists, so bring it into view when a chat opens.
+  useEffect(() => {
+    if (conversationId) conversationRef.current?.scrollIntoView({ block: "start" });
+  }, [conversationId]);
   useEffect(() => {
     if (!conversationId) return;
     return subscribeToMessages(conversationId, addMessage, () => {
@@ -563,14 +568,20 @@ export function Workspace({ expected }: { expected?: "buyer" | "seller" }) {
   }
   function generateDocument(order: Order, type: CommercialDocument["type"]) {
     if (!organization) return;
+    // Open the tab during the click; browsers block tabs opened after the document is ready.
+    const tab = window.open("", "_blank");
     void run(
       async () => {
-        const result = await generateCommercialDocument(order.id, organization.id, type);
-        const link = document.createElement("a");
-        link.href = result.signed_url;
-        link.target = "_blank";
-        link.rel = "noopener noreferrer";
-        link.click();
+        try {
+          const result = await generateCommercialDocument(order.id, organization.id, type);
+          if (tab) {
+            tab.opener = null;
+            tab.location.href = result.signed_url;
+          } else window.location.assign(result.signed_url);
+        } catch (err) {
+          tab?.close();
+          throw err;
+        }
       },
       `${type.replaceAll("_", " ")} generated.`,
     );
@@ -2085,7 +2096,10 @@ export function Workspace({ expected }: { expected?: "buyer" | "seller" }) {
                   </section>
                 )}
                 {conversation && (
-                  <section className="mt-8 border border-input bg-card p-5">
+                  <section
+                    ref={conversationRef}
+                    className="mt-8 scroll-mt-4 border border-input bg-card p-5"
+                  >
                     <div className="flex items-center justify-between">
                       <h2 className="text-lg font-black">Trade messages</h2>
                       <Button variant="outline"
